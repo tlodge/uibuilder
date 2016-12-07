@@ -4,10 +4,14 @@ import { bindActionCreators } from 'redux';
 
 import { actionCreators as editorActions, selector } from '../';
 import Canvas from '../../canvas/components';
-import Palette from '../../palette/components'
+import Palette from '../../palette/components';
+import Mapper from '../../mapper/components';
 import DragDropContainer from '../../../components/DragDrop';
 import { Flex, Box } from 'reflexbox'
 import './Editor.scss';
+//import {source1} from '../../../datasources/';
+import {DatasourceManager} from '../../../datasources';
+import {viewConstants} from '../../palette';
 
 @connect(selector, (dispatch) => ({
   actions: bindActionCreators(editorActions, dispatch)
@@ -15,34 +19,40 @@ import './Editor.scss';
 
 export default class Editor extends Component {
 
-	constructor(props,context){
-		super(props,context);
-		this._handleResize = this._handleResize.bind(this);
-	}		
+	 constructor(props,context){
+		  super(props,context);
+		  this._handleResize = this._handleResize.bind(this);
+	    DatasourceManager.init(props.dispatch);
+   }		
   	
-  	componentDidMount(){
-		window.addEventListener('resize', this._handleResize);
+    componentDidMount(){
+		  window.addEventListener('resize', this._handleResize);
   	}
 
   	render() {
-  		console.log("props isn ediroe are");
-  		console.log(this.props);
-
+  		
   		const {w,h} = this.props.editor;
+      
+      const canvasstyle ={
+        left: viewConstants.PALETTE_WIDTH,
+        width: w-viewConstants.PALETTE_WIDTH,
+      }
 
     	return (
       	 	<div className="editor">
       	 		<DragDropContainer w={w} h={h}>
-      	 			<div className="palettecontainer"><Palette/></div>
-   					<div className="canvascontainer"><Canvas/></div>
-   				</DragDropContainer>
+      	 			<Palette/>
+   					  <div className="canvascontainer" style={canvasstyle}>
+                  <Canvas w={w} h={h}/>
+              </div> 
+              <Mapper/>
+   				  </DragDropContainer>
       		</div>
     	);
   	}
 
   	_handleResize(e){
-  		console.log(this.props)
-     	const w = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+     	  const w = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
       	const h = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
       	this.props.actions.screenResize(w,h);
   	}

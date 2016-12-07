@@ -10,7 +10,7 @@ export default class PaletteLayout extends Component {
   render() {
     
     const { templates: { templatesById, selected }, actions } = this.props;
-
+  
     return (
       <div className="paletteList">
         <TemplateList templates={templatesById} selected={selected} actions={actions} />

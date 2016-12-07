@@ -16,28 +16,24 @@ export const NAME = 'templates';
 
 const initialState: State = {
 
-  templates: [0, 1, 2, 3, 4],
+  templates: [0, 1, 2, 3],
 
   templatesById: [
     {
       id: 0,
-      type: 'Circle'
+      type: 'circle'
     },
     {
       id: 1,
-      type: 'Rectangle'
+      type: 'rect'
     },
     {
       id: 2,
-      type: 'Line'
+      type: 'line'
     },
     {
       id: 3,
-      type: 'Polygon'
-    },
-    {
-      id: 4,
-      type: 'Text'
+      type: 'text'
     }
   ],
 

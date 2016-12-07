@@ -3,6 +3,6 @@ export {
   actionCreators,
   selector,
   NAME
-} from './templates';
+} from './mapper';
 
 export * as viewConstants from './constants';

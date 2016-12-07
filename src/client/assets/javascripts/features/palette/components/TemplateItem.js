@@ -13,24 +13,16 @@ function connect(connect, monitor){
 };
 
 const ItemTypes = {
-  BOX: 'box'
+  TEMPLATE: 'template'
 };
 
-const boxSource = {
+const templateSource = {
 
   beginDrag(props) {
     return {
-      name: props.type
+      shape: props.type
     };
   },
-
-  endDrag(props, monitor) {
-    console.log("drag ended!!!");
-    console.log(props);
-    //const {nt, def, reducer} = props;
-    //const {x,y} = monitor.getClientOffset();
-    //props.handleDrop(reducer, nt, def, x, y);
-  }
 };
 
 
@@ -64,4 +56,4 @@ class TemplateItem extends Component {
   }
 }
 
-export default DragSource(ItemTypes.BOX, boxSource, connect)(TemplateItem);
+export default DragSource(ItemTypes.TEMPLATE, templateSource, connect)(TemplateItem);
