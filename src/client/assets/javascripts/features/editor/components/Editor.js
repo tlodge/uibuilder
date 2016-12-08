@@ -3,26 +3,28 @@ import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 
 import { actionCreators as editorActions, selector } from '../';
+import { actionCreators as sourceActions} from '../../sources';
+
 import Canvas from '../../canvas/components';
 import Palette from '../../palette/components';
-import Mapper from '../../mapper/components';
+import Mapper from '../../mapper/components/Mapper';
 import DragDropContainer from '../../../components/DragDrop';
-import { Flex, Box } from 'reflexbox'
 import './Editor.scss';
-//import {source1} from '../../../datasources/';
 import {DatasourceManager} from '../../../datasources';
 import {viewConstants} from '../../palette';
 
-@connect(selector, (dispatch) => ({
-  actions: bindActionCreators(editorActions, dispatch)
-}))
+@connect(selector, (dispatch) => {
+  DatasourceManager.init(bindActionCreators(sourceActions.registerSource, dispatch));
+  return{
+     actions: bindActionCreators(editorActions, dispatch)
+  }
+})
 
 export default class Editor extends Component {
 
 	 constructor(props,context){
 		  super(props,context);
 		  this._handleResize = this._handleResize.bind(this);
-	    DatasourceManager.init(props.dispatch);
    }		
   	
     componentDidMount(){

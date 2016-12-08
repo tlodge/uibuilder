@@ -4,7 +4,7 @@ import {actionCreators as mapperActions} from '../features/mapper';
 let _count = 0;
 let _emitters = {};
 
-export function	init(dispatch){
+export function	init(registerCallback){
 	
 	var data1 = new EventEmitter();
 	var data2 = new EventEmitter();
@@ -17,37 +17,39 @@ export function	init(dispatch){
 		data2.emit("data", {id:"data2", x:Math.random()*500, y:Math.random()*500})
 	}, 3500);
 
-	this.register(data1, t1,  "a test emitter", {
-														id: {type: "number", 
-														description: "datasource id"},
-														value: {type: "number", description: "data value"}
-												 }, 
-												 (registerInfo)=>{
-												 	dispatch(mapperActions.registerSource(registerInfo));
-												 });
+	this.register(data1, t1,  {
+								name: "source1", 
+							  	description: "a test emitter",
+							  	schema: {
+									id: {type: "number", description: "datasource id"},
+									value: {type: "number", description: "data value"}
+								}, 
+							},
+							(registerInfo)=>{registerCallback(registerInfo);}
+				);
 
-	this.register(data2, t2,  "another test emitter", {
-															id: {type: "number", 
-															description: "datasource id"},
-															x: {type: "number", description: "x data value"},
-															y: {type: "number", description: "y data value"}
-														},
-														(registerInfo)=>{
-												 			dispatch(mapperActions.registerSource(registerInfo));
-														});
+	this.register(data2, t2,  {
+								name: "source2", 
+							  	description: "another test emitter",
+							  	schema: {
+									id: {type: "number", description: "datasource id"},
+									x: {type: "number", description: "x data value"},
+									y: {type: "number", description: "y data value"}
+								}, 
+							},
+							(registerInfo)=>{registerCallback(registerInfo);});
+
 }
 
-export function register(emitter, description, schema, onDone){
+export function register(emitter, timer, source, onDone){
 	 	
 	const id = _count++;
 
 	_emitters[id] = {
 		emitter,
-		description,
-		schema,
 	}
 		
-	onDone({id,description,schema});
+	onDone(Object.assign({},source, {id:id}));
 }
 
 export function get(id){

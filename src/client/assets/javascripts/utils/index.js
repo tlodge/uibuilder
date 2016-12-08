@@ -3,8 +3,10 @@ function _generateid(){
 }
 
 function _circle(x:number,y:number){
+	const id =_generateid();
 	return {
-		id: _generateid(),
+		id,
+		label: `circle:${id}`,
 		type: "circle",
 		cx: x,
 		cy: y,
@@ -13,8 +15,10 @@ function _circle(x:number,y:number){
 }
 
 function _line(x:number,y:number){
+	const id =_generateid();
 	return {
-		id: _generateid(),
+		id,
+		label: `line:${id}`,
 		type: "line",
 		x1: x,
 		x2: x + 30,
@@ -24,8 +28,10 @@ function _line(x:number,y:number){
 }
 
 function _rect(x:number,y:number){
+	const id =_generateid();
 	return {
-		id: _generateid(),
+		id,
+		label: `rect:${id}`,
 		type: "rect",
 		x: x,
 		y: y,
@@ -35,8 +41,10 @@ function _rect(x:number,y:number){
 }
 
 function _text(x:number, y:number){
+	const id =_generateid();
 	return {
-		id: _generateid(),
+		id,
+		label: `text:${id}`,
 		type: "text",
 		x: x,
 		y: y,

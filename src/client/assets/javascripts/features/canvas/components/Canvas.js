@@ -46,6 +46,8 @@ class Canvas extends Component {
   }
 
   _subscribe(id){
+      console.log("--------->subscribing!!");
+      console.log(id);
       var ds = DatasourceManager.get(0);
       ds.emitter.addListener('data', (data)=>{
           this.updateAttribute(id, "cx", data.value);
