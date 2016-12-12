@@ -2,7 +2,7 @@
 
 import { createStructuredSelector } from 'reselect';
 import { State } from 'models/mapper';
-import {NAME as CANVASNAME, actionCreators as shapeActions} from '../canvas'
+import {NAME as CANVASNAME, actionCreators as templateActions} from '../canvas'
 import {NAME as SOURCENAME} from '../sources'
 import {DatasourceManager} from '../../datasources';
 // Action Types
@@ -31,41 +31,29 @@ const createFrom = (action)=>{
 }
 
 const createTo = (action)=>{
-	return {shapeId:action.shapeId, attribute:action.attribute}
+	return {templateId:action.templateId, attribute:action.attribute}
 }
 
-const subscribe = (sourceId, path, shapeId, attribute, onData)=>{
-	console.log("getting source iD");
-	console.log(sourceId);
-
+const subscribe = (key, sourceId, path, templateId, attribute, onData)=>{
+	
 	var ds = DatasourceManager.get(sourceId);
 
 	if (ds){
-		console.log("GREAT GOT Ds!!!!!");
-
     	ds.emitter.addListener('data', (data)=>{
-    		console.log("seen some data!!");
+    		console.log("seend data " );
     		console.log(data);
-    		console.log(path);
-    		console.log("*****")
-    		onData(shapeId,attribute,data[path]);
+    		console.log("key is " + key)
+    		onData(data[key],sourceId,templateId,attribute,data[path]);
     	});
     } 
 }
 
 const createSubscription = (state, action, onData)=>{
-	console.log("am in create subscription!!");
-
+	
 	switch(action.type){
-		case MAP_FROM:
-			if (state.to){
-				subscribe(action.sourceId, action.path, state.to.shapeId, state.to.attribute, onData);
-			}
-			break;
-
 		case MAP_TO:
 			if (state.from){
-				subscribe(state.from.sourceId, state.from.path, action.shapeId, action.attribute, onData);
+				subscribe("id", state.from.sourceId, state.from.path, action.templateId, action.attribute, onData);
 			}
 			break;
 	}
@@ -80,28 +68,19 @@ export default function reducer(state: State = initialState, action: any = {}): 
 			return Object.assign({}, state, {open:!state.open});
 	
 		case MAP_FROM:
-			if (state.to){
-				return Object.assign({}, state, {
-												mappings: [...state.mappings, {from: createFrom(action), to:state.to}],
-												from: null,
-												to: null,
-											});
-			}else{
-				return Object.assign({}, state, {from:createFrom(action)});
-			}
+			return Object.assign({}, state, {from:createFrom(action)});
+		
 
 		case MAP_TO:
 			if (state.from){
 				//subcribe
 				return Object.assign({}, state, {
-													mappings: [...state.mappings, {from:state.from, to:createTo(action)}],
+													mappings: [...state.mappings, {enter:"id", from:state.from, to:createTo(action), /*nodes:[]*/}],
 													from: null,
 													to: null,
 												})
 			}
-			else{
-				return Object.assign({}, state, {to:createTo(action)})
-			}
+			return state;
 
 		default:	
 			return state;
@@ -116,31 +95,54 @@ function toggleMapper() {
 }
 
 function mapFrom(sourceId, path){
-	return (dispatch,getState)=>{
-		const action = {
-			type: MAP_FROM,
-			sourceId,
-			path
-		}
+	return {
+		type: MAP_FROM,
+		sourceId,
+		path
+	};
+}
 
-		const onData = (id, attribute, data)=>{
-			dispatch(shapeActions.updateAttribute(id,attribute,data));
-		}
-		createSubscription(getState().mapper, action, onData);
-		dispatch(action);
+function createNode(templateId, sourceId, attribute, data){
+	return {
+		type: ADD_NODE,
+		templateId,
+		sourceId,
+		attribute,
+		data,
 	}
 }
 
-function mapTo(shapeId, attribute){
+function mapTo(templateId, attribute){
 	return (dispatch,getState)=>{
 		
 		const action = {
 			type: MAP_TO,
-			shapeId,
+			templateId,
 			attribute,
 		}
-		const onData = (id, attribute, data)=>{
-			dispatch(shapeActions.updateAttribute(id,attribute,data));
+		
+		const onData = (key, sourceId, templateId, attribute, data)=>{
+			//if mapping doesn't exist, create new node
+			/*const mapping = getState().mapper.mappings.reduce((acc, mapping)=>{
+				if (mapping.to.templateId === templateId && mapping.from.sourceId === sourceId){
+					return mapping;
+				}
+				return acc;
+			},null);*/
+
+			/*if (mapping && mapping.nodes){
+				if (!mapping.nodes(data.id)){
+					dispatch(createNode(templateId, sourceId, attribute, data));
+				}
+				else{
+					dispatch(templateActions.updateNodeAttribute(templateId,attribute,data));
+				}
+			}*/
+			console.log("seen some data");
+			console.log(`${key} ${sourceId} ${templateId} ${attribute} ${data}`);
+
+			//console.log(mapping);
+			dispatch(templateActions.updateNodeAttribute(templateId,key,attribute,data));
 		}
 		createSubscription(getState().mapper, action, onData);
 		dispatch(action);

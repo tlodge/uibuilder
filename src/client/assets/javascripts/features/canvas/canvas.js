@@ -2,14 +2,16 @@
 
 import { createStructuredSelector } from 'reselect';
 import { State } from 'models/canvas';
-import {createShape} from '../../utils/';
+import {createTemplate, generateId} from '../../utils/';
 // Action Types
 
-// Define types in the form of 'npm-module-or-myapp/feature-name/ACTION_TYPE_NAME'
+
 const MOUSE_MOVE  = 'uibuilder/canvas/MOUSE_MOVE';
-const SHAPE_DROPPED  = 'uibuilder/canvas/SHAPE_DROPPED';
-const SHAPE_SELECTED  = 'uibuilder/canvas/SHAPE_SELECTED';
-const UPDATE_ATTRIBUTE  = 'uibuilder/canvas/UPDATE_ATTRIBUTE';
+const TEMPLATE_DROPPED  = 'uibuilder/canvas/TEMPLATE_DROPPED';
+const TEMPLATE_SELECTED  = 'uibuilder/canvas/TEMPLATE_SELECTED ';
+const NODE_ENTER  = 'uibuilder/canvas/NODE_ENTER';
+const UPDATE_NODE_ATTRIBUTE  = 'uibuilder/canvas/UPDATE_NODE_ATTRIBUTE';
+
 // This will be used in our root reducer and selectors
 
 export const NAME = 'canvas';
@@ -17,25 +19,78 @@ export const NAME = 'canvas';
 // Define the initial state for `shapes` module
 
 const initialState: State = {
-  shapes: [],
+  templates: [],     //templates
+  nodes: {},     //these are the 
   selected:null,
   x: 0,
   y: 0,
 };
 
-const shape=(state, action)=>{
+const node=(state, action)=>{
   if (state.id != action.id){
     return state;
   }
 
   switch(action.type){
 
-    case UPDATE_ATTRIBUTE:
+    case UPDATE_NODE_ATTRIBUTE:
       return Object.assign({}, state, {[action.attribute]:action.value}); 
    
     default:
       return state;
   }
+}
+
+const cloneShape =(shapes, action)=>{
+  for (var template in templates){
+     if (template.id === action.id){
+        return Object.assign({}, template);
+     }
+  }
+} 
+
+/* {
+
+
+}*/
+//key
+//id
+//attribute
+//value
+
+/*nodes = {
+  templateId:{
+                key : {
+                  node
+                },
+                key: {
+                  node
+                }
+  }  
+}*/
+
+const createNode = (templates, templateId)=>{
+   console.log("CREATING A NEW NODE!!");
+
+   const template = templates.reduce((acc,t)=>{
+      return  (t.id === templateId) ? t : acc;
+   },{});
+
+   const id = generateId();
+   return Object.assign({}, template, {id, label:`${template.type}:${id}`});
+}
+
+const updateNodes = (templates, nodes, action)=>{
+ 
+  const parent = nodes[action.templateId] || {};
+  console.log("action key is");
+  console.log(action.key);
+
+  const node = parent[action.key] || createNode(templates, action.templateId);
+  
+  const newNode = Object.assign({}, node, {[action.attribute] : action.value});
+  
+  return Object.assign({}, nodes, {[action.templateId] : Object.assign({}, parent, {[action.key] : newNode})});
 }
 
 export default function reducer(state: State = initialState, action: any = {}): State {
@@ -48,14 +103,20 @@ export default function reducer(state: State = initialState, action: any = {}): 
         y: action.y
       };
     
-    case SHAPE_DROPPED: 
-      return Object.assign({}, state,  {shapes: [...state.shapes, createShape(action.shape, action.x, action.y)]});
+    case TEMPLATE_DROPPED: 
+      return Object.assign({}, state,  {templates: [...state.templates, createTemplate(action.template, action.x, action.y)]});
     
-    case SHAPE_SELECTED: 
+    case TEMPLATE_SELECTED: 
       return Object.assign({}, state,  {selected: action.id});
 
-    case UPDATE_ATTRIBUTE: 
-      return Object.assign({}, state, {shapes : state.shapes.map(s=>shape(s, action))})
+    case NODE_ENTER:
+      //return Object.assign({}, state,  {shapes: [...state.shapes, cloneShape(state.shapes, action.id)]});
+      return state;
+
+    case UPDATE_NODE_ATTRIBUTE: 
+      //console.log("AM IN HERE");
+      //llokup the action.key, and create new node from template if doesn't already exist!
+      return Object.assign({}, state, {nodes:updateNodes(state.templates, state.nodes, action)})
 
     default:
       return state;
@@ -72,26 +133,35 @@ function mouseMove(x: number, y:number) {
   };
 }
 
-function shapeDropped(shape:string, x:number, y:number) {
+function templateDropped(template:string, x:number, y:number) {
   return {
-    type: SHAPE_DROPPED,
-    shape,
+    type: TEMPLATE_DROPPED,
+    template,
     x,
     y,
   };
 }
 
-function shapeSelected(id:string) {
+function templateSelected(id:string) {
   return {
-    type: SHAPE_SELECTED,
+    type: TEMPLATE_SELECTED,
     id,
   };
 }
 
-function updateAttribute(id:string, attribute:string, value) {
-  return {
-    type: UPDATE_ATTRIBUTE,
+function nodeEnter(id:string){
+   return {
+    type: NODE_ENTER,
     id,
+  };
+}
+
+function updateNodeAttribute(templateId:string, key:string, attribute:string, value) {
+  
+  return {
+    type: UPDATE_NODE_ATTRIBUTE,
+    templateId,
+    key,
     attribute,
     value,
   };
@@ -107,7 +177,8 @@ export const selector = createStructuredSelector({
 
 export const actionCreators = {
   mouseMove,
-  shapeDropped,
-  shapeSelected,
-  updateAttribute,
+  templateDropped,
+  templateSelected,
+  nodeEnter,
+  updateNodeAttribute,
 };

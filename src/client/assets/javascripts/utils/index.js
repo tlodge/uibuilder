@@ -1,9 +1,5 @@
-function _generateid(){
-	return (1+Math.random()*4294967295).toString(16);
-}
-
 function _circle(x:number,y:number){
-	const id =_generateid();
+	const id =generateId();
 	return {
 		id,
 		label: `circle:${id}`,
@@ -15,7 +11,7 @@ function _circle(x:number,y:number){
 }
 
 function _line(x:number,y:number){
-	const id =_generateid();
+	const id =generateId();
 	return {
 		id,
 		label: `line:${id}`,
@@ -28,7 +24,7 @@ function _line(x:number,y:number){
 }
 
 function _rect(x:number,y:number){
-	const id =_generateid();
+	const id =generateId();
 	return {
 		id,
 		label: `rect:${id}`,
@@ -41,7 +37,7 @@ function _rect(x:number,y:number){
 }
 
 function _text(x:number, y:number){
-	const id =_generateid();
+	const id =generateId();
 	return {
 		id,
 		label: `text:${id}`,
@@ -52,7 +48,7 @@ function _text(x:number, y:number){
 	}
 }
 
-export function createShape(type:string, x:number, y:number){
+export function createTemplate(type:string, x:number, y:number){
 	switch (type){
 		case "line":
 			return _line(x,y);
@@ -69,5 +65,9 @@ export function createShape(type:string, x:number, y:number){
 		default:
 			return null;
 	}
+}
+
+export function generateId(){
+	return (1+Math.random()*4294967295).toString(16);
 }
 

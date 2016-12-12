@@ -18,9 +18,9 @@ function collect(connect, monitor) {
 const canvasTarget = {
   drop(props,monitor) {
    
-    const {shape} = monitor.getItem();
+    const {template} = monitor.getItem();
     const {x,y}   = monitor.getSourceClientOffset()
-    props.dispatch(canvasActions.shapeDropped(shape,(x-100),y))
+    props.dispatch(canvasActions.templateDropped(template,(x-100),y))
      //this.shapeDropped(props.type,x,y);
   }
 };
@@ -35,8 +35,8 @@ class Canvas extends Component {
   	super(props, context);
   	this._onMouseMove = this._onMouseMove.bind(this);
     this.mouseMove = bindActionCreators(canvasActions.mouseMove, props.dispatch);
-    this.shapeDropped = bindActionCreators(canvasActions.shapeDropped, props.dispatch);
-    this.updateAttribute = bindActionCreators(canvasActions.updateAttribute, props.dispatch);
+    //this.templateDropped = bindActionCreators(canvasActions.templateDropped, props.dispatch);
+    this.updateNodeAttribute = bindActionCreators(canvasActions.updateNodeAttribute, props.dispatch);
     this._subscribe = this._subscribe.bind(this);
   }	
 
@@ -46,40 +46,77 @@ class Canvas extends Component {
   }
 
   _subscribe(id){
-      console.log("--------->subscribing!!");
-      console.log(id);
-      var ds = DatasourceManager.get(0);
+      var ds = DatasourceManager.get(id);
+      
+      //last value is key.
       ds.emitter.addListener('data', (data)=>{
-          this.updateAttribute(id, "cx", data.value);
+          //this.enter("id")
+          this.updateNodeAttribute(id, "cx", data.value, "id");
       });
   }
 
-  renderShapes(){
-    
-    const {canvas:{shapes}} = this.props;
-    
-    return shapes.map((shape)=>{
-       switch(shape.type){
+  renderTemplate(template){
+      switch(template.type){
           
           case "circle":
-            return <Circle key={shape.id} {
+            return <Circle key={template.id} {
                                               ...{
-                                                  ...shape, 
+                                                  ...template, 
                                                   ...{subscribe:this._subscribe}
                                               }
                                           }/>
           
           case "rect":
-            return <Rect key={shape.id} {...shape}/>
+            return <Rect key={template.id} {...template}/>
           
           case "text":
-            return <Text key={shape.id}  {...shape}/>
+            return <Text key={template.id}  {...template}/>
           
           case "line":
-            return <Line key={shape.id}  {...shape}/>
+            return <Line key={template.id}  {...template}/>
        }
       
        return null;
+
+  }
+
+  renderNode(node){
+      switch(node.type){
+          
+          case "circle":
+            return <Circle key={node.id} {...{...node}}/>
+
+          case "rect":
+            return <Rect key={node.id} {...node}/>
+          
+          case "text":
+            return <Text key={template.id}  {...node}/>
+          
+          case "line":
+            return <Line key={template.id}  {...node}/>
+       }
+      
+       return null;
+
+  }
+
+  renderNodes(){
+      const {canvas:{nodes}} = this.props;
+      const n = [];
+      Object.keys(nodes).map((templatekey)=>{
+          Object.keys(nodes[templatekey]).map((nodekey)=>{
+              n.push(this.renderNode(nodes[templatekey][nodekey]));
+          })
+      });
+      return n;
+  }
+
+  renderTemplates(){
+    
+    const {canvas:{templates}} = this.props;
+    
+    return templates.map((template)=>{
+       return this.renderTemplate(template);
     });
   }
 
@@ -89,7 +126,8 @@ class Canvas extends Component {
     return connectDropTarget(
       <div onMouseMove={this._onMouseMove} className="canvas">
         <svg id="svgchart" width={w} height={h}>
-    		  {this.renderShapes()}		
+    		  {this.renderTemplates()}	
+          {this.renderNodes()}	
     		</svg>
       </div>
     );

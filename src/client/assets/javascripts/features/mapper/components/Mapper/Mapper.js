@@ -50,22 +50,22 @@ export default class Mapper extends Component {
 
   renderComponents() {
     
-    const {canvas:{shapes, selected}} = this.props;
+    const {canvas:{templates, selected}} = this.props;
 
-    const shps = shapes.map((shape,i)=>{
-      return <Box key={i} onClick={this.props.actions.shapeSelected.bind(null, shape.id)}>{shape.label}></Box>
+    const tmplts = templates.map((shape,i)=>{
+      return <Box key={i} onClick={this.props.actions.templateSelected.bind(null, shape.id)}>{shape.label}></Box>
     });
 
     const attrs = selected != null ? <Attributes {
                                                       ...{
-                                                            attributes: shapes.reduce((acc, shape)=>{return (shape.id === selected) ? Object.keys(shape) : acc;},[]),
+                                                            attributes: templates.reduce((acc, template)=>{return (template.id === selected) ? Object.keys(template) : acc;},[]),
                                                             onSelect: this.props.actions.mapTo.bind(null, selected)
                                                           }
                                                   }
                                       /> : null;
     
     return  <Flex flexColumn={true}>
-              {shps}
+              {tmplts}
               {attrs}
             </Flex>
 

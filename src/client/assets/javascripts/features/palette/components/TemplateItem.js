@@ -20,7 +20,7 @@ const templateSource = {
 
   beginDrag(props) {
     return {
-      shape: props.type
+      template: props.type
     };
   },
 };

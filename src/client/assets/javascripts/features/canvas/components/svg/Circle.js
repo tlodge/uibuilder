@@ -6,9 +6,9 @@ export default class Circle extends Component {
 	render(){
 		const {id,cx,cy,r} = this.props;
 		return (	
-						<Motion style={{cx: spring(cx), cy: spring(cy)}}>
+						<Motion style={{cx: spring(cx), cy: spring(cy), r:spring(r)}}>
 			 				{(item) => {
-			 					return <circle cx={item.cx} cy={item.cy} r={r} onDoubleClick={()=>{this.props.subscribe(id)}}/>
+			 					return <circle cx={item.cx} cy={item.cy} r={item.r}/>
 						 	}}	 
 						</Motion>
 					

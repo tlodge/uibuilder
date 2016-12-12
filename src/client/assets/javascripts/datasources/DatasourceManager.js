@@ -13,8 +13,10 @@ export function	init(registerCallback){
 		data1.emit("data", {id:"data1", value:Math.random()*500})
 	}, 2000);
 
+	const keys = ["data2","data3","data4"];
+
 	const t2 = setInterval(()=>{
-		data2.emit("data", {id:"data2", x:Math.random()*500, y:Math.random()*500})
+		data2.emit("data", {id:keys[Math.round(2 * Math.random())], x:Math.random()*500, y:Math.random()*500})
 	}, 3500);
 
 	this.register(data1, t1,  {
