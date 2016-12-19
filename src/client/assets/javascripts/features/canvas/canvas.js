@@ -70,8 +70,7 @@ const cloneShape =(shapes, action)=>{
 }*/
 
 const createNode = (templates, templateId)=>{
-   console.log("CREATING A NEW NODE!!");
-
+  
    const template = templates.reduce((acc,t)=>{
       return  (t.id === templateId) ? t : acc;
    },{});
@@ -83,8 +82,6 @@ const createNode = (templates, templateId)=>{
 const updateNodes = (templates, nodes, action)=>{
  
   const parent = nodes[action.templateId] || {};
-  console.log("action key is");
-  console.log(action.key);
 
   const node = parent[action.key] || createNode(templates, action.templateId);
   

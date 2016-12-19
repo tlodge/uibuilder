@@ -10,6 +10,29 @@ import Attributes from "../Attributes";
 
 import "./Mapper.scss";
 import { Flex, Box } from 'reflexbox'
+import '../../../../../styles/index.scss';
+import Paper from 'react-md/lib/Papers';
+
+const sourceName = (sources, sourceId)=>{
+  console.log("soiurces rae ");
+  console.log(sources);
+
+  for (source in sources){
+      if (sourceId === source.id){
+          return source.name;
+      }
+  }
+  return sourceId;
+}
+
+const templateName = (templates, templateId)=>{
+  for (template in templates){
+    if (template.id === templateId){
+      return template.label;
+    }      
+  }
+  return templateId;
+}
 
 @connect(selector, (dispatch) => {
   return {
@@ -20,7 +43,6 @@ import { Flex, Box } from 'reflexbox'
       }
 	}
 })
-
 
 export default class Mapper extends Component {
   
@@ -39,12 +61,12 @@ export default class Mapper extends Component {
                                                     onSelect: this.props.actions.mapFrom.bind(null, selected) 
                                                     }
                                               }
-                                    /> : null;
+                                    />: null;
 
                                   
     return <Flex flexColumn={true}>
-              {srcs}
-              {schema}
+                  {srcs}
+                  {schema}
             </Flex>
   }
 
@@ -53,7 +75,10 @@ export default class Mapper extends Component {
     const {canvas:{templates, selected}} = this.props;
 
     const tmplts = templates.map((shape,i)=>{
-      return <Box key={i} onClick={this.props.actions.templateSelected.bind(null, shape.id)}>{shape.label}></Box>
+      const style = {
+        fontWeight: selected && selected === shape.id ? "bold" : "normal", 
+      }
+      return <Box key={i} style={style} onClick={this.props.actions.templateSelected.bind(null, shape.id)}>{shape.label}></Box>
     });
 
     const attrs = selected != null ? <Attributes {
@@ -65,20 +90,52 @@ export default class Mapper extends Component {
                                       /> : null;
     
     return  <Flex flexColumn={true}>
-              {tmplts}
-              {attrs}
+                {tmplts}
+                {attrs}
             </Flex>
 
+  }
+
+  renderMappings(){
+    const {canvas:{templates}, sources:{sources}, mapper:{mappings}} = this.props;
+  
+    return mappings.map((item,i)=>{
+        
+        const sourceName = sources.reduce((acc,source)=>{
+          if (item.from.sourceId === source.id)
+            return source.name;
+          return acc;
+        },item.from.sourceId);
+
+        const templateName = templates.reduce((acc,template)=>{
+          if (item.to.templateId === template.id)
+            return template.label;
+          return acc;
+        },item.to.templateId);
+
+        return <div key={i}>{`${sourceName}:${item.from.path}`}->{`${templateName}:${item.to.attribute}`}</div>
+    })
   }
 
   render() {
 
     const {mapper:{open}} = this.props;
-    return (<div id="mapper" style={{width:viewConstants.MAPPER_WIDTH}}>
-                <Flex>
-                  <Box col={6}>{this.renderSources()}</Box>
-                  <Box col={6}>{this.renderComponents()}</Box>
-                </Flex>
-            </div>);
+    return (
+              <div id="mapper" style={{width:viewConstants.MAPPER_WIDTH}}>
+                 <Paper key={1} zDepth={1}>
+                  <Flex flexColumn={true}>
+                    <Box><h2>mapper</h2></Box>
+                    <Flex>
+                      <Box col={6}>{this.renderSources()}</Box>
+                      <Box col={6}>{this.renderComponents()}</Box>
+                    </Flex>
+                    <Box><h2>mappings</h2></Box>
+                    <Box>
+                      {this.renderMappings()}
+                    </Box>
+                  </Flex>
+                  </Paper>
+              </div>
+           );
   }
 }

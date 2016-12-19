@@ -40,9 +40,6 @@ const subscribe = (key, sourceId, path, templateId, attribute, onData)=>{
 
 	if (ds){
     	ds.emitter.addListener('data', (data)=>{
-    		console.log("seend data " );
-    		console.log(data);
-    		console.log("key is " + key)
     		onData(data[key],sourceId,templateId,attribute,data[path]);
     	});
     } 
@@ -115,6 +112,8 @@ function createNode(templateId, sourceId, attribute, data){
 function mapTo(templateId, attribute){
 	return (dispatch,getState)=>{
 		
+		dispatch(templateActions.templateSelected(templateId));
+
 		const action = {
 			type: MAP_TO,
 			templateId,
@@ -122,26 +121,6 @@ function mapTo(templateId, attribute){
 		}
 		
 		const onData = (key, sourceId, templateId, attribute, data)=>{
-			//if mapping doesn't exist, create new node
-			/*const mapping = getState().mapper.mappings.reduce((acc, mapping)=>{
-				if (mapping.to.templateId === templateId && mapping.from.sourceId === sourceId){
-					return mapping;
-				}
-				return acc;
-			},null);*/
-
-			/*if (mapping && mapping.nodes){
-				if (!mapping.nodes(data.id)){
-					dispatch(createNode(templateId, sourceId, attribute, data));
-				}
-				else{
-					dispatch(templateActions.updateNodeAttribute(templateId,attribute,data));
-				}
-			}*/
-			console.log("seen some data");
-			console.log(`${key} ${sourceId} ${templateId} ${attribute} ${data}`);
-
-			//console.log(mapping);
 			dispatch(templateActions.updateNodeAttribute(templateId,key,attribute,data));
 		}
 		createSubscription(getState().mapper, action, onData);

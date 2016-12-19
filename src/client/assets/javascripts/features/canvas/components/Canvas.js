@@ -37,6 +37,7 @@ class Canvas extends Component {
     this.mouseMove = bindActionCreators(canvasActions.mouseMove, props.dispatch);
     //this.templateDropped = bindActionCreators(canvasActions.templateDropped, props.dispatch);
     this.updateNodeAttribute = bindActionCreators(canvasActions.updateNodeAttribute, props.dispatch);
+    this.templateSelected = bindActionCreators(canvasActions.templateSelected, props.dispatch);
     this._subscribe = this._subscribe.bind(this);
   }	
 
@@ -55,12 +56,14 @@ class Canvas extends Component {
       });
   }
 
-  renderTemplate(template){
+  renderTemplate(template, selected){
       switch(template.type){
           
           case "circle":
             return <Circle key={template.id} {
                                               ...{
+                                                  ...{selected: selected},
+                                                  ...{onSelect: this.templateSelected.bind(null,template.id)},
                                                   ...template, 
                                                   ...{subscribe:this._subscribe}
                                               }
@@ -90,10 +93,10 @@ class Canvas extends Component {
             return <Rect key={node.id} {...node}/>
           
           case "text":
-            return <Text key={template.id}  {...node}/>
+            return <Text key={template.id} {...node}/>
           
           case "line":
-            return <Line key={template.id}  {...node}/>
+            return <Line key={template.id} {...node}/>
        }
       
        return null;
@@ -102,9 +105,11 @@ class Canvas extends Component {
 
   renderNodes(){
       const {canvas:{nodes}} = this.props;
+     
       const n = [];
       Object.keys(nodes).map((templatekey)=>{
           Object.keys(nodes[templatekey]).map((nodekey)=>{
+              
               n.push(this.renderNode(nodes[templatekey][nodekey]));
           })
       });
@@ -113,10 +118,10 @@ class Canvas extends Component {
 
   renderTemplates(){
     
-    const {canvas:{templates}} = this.props;
+    const {canvas:{templates, selected}} = this.props;
     
     return templates.map((template)=>{
-       return this.renderTemplate(template);
+       return this.renderTemplate(template, selected && selected === template.id);
     });
   }
 

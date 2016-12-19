@@ -13,6 +13,8 @@ import './Editor.scss';
 import {DatasourceManager} from '../../../datasources';
 import {viewConstants} from '../../palette';
 
+
+
 @connect(selector, (dispatch) => {
   DatasourceManager.init(bindActionCreators(sourceActions.registerSource, dispatch));
   return{
@@ -31,6 +33,9 @@ export default class Editor extends Component {
 		  window.addEventListener('resize', this._handleResize);
   	}
 
+
+    
+
   	render() {
   		
   		const {w,h} = this.props.editor;
@@ -41,15 +46,15 @@ export default class Editor extends Component {
       }
 
     	return (
-      	 	<div className="editor">
-      	 		<DragDropContainer w={w} h={h}>
-      	 			<Palette/>
-   					  <div className="canvascontainer" style={canvasstyle}>
+      	<div className="editor">
+            <DragDropContainer w={w} h={h}>
+              <Palette/>
+              <div className="canvascontainer" style={canvasstyle}>
                   <Canvas w={w} h={h}/>
               </div> 
               <Mapper/>
-   				  </DragDropContainer>
-      		</div>
+            </DragDropContainer>
+          </div>
     	);
   	}
 
