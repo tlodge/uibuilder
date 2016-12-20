@@ -10,7 +10,17 @@ export function	init(registerCallback){
 	var data2 = new EventEmitter();
 
 	const t1 = setInterval(()=>{
-		data1.emit("data", {id:"data1", value:Math.random()*500})
+		data1.emit("data", 
+							{
+									id:"data1", 
+									value: {
+										x:	Math.random() *100,
+										y: Math.random()  * 300,
+										z: Math.random()  * 20,
+										name: "dskldjs",
+									}
+							}
+				  );
 	}, 2000);
 
 	const keys = ["data2","data3","data4"];
@@ -24,7 +34,16 @@ export function	init(registerCallback){
 							  	description: "a test emitter",
 							  	schema: {
 									id: {type: "number", description: "datasource id"},
-									value: {type: "number", description: "data value"}
+									value: {
+												type: "object", 
+												description: "object data value",
+												properties: {
+													x: {type: "number", description: "x value"},
+													y: {type: "number", description: "y value"},
+													z: {type: "number", description: "z value"},
+													name: {type: "string", description: "a name"}
+												}
+									}
 								}, 
 							},
 							(registerInfo)=>{registerCallback(registerInfo);}

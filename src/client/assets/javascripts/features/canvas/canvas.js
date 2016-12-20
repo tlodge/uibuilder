@@ -10,7 +10,7 @@ const MOUSE_MOVE  = 'uibuilder/canvas/MOUSE_MOVE';
 const TEMPLATE_DROPPED  = 'uibuilder/canvas/TEMPLATE_DROPPED';
 const TEMPLATE_SELECTED  = 'uibuilder/canvas/TEMPLATE_SELECTED ';
 const NODE_ENTER  = 'uibuilder/canvas/NODE_ENTER';
-const UPDATE_NODE_ATTRIBUTE  = 'uibuilder/canvas/UPDATE_NODE_ATTRIBUTE';
+const UPDATE_NODE_PROPERTY  = 'uibuilder/canvas/UPDATE_NODE_PROPERTY';
 
 // This will be used in our root reducer and selectors
 
@@ -33,8 +33,8 @@ const node=(state, action)=>{
 
   switch(action.type){
 
-    case UPDATE_NODE_ATTRIBUTE:
-      return Object.assign({}, state, {[action.attribute]:action.value}); 
+    case UPDATE_NODE_PROPERTY:
+      return Object.assign({}, state, {[action.property]:action.value}); 
    
     default:
       return state;
@@ -83,11 +83,11 @@ const updateNodes = (templates, nodes, action)=>{
  
   const parent = nodes[action.templateId] || {};
 
-  const node = parent[action.key] || createNode(templates, action.templateId);
+  const node = parent[action.enterKey] || createNode(templates, action.templateId);
   
-  const newNode = Object.assign({}, node, {[action.attribute] : action.value});
+  const newNode = Object.assign({}, node, {[action.property] : action.value});
   
-  return Object.assign({}, nodes, {[action.templateId] : Object.assign({}, parent, {[action.key] : newNode})});
+  return Object.assign({}, nodes, {[action.templateId] : Object.assign({}, parent, {[action.enterKey] : newNode})});
 }
 
 export default function reducer(state: State = initialState, action: any = {}): State {
@@ -104,15 +104,15 @@ export default function reducer(state: State = initialState, action: any = {}): 
       return Object.assign({}, state,  {templates: [...state.templates, createTemplate(action.template, action.x, action.y)]});
     
     case TEMPLATE_SELECTED: 
-      return Object.assign({}, state,  {selected: action.id});
+      return Object.assign({}, state,  {selected: action.template});
 
     case NODE_ENTER:
       //return Object.assign({}, state,  {shapes: [...state.shapes, cloneShape(state.shapes, action.id)]});
       return state;
 
-    case UPDATE_NODE_ATTRIBUTE: 
+    case UPDATE_NODE_PROPERTY: 
       //console.log("AM IN HERE");
-      //llokup the action.key, and create new node from template if doesn't already exist!
+      //llokup the action.enterKey, and create new node from template if doesn't already exist!
       return Object.assign({}, state, {nodes:updateNodes(state.templates, state.nodes, action)})
 
     default:
@@ -139,10 +139,10 @@ function templateDropped(template:string, x:number, y:number) {
   };
 }
 
-function templateSelected(id:string) {
+function templateSelected(template) {
   return {
     type: TEMPLATE_SELECTED,
-    id,
+    template,
   };
 }
 
@@ -153,13 +153,13 @@ function nodeEnter(id:string){
   };
 }
 
-function updateNodeAttribute(templateId:string, key:string, attribute:string, value) {
-  
+function updateNodeProperty(templateId:string, enterKey:string, property:string, value) {
+
   return {
-    type: UPDATE_NODE_ATTRIBUTE,
+    type: UPDATE_NODE_PROPERTY,
     templateId,
-    key,
-    attribute,
+    enterKey,
+    property,
     value,
   };
 }
@@ -177,5 +177,5 @@ export const actionCreators = {
   templateDropped,
   templateSelected,
   nodeEnter,
-  updateNodeAttribute,
+  updateNodeProperty,
 };

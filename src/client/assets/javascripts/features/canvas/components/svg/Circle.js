@@ -5,6 +5,7 @@ import {Motion, spring} from 'react-motion';
 export default class Circle extends Component {
 	render(){
 		const {id,cx,cy,r, selected, onSelect} = this.props;
+		
 		const style = {
 			fill: selected ? "red" : "black"
 		}

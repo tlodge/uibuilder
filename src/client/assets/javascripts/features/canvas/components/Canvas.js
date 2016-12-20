@@ -36,9 +36,9 @@ class Canvas extends Component {
   	this._onMouseMove = this._onMouseMove.bind(this);
     this.mouseMove = bindActionCreators(canvasActions.mouseMove, props.dispatch);
     //this.templateDropped = bindActionCreators(canvasActions.templateDropped, props.dispatch);
-    this.updateNodeAttribute = bindActionCreators(canvasActions.updateNodeAttribute, props.dispatch);
+    this.updateNodeProperty = bindActionCreators(canvasActions.updateNodeProperty, props.dispatch);
     this.templateSelected = bindActionCreators(canvasActions.templateSelected, props.dispatch);
-    this._subscribe = this._subscribe.bind(this);
+    //this._subscribe = this._subscribe.bind(this);
   }	
 
   _onMouseMove(e){
@@ -46,15 +46,6 @@ class Canvas extends Component {
     this.mouseMove(clientX,clientY);
   }
 
-  _subscribe(id){
-      var ds = DatasourceManager.get(id);
-      
-      //last value is key.
-      ds.emitter.addListener('data', (data)=>{
-          //this.enter("id")
-          this.updateNodeAttribute(id, "cx", data.value, "id");
-      });
-  }
 
   renderTemplate(template, selected){
       switch(template.type){
@@ -63,9 +54,8 @@ class Canvas extends Component {
             return <Circle key={template.id} {
                                               ...{
                                                   ...{selected: selected},
-                                                  ...{onSelect: this.templateSelected.bind(null,template.id)},
+                                                  ...{onSelect: this.templateSelected.bind(null,{templateId:template.id, type:template.type})},
                                                   ...template, 
-                                                  ...{subscribe:this._subscribe}
                                               }
                                           }/>
           
@@ -93,10 +83,10 @@ class Canvas extends Component {
             return <Rect key={node.id} {...node}/>
           
           case "text":
-            return <Text key={template.id} {...node}/>
+            return <Text key={node.id} {...node}/>
           
           case "line":
-            return <Line key={template.id} {...node}/>
+            return <Line key={node.id} {...node}/>
        }
       
        return null;
@@ -121,7 +111,7 @@ class Canvas extends Component {
     const {canvas:{templates, selected}} = this.props;
     
     return templates.map((template)=>{
-       return this.renderTemplate(template, selected && selected === template.id);
+       return this.renderTemplate(template, selected && selected.templateId === template.id);
     });
   }
 

@@ -1,3 +1,84 @@
+
+function _circle_schema(){
+	return {
+		
+		attributes:{
+			cx: {type:"number", description:"x coordinate of circle center"},
+			cy: {type:"number", description:"y coordinate of circle center"},
+			r: {type:"number", description:"circle radius (px)"},
+		},
+		
+		style:{
+			fill: 	{type:"colour", description:"fill colour"},
+			stroke: {type:"colour", description:"stroke colour"},
+			"stroke-width": {type:"number", description:"stroke width"},
+			opacity: {type:"number", description:"opacity from 0 (transparent) to 1 (opaque)"},
+		}
+	}
+}
+
+function _line_schema(){
+	return {
+		
+		attributes:{
+			x1: {type:"number", description:"x coordinate of first point"},
+			x2: {type:"number", description:"x coordinate of last point"},
+			y1: {type:"number", description:"y coordinate of first point"},
+			y2: {type:"number", description:"y coordinate of last point"},
+		},
+		
+		style:{
+			fill: 	{type:"colour", description:"fill colour"},
+			stroke: {type:"colour", description:"stroke colour"},
+			"stroke-width": {type:"number", description:"stroke width"},
+			opacity: {type:"number", description:"opacity from 0 (transparent) to 1 (opaque)"},
+		}
+	}
+}
+
+function _rect_schema(){
+	return {
+		
+		attributes:{
+			x: {type:"number", description:"x coordinate of left most position of the rect"},
+			y: {type:"number", description:"y coordinate of top most position of the rect"},
+			width: {type:"number", description:"rect width"},
+			height: {type:"number", description:"rect height"},
+		},
+		
+		style:{
+			fill: 	{type:"colour", description:"fill colour"},
+			stroke: {type:"colour", description:"stroke colour"},
+			"stroke-width": {type:"number", description:"stroke width"},
+			opacity: {type:"number", description:"opacity from 0 (transparent) to 1 (opaque)"},
+		}
+	}
+}
+
+function _text_schema(){
+	return {
+		
+		attributes:{
+			x: {type:"number", description:"x coordinate of left most position of the text"},
+			y: {type:"number", description:"y coordinate text baseline"},
+			text: {type:"string", description:"the text"},
+		},
+		
+		style:{
+			fill: 	{type:"colour", description:"fill colour"},
+			stroke: {type:"colour", description:"stroke colour"},
+			"stroke-width": {type:"number", description:"stroke width"},
+			opacity: {type:"number", description:"opacity from 0 (transparent) to 1 (opaque)"},
+			"text-decoration": {type:"string", description: "text decoration", enum:["none", "underline", "overline", "line-through","blink"]},
+			"font-weight": {type:"string", description:"font weight", enum:["normal","bold","bolder","lighter"]},
+			"font-size":{type:"number", description:"size of the text (px)"},
+			"font-style":{type:"string", description:"font weight", enum:["normal","italic","oblique"]}
+		}
+	}
+}
+
+
+
 function _circle(x:number,y:number){
 	const id =generateId();
 	return {
@@ -45,6 +126,25 @@ function _text(x:number, y:number){
 		x: x,
 		y: y,
 		text: "your text",
+	}
+}
+
+export function schemaLookup(type){
+	switch (type){
+		case "line":
+			return _line_schema();
+
+		case "rect":
+			return _rect_schema();
+
+		case "circle":
+			return _circle_schema();
+
+		case "text":
+			return _text_schema();
+
+		default:
+			return null;
 	}
 }
 

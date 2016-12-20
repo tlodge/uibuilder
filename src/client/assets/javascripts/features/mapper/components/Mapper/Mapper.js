@@ -7,6 +7,7 @@ import { actionCreators as sourceActions } from '../../../sources';
 
 import Schema from "../Schema";
 import Attributes from "../Attributes";
+import Transformer from "../Transformer";
 
 import "./Mapper.scss";
 import { Flex, Box } from 'reflexbox'
@@ -14,9 +15,6 @@ import '../../../../../styles/index.scss';
 import Paper from 'react-md/lib/Papers';
 
 const sourceName = (sources, sourceId)=>{
-  console.log("soiurces rae ");
-  console.log(sources);
-
   for (source in sources){
       if (sourceId === source.id){
           return source.name;
@@ -76,14 +74,14 @@ export default class Mapper extends Component {
 
     const tmplts = templates.map((shape,i)=>{
       const style = {
-        fontWeight: selected && selected === shape.id ? "bold" : "normal", 
+        fontWeight: selected && selected.templateId === shape.id ? "bold" : "normal", 
       }
-      return <Box key={i} style={style} onClick={this.props.actions.templateSelected.bind(null, shape.id)}>{shape.label}></Box>
+      return <Box key={i} style={style} onClick={this.props.actions.templateSelected.bind(null, {templateId:shape.id, type:shape.type})}>{shape.label}></Box>
     });
 
     const attrs = selected != null ? <Attributes {
                                                       ...{
-                                                            attributes: templates.reduce((acc, template)=>{return (template.id === selected) ? Object.keys(template) : acc;},[]),
+                                                            attributes: templates.reduce((acc, template)=>{return (template.id === selected.templateId) ? Object.keys(template) : acc;},[]),
                                                             onSelect: this.props.actions.mapTo.bind(null, selected)
                                                           }
                                                   }
@@ -113,13 +111,14 @@ export default class Mapper extends Component {
           return acc;
         },item.to.templateId);
 
-        return <div key={i}>{`${sourceName}:${item.from.path}`}->{`${templateName}:${item.to.attribute}`}</div>
+        return <div onClick={this.props.actions.selectMapping.bind(null,item)} key={i}>{`${sourceName}:${item.from.path}`}->{`${templateName}:${item.to.property}`}</div>
     })
   }
 
   render() {
 
-    const {mapper:{open}} = this.props;
+    const {mapper:{open, selectedMapping}} = this.props;
+   
     return (
               <div id="mapper" style={{width:viewConstants.MAPPER_WIDTH}}>
                  <Paper key={1} zDepth={1}>
@@ -132,8 +131,10 @@ export default class Mapper extends Component {
                     <Box><h2>mappings</h2></Box>
                     <Box>
                       {this.renderMappings()}
+                      {selectedMapping && <Transformer selectedMapping={selectedMapping} saveDialog={this.props.actions.saveTransformer.bind(null, selectedMapping.mappingId)} closeDialog={this.props.actions.selectMapping.bind(null,null)}/>}
                     </Box>
                   </Flex>
+
                   </Paper>
               </div>
            );
