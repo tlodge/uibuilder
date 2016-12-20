@@ -143,6 +143,7 @@ function mapTo(template, property){
 			mappingId: generateId(),
 		}
 		
+		//TODO: what other things can, should we pass into the mapper transform to make use of?
 		const onData = (mappingId, enterKey, source, template, value)=>{
 			const transformer = getState().mapper.transformers[mappingId] || `return ${source.key}`;
 			const transform = Function(source.key, transformer);
