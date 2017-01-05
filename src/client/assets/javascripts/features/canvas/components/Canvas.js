@@ -6,7 +6,8 @@ import './Canvas.scss';
 import {Circle,Text,Rect,Line} from './svg/';
 import { DropTarget } from 'react-dnd';
 import {DatasourceManager} from '../../../datasources';
-
+import Toolbar from 'react-md/lib/Toolbars';
+import Button from 'react-md/lib/Buttons';
 
 function collect(connect, monitor) {
   return {
@@ -36,8 +37,8 @@ class Canvas extends Component {
   	this._onMouseMove = this._onMouseMove.bind(this);
     this.mouseMove = bindActionCreators(canvasActions.mouseMove, props.dispatch);
     //this.templateDropped = bindActionCreators(canvasActions.templateDropped, props.dispatch);
-    this.updateNodeProperty = bindActionCreators(canvasActions.updateNodeProperty, props.dispatch);
     this.templateSelected = bindActionCreators(canvasActions.templateSelected, props.dispatch);
+    this.setView = bindActionCreators(canvasActions.setView, props.dispatch);
     //this._subscribe = this._subscribe.bind(this);
   }	
 
@@ -116,14 +117,27 @@ class Canvas extends Component {
   }
 
   render() {
-  	const {w,h, connectDropTarget} = this.props;
-  	
+
+   
+
+  	const {w,h, canvas:{view}, connectDropTarget} = this.props;
+  	const actions = [];
+    
+
+    if (view === "editor"){
+      actions.push(<Button flat key="toggle" label="live" onClick={this.setView.bind(null,"live")}>tap_and_play</Button>);
+    }else{
+      actions.push(<Button flat key="toggle" label="editor" onClick={this.setView.bind(null,"editor")}>mode_edit</Button>);
+    }
+    
+
     return connectDropTarget(
       <div onMouseMove={this._onMouseMove} className="canvas">
         <svg id="svgchart" width={w} height={h}>
-    		  {this.renderTemplates()}	
-          {this.renderNodes()}	
+    		  {view==="editor" && this.renderTemplates()}	
+          {view==="live" && this.renderNodes()}	
     		</svg>
+        <Toolbar colored title={view} actions={actions} style={{position:'fixed', width:`calc(100vw - 350px)`, background:"#3f51b5", bottom:0}}/>
       </div>
     );
   }

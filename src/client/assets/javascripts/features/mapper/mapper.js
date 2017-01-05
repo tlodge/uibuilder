@@ -131,7 +131,7 @@ function mapFrom(sourceId, key, path, type){
 	};
 }
 
-function mapTo(template, property){
+function mapToAttribute(template, property){
 	return (dispatch,getState)=>{
 		
 		dispatch(templateActions.templateSelected(template));
@@ -154,7 +154,37 @@ function mapTo(template, property){
 			console.log(`**************************** ${transform(value)} *************************`);
 
 			
-			dispatch(templateActions.updateNodeProperty(template.templateId,enterKey,template.property,transform(value)));
+			dispatch(templateActions.updateNodeAttribute(template.templateId,enterKey,template.property,transform(value)));
+		}
+		createSubscription(getState().mapper, action, onData);
+		dispatch(action);
+	}
+}
+
+function mapToStyle(template, property){
+	
+	return (dispatch,getState)=>{
+
+		dispatch(templateActions.templateSelected(template));
+
+		const action = {
+			type: MAP_TO,
+			template,
+			property,
+			mappingId: generateId(),
+		}
+
+		const onData = (mappingId, enterKey, source, template, value)=>{
+			const transformer = getState().mapper.transformers[mappingId] || `return ${source.key}`;
+			const transform = Function(source.key, transformer);
+			
+			console.log("************************ transformer is ********************************");
+			console.log(transformer);
+			console.log("************************* applying to " + value + " is ****************** ");
+			console.log(`**************************** ${transform(value)} *************************`);
+
+			
+			dispatch(templateActions.updateNodeStyle(template.templateId,enterKey,template.property,transform(value)));
 		}
 		createSubscription(getState().mapper, action, onData);
 		dispatch(action);
@@ -194,7 +224,8 @@ export const selector = createStructuredSelector({
 export const actionCreators = {
   toggleMapper,
   mapFrom,
-  mapTo,
+  mapToAttribute,
+  mapToStyle,
   selectMapping,
   saveTransformer,
 };

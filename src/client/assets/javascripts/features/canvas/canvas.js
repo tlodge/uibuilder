@@ -3,71 +3,34 @@
 import { createStructuredSelector } from 'reselect';
 import { State } from 'models/canvas';
 import {createTemplate, generateId} from '../../utils/';
+import _ from 'lodash';
+
 // Action Types
 
 
-const MOUSE_MOVE  = 'uibuilder/canvas/MOUSE_MOVE';
-const TEMPLATE_DROPPED  = 'uibuilder/canvas/TEMPLATE_DROPPED';
-const TEMPLATE_SELECTED  = 'uibuilder/canvas/TEMPLATE_SELECTED ';
-const NODE_ENTER  = 'uibuilder/canvas/NODE_ENTER';
-const UPDATE_NODE_PROPERTY  = 'uibuilder/canvas/UPDATE_NODE_PROPERTY';
+const MOUSE_MOVE              = 'uibuilder/canvas/MOUSE_MOVE';
+const TEMPLATE_DROPPED        = 'uibuilder/canvas/TEMPLATE_DROPPED';
+const TEMPLATE_SELECTED       = 'uibuilder/canvas/TEMPLATE_SELECTED ';
+const NODE_ENTER              = 'uibuilder/canvas/NODE_ENTER';
+const UPDATE_NODE_ATTRIBUTE   = 'uibuilder/canvas/UPDATE_NODE_ATTRIBUTE';
+const UPDATE_NODE_STYLE       = 'uibuilder/canvas/UPDATE_NODE_STYLE';
+const SET_VIEW                = 'uibuilder/canvas/SET_VIEW';
 
 // This will be used in our root reducer and selectors
+
 
 export const NAME = 'canvas';
 
 // Define the initial state for `shapes` module
 
 const initialState: State = {
+  view: "editor", //editor or live
   templates: [],     //templates
   nodes: {},     //these are the 
   selected:null,
   x: 0,
   y: 0,
 };
-
-const node=(state, action)=>{
-  if (state.id != action.id){
-    return state;
-  }
-
-  switch(action.type){
-
-    case UPDATE_NODE_PROPERTY:
-      return Object.assign({}, state, {[action.property]:action.value}); 
-   
-    default:
-      return state;
-  }
-}
-
-const cloneShape =(shapes, action)=>{
-  for (var template in templates){
-     if (template.id === action.id){
-        return Object.assign({}, template);
-     }
-  }
-} 
-
-/* {
-
-
-}*/
-//key
-//id
-//attribute
-//value
-
-/*nodes = {
-  templateId:{
-                key : {
-                  node
-                },
-                key: {
-                  node
-                }
-  }  
-}*/
 
 const createNode = (templates, templateId)=>{
   
@@ -79,13 +42,24 @@ const createNode = (templates, templateId)=>{
    return Object.assign({}, template, {id, label:`${template.type}:${id}`});
 }
 
-const updateNodes = (templates, nodes, action)=>{
+const updateAttributes = (templates, nodes, action)=>{
  
   const parent = nodes[action.templateId] || {};
 
   const node = parent[action.enterKey] || createNode(templates, action.templateId);
   
   const newNode = Object.assign({}, node, {[action.property] : action.value});
+  
+  return Object.assign({}, nodes, {[action.templateId] : Object.assign({}, parent, {[action.enterKey] : newNode})});
+}
+
+const updateStyles = (templates, nodes, action)=>{
+ 
+  const parent = nodes[action.templateId] || {};
+
+  const node = parent[action.enterKey] || createNode(templates, action.templateId);
+  
+  const newNode = Object.assign({}, node, {style: Object.assign({}, node.style, {[action.property] : action.value})});
   
   return Object.assign({}, nodes, {[action.templateId] : Object.assign({}, parent, {[action.enterKey] : newNode})});
 }
@@ -110,10 +84,18 @@ export default function reducer(state: State = initialState, action: any = {}): 
       //return Object.assign({}, state,  {shapes: [...state.shapes, cloneShape(state.shapes, action.id)]});
       return state;
 
-    case UPDATE_NODE_PROPERTY: 
+    case UPDATE_NODE_ATTRIBUTE: 
       //console.log("AM IN HERE");
       //llokup the action.enterKey, and create new node from template if doesn't already exist!
-      return Object.assign({}, state, {nodes:updateNodes(state.templates, state.nodes, action)})
+      return Object.assign({}, state, {nodes:updateAttributes(state.templates, state.nodes, action)})
+
+    case UPDATE_NODE_STYLE: 
+      //console.log("AM IN HERE");
+      //llokup the action.enterKey, and create new node from template if doesn't already exist!
+      return Object.assign({}, state, {nodes:updateStyles(state.templates, state.nodes, action)})
+
+    case SET_VIEW:
+      return Object.assign({}, state, {view:action.view})
 
     default:
       return state;
@@ -153,15 +135,33 @@ function nodeEnter(id:string){
   };
 }
 
-function updateNodeProperty(templateId:string, enterKey:string, property:string, value) {
+function updateNodeAttribute(templateId:string, enterKey:string, property:string, value) {
 
   return {
-    type: UPDATE_NODE_PROPERTY,
+    type: UPDATE_NODE_ATTRIBUTE,
     templateId,
     enterKey,
     property,
     value,
   };
+}
+
+function updateNodeStyle(templateId:string, enterKey:string, property:string, value){
+   return {
+    type: UPDATE_NODE_STYLE,
+    templateId,
+    enterKey,
+    property: _.camelCase(property),
+    value,
+  };
+
+}
+
+function setView(view:string){
+  return{
+    type: SET_VIEW,
+    view,
+  }
 }
 
 // Selectors
@@ -174,8 +174,10 @@ export const selector = createStructuredSelector({
 
 export const actionCreators = {
   mouseMove,
+  setView,
   templateDropped,
   templateSelected,
   nodeEnter,
-  updateNodeProperty,
+  updateNodeAttribute,
+  updateNodeStyle,
 };

@@ -9,7 +9,10 @@ export default class Transformer extends PureComponent {
   
   constructor(props) {
     super(props);
-    this.state = {buffer:null}
+    console.log("rendering transformer and props are");
+    console.log(props);
+
+    this.state = {buffer:props.transformer || null}
   }
   
   closeDialog = () => {
@@ -26,7 +29,6 @@ export default class Transformer extends PureComponent {
               id="function"
               placeholder={`return ${key}`}
               block
-              paddedBlock
               rows={4}
               value={this.state.buffer || `return ${key}`} 
               onChange={(e)=>{
@@ -40,20 +42,21 @@ export default class Transformer extends PureComponent {
  
   render() {
     const { selectedMapping } = this.props;
+
+  
     const {from,to} = selectedMapping || {from:null,to:null};
     let ftype = null;
     let ttype = null;
+
 
     if (from){ 
         ftype = from.type;
     }
 
     if (to){
-       const schema = schemaLookup(to.type);
-       if (schema.attributes){
-          const property = schema.attributes[to.property];
-          ttype = property.type;
-       }
+      const schema = {...schemaLookup(to.type).attributes, ...schemaLookup(to.type).style}; 
+      const property = schema[to.property];
+      ttype = property ? property.type : null;
     }
 
     return (
@@ -76,7 +79,7 @@ export default class Transformer extends PureComponent {
           }]}
         >
           <div>
-            <p>{ftype}->{ttype}</p>
+            <strong>{from.key}:{ftype}->{ttype}</strong>
             {this.renderTransformer(from.key)}   
           </div>
         </Dialog>

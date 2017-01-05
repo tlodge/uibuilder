@@ -72,7 +72,7 @@ function _text_schema(){
 			"text-decoration": {type:"string", description: "text decoration", enum:["none", "underline", "overline", "line-through","blink"]},
 			"font-weight": {type:"string", description:"font weight", enum:["normal","bold","bolder","lighter"]},
 			"font-size":{type:"number", description:"size of the text (px)"},
-			"font-style":{type:"string", description:"font weight", enum:["normal","italic","oblique"]}
+			"font-style":{type:"string", description:"font style", enum:["normal","italic","oblique"]}
 		}
 	}
 }
@@ -88,6 +88,12 @@ function _circle(x:number,y:number){
 		cx: x,
 		cy: y,
 		r: 30,
+		style:{
+			fill:'black',
+			stroke: 'black',
+			'stroke-width': 1,
+			opacity: 1,
+		}
 	}
 }
 
@@ -126,8 +132,19 @@ function _text(x:number, y:number){
 		x: x,
 		y: y,
 		text: "your text",
+		style:{
+			fill:'black',
+			stroke: 'black',
+			'stroke-width': 1,
+			opacity: 1,
+			'text-decoration': 'none',
+			'font-weight': 'normal',
+			'font-size': '1em',
+			'font-style': 'normal',
+		}
 	}
 }
+
 
 export function schemaLookup(type){
 	switch (type){

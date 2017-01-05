@@ -34,8 +34,6 @@ export default class Editor extends Component {
   	}
 
 
-    
-
   	render() {
   		
   		const {w,h} = this.props.editor;

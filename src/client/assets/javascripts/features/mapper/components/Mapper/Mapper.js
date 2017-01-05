@@ -13,6 +13,9 @@ import "./Mapper.scss";
 import { Flex, Box } from 'reflexbox'
 import '../../../../../styles/index.scss';
 import Paper from 'react-md/lib/Papers';
+import SelectField from 'react-md/lib/SelectFields';
+
+import {schemaLookup} from '../../../../utils';
 
 const sourceName = (sources, sourceId)=>{
   for (source in sources){
@@ -79,17 +82,27 @@ export default class Mapper extends Component {
       return <Box key={i} style={style} onClick={this.props.actions.templateSelected.bind(null, {templateId:shape.id, type:shape.type})}>{shape.label}></Box>
     });
 
+
     const attrs = selected != null ? <Attributes {
                                                       ...{
-                                                            attributes: templates.reduce((acc, template)=>{return (template.id === selected.templateId) ? Object.keys(template) : acc;},[]),
-                                                            onSelect: this.props.actions.mapTo.bind(null, selected)
+                                                            attributes: templates.reduce((acc, template)=>{return (template.id === selected.templateId) ? Object.keys(schemaLookup(template.type).attributes) : acc;},[]),
+                                                            onSelect: this.props.actions.mapToAttribute.bind(null, selected)
                                                           }
                                                   }
                                       /> : null;
     
+    const style = selected != null ? <Attributes {
+                                                      ...{
+                                                            attributes: templates.reduce((acc, template)=>{return (template.id === selected.templateId) ? Object.keys(schemaLookup(template.type).style) : acc;},[]),
+                                                            onSelect: this.props.actions.mapToStyle.bind(null, selected)
+                                                          }
+                                                  }
+                                      /> : null;
+
     return  <Flex flexColumn={true}>
                 {tmplts}
                 {attrs}
+                {style}
             </Flex>
 
   }
@@ -115,14 +128,29 @@ export default class Mapper extends Component {
     })
   }
 
+  renderProperties(){
+      const {canvas:{templates, selected}} = this.props;
+      
+      const template  = templates.reduce((acc, template)=>template.id === selected.templateId ? template : acc);
+      console.log(template);
+
+      return (<div>
+                <Box><h2>property editor</h2></Box>
+                <Flex>
+
+                </Flex>
+              </div>);
+  }
+
   render() {
 
-    const {mapper:{open, selectedMapping}} = this.props;
-   
+    const {mapper:{open, selectedMapping, transformers}, canvas:{selected}} = this.props;
+
     return (
               <div id="mapper" style={{width:viewConstants.MAPPER_WIDTH}}>
                  <Paper key={1} zDepth={1}>
                   <Flex flexColumn={true}>
+                    {selected && this.renderProperties()}
                     <Box><h2>mapper</h2></Box>
                     <Flex>
                       <Box col={6}>{this.renderSources()}</Box>
@@ -131,7 +159,7 @@ export default class Mapper extends Component {
                     <Box><h2>mappings</h2></Box>
                     <Box>
                       {this.renderMappings()}
-                      {selectedMapping && <Transformer selectedMapping={selectedMapping} saveDialog={this.props.actions.saveTransformer.bind(null, selectedMapping.mappingId)} closeDialog={this.props.actions.selectMapping.bind(null,null)}/>}
+                      {selectedMapping && <Transformer selectedMapping={selectedMapping} transformer={transformers[selectedMapping.mappingId]} saveDialog={this.props.actions.saveTransformer.bind(null, selectedMapping.mappingId)} closeDialog={this.props.actions.selectMapping.bind(null,null)}/>}
                     </Box>
                   </Flex>
 
