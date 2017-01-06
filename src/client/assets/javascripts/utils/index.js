@@ -139,12 +139,24 @@ function _text(x:number, y:number){
 			opacity: 1,
 			'text-decoration': 'none',
 			'font-weight': 'normal',
-			'font-size': '1em',
+			'font-size': 10,
 			'font-style': 'normal',
 		}
 	}
 }
 
+
+export function typeForProperty(type, property){
+	const schema = schemaLookup(type);
+	
+	if (schema){
+		if (schema.attributes[property])
+			return schema.attributes[property].type;
+		if (schema.style[property])
+			return schema.style[property].type;
+	}
+	return "unknown";
+}
 
 export function schemaLookup(type){
 	switch (type){

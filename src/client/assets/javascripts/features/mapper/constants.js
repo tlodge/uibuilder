@@ -1,1 +1,1 @@
-export const MAPPER_WIDTH = 250;
+export const MAPPER_WIDTH = 320;

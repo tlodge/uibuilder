@@ -12,33 +12,37 @@ const types = Object.keys(schema).reduce((acc,key)=>{
 	return acc;
 },{});
 
-const objspring = (obj)=>{
-	return {x:10};
-}
 
 export default class Circle extends Component {
 	render(){
 	
 		const {id,cx,cy,r,selected, onSelect} = this.props;
 		let {style} = this.props;
-		style = style || {};
 
-		const interpolatedStyles = styles.filter(key=>types[key]==="number").filter(key=>style[key]).reduce((acc, key)=>{
-			acc[key] = spring(style[key]); 
+		
+		style = style || {};
+		
+		style = Object.keys(style).reduce((acc,key)=>{
+			acc[_.camelCase(key)] = style[key];
 			return acc;
 		},{});
 
-		const _style = Object.assign({}, style, {
-			fill: selected ? "red" : "black",
-			stroke: 'black',
-		});
+
+		const interpolatedStyles = styles.filter(key=>types[key]==="number").filter(key=>style[key]).reduce((acc, key)=>{
+			const n = Number(style[key]);
+			if (!isNaN(n)){
+				acc[key] = spring(n); 
+			}
+			return acc;
+		},{});
+
 
 		return (	
-						<Motion style={{cx: spring(cx), cy: spring(cy), r:spring(r), ...interpolatedStyles}}>
+						<Motion style={{cx: spring(Number(cx) || 0), cy: spring(Number(cy) || 0), r:spring(Number(r) || 0), ...interpolatedStyles}}>
 			 				{(item) => {
-			 					const style = Object.assign({},_style,item);
+			 					const _style = Object.assign({},style,item);
 
-			 					return <circle cx={item.cx} cy={item.cy} r={item.r} style={style} onClick={onSelect}/>
+			 					return <circle cx={item.cx} cy={item.cy} r={item.r} style={_style} onClick={onSelect}/>
 						 	}}	 
 						</Motion>
 					

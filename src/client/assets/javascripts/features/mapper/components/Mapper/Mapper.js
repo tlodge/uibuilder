@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import CSSTransitionGroup from 'react-addons-css-transition-group';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { actionCreators as mapperActions, viewConstants, selector } from '../..';
@@ -8,14 +9,14 @@ import { actionCreators as sourceActions } from '../../../sources';
 import Schema from "../Schema";
 import Attributes from "../Attributes";
 import Transformer from "../Transformer";
+import Properties  from "../Properties";
 
 import "./Mapper.scss";
 import { Flex, Box } from 'reflexbox'
 import '../../../../../styles/index.scss';
 import Paper from 'react-md/lib/Papers';
-import SelectField from 'react-md/lib/SelectFields';
-
 import {schemaLookup} from '../../../../utils';
+
 
 const sourceName = (sources, sourceId)=>{
   for (source in sources){
@@ -47,6 +48,13 @@ const templateName = (templates, templateId)=>{
 
 export default class Mapper extends Component {
   
+  
+  constructor(props){
+      super(props);
+      this.state = { activeTabIndex: 0};
+      this._handleTabChange = this._handleTabChange.bind(this);
+  }
+
   renderSources() {
 
     const {sources:{sources, selected}} = this.props;
@@ -75,7 +83,8 @@ export default class Mapper extends Component {
     
     const {canvas:{templates, selected}} = this.props;
 
-    const tmplts = templates.map((shape,i)=>{
+    const tmplts = Object.keys(templates).map((key,i)=>{
+      const shape = templates[key];
       const style = {
         fontWeight: selected && selected.templateId === shape.id ? "bold" : "normal", 
       }
@@ -85,7 +94,7 @@ export default class Mapper extends Component {
 
     const attrs = selected != null ? <Attributes {
                                                       ...{
-                                                            attributes: templates.reduce((acc, template)=>{return (template.id === selected.templateId) ? Object.keys(schemaLookup(template.type).attributes) : acc;},[]),
+                                                            attributes: Object.keys(schemaLookup(templates[selected.templateId].type).attributes), 
                                                             onSelect: this.props.actions.mapToAttribute.bind(null, selected)
                                                           }
                                                   }
@@ -93,7 +102,7 @@ export default class Mapper extends Component {
     
     const style = selected != null ? <Attributes {
                                                       ...{
-                                                            attributes: templates.reduce((acc, template)=>{return (template.id === selected.templateId) ? Object.keys(schemaLookup(template.type).style) : acc;},[]),
+                                                            attributes:  Object.keys(schemaLookup(templates[selected.templateId].type).style), 
                                                             onSelect: this.props.actions.mapToStyle.bind(null, selected)
                                                           }
                                                   }
@@ -107,6 +116,7 @@ export default class Mapper extends Component {
 
   }
 
+
   renderMappings(){
     const {canvas:{templates}, sources:{sources}, mapper:{mappings}} = this.props;
   
@@ -118,34 +128,26 @@ export default class Mapper extends Component {
           return acc;
         },item.from.sourceId);
 
-        const templateName = templates.reduce((acc,template)=>{
-          if (item.to.templateId === template.id)
-            return template.label;
-          return acc;
-        },item.to.templateId);
+        const templateName = templates[item.to.templateId].label;
 
         return <div onClick={this.props.actions.selectMapping.bind(null,item)} key={i}>{`${sourceName}:${item.from.path}`}->{`${templateName}:${item.to.property}`}</div>
     })
   }
 
   renderProperties(){
+      const { activeTabIndex } = this.state;
       const {canvas:{templates, selected}} = this.props;
-      
-      const template  = templates.reduce((acc, template)=>template.id === selected.templateId ? template : acc);
+      const template  = templates[selected.templateId];
+      console.log(`selected is now ${selected.templateId}`);
       console.log(template);
 
-      return (<div>
-                <Box><h2>property editor</h2></Box>
-                <Flex>
-
-                </Flex>
-              </div>);
+      return <Properties template={template} updateAttribute={this.props.actions.updateTemplateAttribute.bind(null,selected.templateId)} updateStyle={this.props.actions.updateTemplateStyle.bind(null,selected.templateId)}/>
   }
 
   render() {
 
     const {mapper:{open, selectedMapping, transformers}, canvas:{selected}} = this.props;
-
+   
     return (
               <div id="mapper" style={{width:viewConstants.MAPPER_WIDTH}}>
                  <Paper key={1} zDepth={1}>
@@ -167,4 +169,8 @@ export default class Mapper extends Component {
               </div>
            );
   }
+
+   _handleTabChange(activeTabIndex) {
+      this.setState({ activeTabIndex });
+   }
 }

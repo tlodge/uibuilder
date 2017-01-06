@@ -49,22 +49,28 @@ class Canvas extends Component {
 
 
   renderTemplate(template, selected){
+      const props = {
+                       selected: selected,
+                       onSelect: this.templateSelected.bind(null,{templateId:template.id, type:template.type}),
+                       ...template, 
+                    };
+
       switch(template.type){
           
           case "circle":
-            return <Circle key={template.id} {
+            return <Circle key={template.id} {...props}/>
+          
+          case "rect":
+            return <Rect key={template.id} {...template}/>
+          
+          case "text":
+            return <Text key={template.id}  {
                                               ...{
                                                   ...{selected: selected},
                                                   ...{onSelect: this.templateSelected.bind(null,{templateId:template.id, type:template.type})},
                                                   ...template, 
                                               }
                                           }/>
-          
-          case "rect":
-            return <Rect key={template.id} {...template}/>
-          
-          case "text":
-            return <Text key={template.id}  {...template}/>
           
           case "line":
             return <Line key={template.id}  {...template}/>
@@ -108,11 +114,12 @@ class Canvas extends Component {
   }
 
   renderTemplates(){
-    
+  
     const {canvas:{templates, selected}} = this.props;
     
-    return templates.map((template)=>{
-       return this.renderTemplate(template, selected && selected.templateId === template.id);
+    return Object.keys(templates).map((key)=>{
+
+       return this.renderTemplate(templates[key], selected && selected.templateId === templates[key].id);
     });
   }
 
