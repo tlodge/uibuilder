@@ -33,6 +33,11 @@ app.use(webpackDevMiddleware(compiler, {
 
 app.use(webpackHotMiddleware(compiler));
 
+
+app.get('/images/:name', (req,res)=>{
+   res.sendFile(path.join(__dirname, './src/client/assets/images/' + req.params.name));
+});
+
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, './src/client/assets/index.html'));
 });

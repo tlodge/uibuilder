@@ -13,10 +13,14 @@ const types = Object.keys(schema).reduce((acc,key)=>{
 
 export default class Text extends Component {
 
-	render(){
-		const {x,y,text,selected,onSelect} = this.props;
-		let {style} = this.props;
+	static defaultProps = {
+   		transform: "translate(0,0)"
+  	};
 
+	render(){
+		const {x,y,text,selected,transform, onSelect} = this.props;
+		let {style} = this.props;
+		
 		
 		style = style || {};
 		
@@ -26,15 +30,23 @@ export default class Text extends Component {
 		},{});
 
 		const interpolatedStyles = styles.filter(key=>types[key]==="number").filter(key=>style[key]).reduce((acc, key)=>{
-			acc[key] = spring(style[key]); 
+			const n = Number(style[key]);
+			if (!isNaN(n)){
+				acc[key] = spring(n); 
+			}
 			return acc;
 		},{});
 
-		return (<Motion style={{x: spring(x), y: spring(y),...interpolatedStyles}}>
+
+		return (<Motion style={{x: spring(Number(x)), y: spring(Number(y)),...interpolatedStyles}}>
 			 		{
 			 			(item) => { 
-			 				const _style = Object.assign({},style,item);
-			 				return <text x={item.x} y={item.y} style={_style} onClick={onSelect}>{text}</text>
+			 				const _style = Object.assign({},style,item,{fontSize:`${item.fontSize}px`});
+			 				console.log(_style);
+
+			 				return 	<g transform={transform}>
+			 							<text x={item.x} y={item.y} style={_style} onClick={onSelect}>{text}</text>
+			 						</g>
 			 			}
 			 		}
 				</Motion>)

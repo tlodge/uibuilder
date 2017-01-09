@@ -7,8 +7,15 @@ export default class PaletteLayout extends Component {
     templates: PropTypes.object.isRequired
   };
 
+  constructor(props){
+    super(props);
+    const {actions} = this.props;
+    this.props.actions.loadSVGTemplates();
+  }
+
   render() {
     
+
     const { templates: { templatesById, selected }, actions } = this.props;
   
     return (

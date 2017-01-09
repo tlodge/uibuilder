@@ -12,14 +12,21 @@ const types = Object.keys(schema).reduce((acc,key)=>{
 	return acc;
 },{});
 
+const degToRad = (degrees)=>{
+	return (Math.PI / 180) + degrees; 
+}
 
 export default class Circle extends Component {
+	
+	static defaultProps = {
+   		transform: "translate(0,0)"
+  	};
+
 	render(){
 	
-		const {id,cx,cy,r,selected, onSelect} = this.props;
+		const {id,cx,cy,r,selected, transform, onSelect} = this.props;
 		let {style} = this.props;
 
-		
 		style = style || {};
 		
 		style = Object.keys(style).reduce((acc,key)=>{
@@ -36,13 +43,18 @@ export default class Circle extends Component {
 			return acc;
 		},{});
 
-
 		return (	
 						<Motion style={{cx: spring(Number(cx) || 0), cy: spring(Number(cy) || 0), r:spring(Number(r) || 0), ...interpolatedStyles}}>
 			 				{(item) => {
 			 					const _style = Object.assign({},style,item);
+			 					
+			 					const sx = item.cx + (item.r * Math.sin(degToRad(45)));
+			 					const sy = item.cy + (item.r * Math.cos(degToRad(45)));
 
-			 					return <circle cx={item.cx} cy={item.cy} r={item.r} style={_style} onClick={onSelect}/>
+			 					return 	<g transform={transform}>
+			 								<circle cx={item.cx} cy={item.cy} r={item.r} style={_style} onClick={onSelect}/>
+			 								<circle cx={sx} cy={sy} r={item.r/2} style={{fill:"white"}}/>
+			 							</g>
 						 	}}	 
 						</Motion>
 					

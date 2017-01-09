@@ -134,7 +134,7 @@ function _text(x:number, y:number){
 		text: "your text",
 		style:{
 			fill:'black',
-			stroke: 'black',
+			stroke: 'none',
 			'stroke-width': 1,
 			opacity: 1,
 			'text-decoration': 'none',
@@ -144,6 +144,7 @@ function _text(x:number, y:number){
 		}
 	}
 }
+
 
 
 export function typeForProperty(type, property){
@@ -195,6 +196,43 @@ export function createTemplate(type:string, x:number, y:number){
 			return null;
 	}
 }
+
+export function originForNode(node){
+
+	switch (node.type){
+
+		case "line":
+			return {x:node.x1, y:node.y1}
+
+		case "text":
+		case "rect":
+			return {x:node.x, y:node.y}
+
+		case "circle":
+			return {x:node.cx, y:node.cy}
+
+		default:
+			return null;
+	}
+}
+
+export function scalePreservingOrigin(x,y,sf){
+	//return `translate(${node.cx},${node.cy}) scale(${sf}) translate(${-node.cx},${-node.cy})`
+	return `scale(${sf}) translate(${-(x - (x/sf))},${-(y - (y/sf))})`
+}
+
+export function componentsFromTransform(a)
+{
+    var b={};
+    for (var i in a = a.match(/(\w+\((\-?\d+\.?\d*e?\-?\d*,?)+\))+/g))
+    {
+        var c = a[i].match(/[\w\.\-]+/g);
+        b[c.shift()] = c;
+    }
+    return b;
+}
+
+
 
 export function generateId(){
 	return (1+Math.random()*4294967295).toString(16);

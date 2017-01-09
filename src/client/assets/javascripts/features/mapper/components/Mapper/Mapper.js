@@ -108,10 +108,18 @@ export default class Mapper extends Component {
                                                   }
                                       /> : null;
 
+    const transforms = selected != null ? <Attributes {
+                                                          ...{
+                                                              attributes: ["transform"],
+                                                              onSelect: this.props.actions.mapToTransform.bind(null, selected)
+                                                          }
+                                                      }
+                                      /> : null;
     return  <Flex flexColumn={true}>
                 {tmplts}
                 {attrs}
                 {style}
+                {transforms}
             </Flex>
 
   }
@@ -138,8 +146,6 @@ export default class Mapper extends Component {
       const { activeTabIndex } = this.state;
       const {canvas:{templates, selected}} = this.props;
       const template  = templates[selected.templateId];
-      console.log(`selected is now ${selected.templateId}`);
-      console.log(template);
 
       return <Properties template={template} updateAttribute={this.props.actions.updateTemplateAttribute.bind(null,selected.templateId)} updateStyle={this.props.actions.updateTemplateStyle.bind(null,selected.templateId)}/>
   }

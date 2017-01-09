@@ -115,6 +115,7 @@
     "redux-promise": "0.5.3",
     "redux-thunk": "2.1.0",
     "reflexbox": "2.2.3",
-    "reselect": "2.5.3"
+    "reselect": "2.5.3",
+    "superagent": "3.3.1"
   }
 }
