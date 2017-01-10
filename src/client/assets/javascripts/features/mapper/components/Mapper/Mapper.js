@@ -15,8 +15,7 @@ import "./Mapper.scss";
 import { Flex, Box } from 'reflexbox'
 import '../../../../../styles/index.scss';
 import Paper from 'react-md/lib/Papers';
-import {schemaLookup} from '../../../../utils';
-
+import {schemaLookup, templateForPath} from '../../../../utils';
 
 const sourceName = (sources, sourceId)=>{
   for (source in sources){
@@ -59,15 +58,17 @@ export default class Mapper extends Component {
 
     const {sources:{sources, selected}} = this.props;
     
+    const path = selected ? selected.path[0] : null;
+
     const srcs = sources.map((source) =>{
         return <Box key={source.id} onClick={this.props.actions.selectSource.bind(null, source.id)}>{source.name}</Box>
     });
 
     
-    const schema = selected != null ? <Schema {
+    const schema = path != null ? <Schema {
                                                 ...{
-                                                    schema: sources.reduce((acc, source)=>{return (source.id === selected) ? source.schema : acc;},{}),
-                                                    onSelect: this.props.actions.mapFrom.bind(null, selected) 
+                                                    schema: sources.reduce((acc, source)=>{return (source.id === path) ? source.schema : acc;},{}),
+                                                    onSelect: this.props.actions.mapFrom.bind(null, path) 
                                                     }
                                               }
                                     />: null;
@@ -83,35 +84,40 @@ export default class Mapper extends Component {
     
     const {canvas:{templates, selected}} = this.props;
 
+    const path = selected ? selected.path[0] : null;
+
+    console.log("in render componets and path is");
+    console.log(path);
+
     const tmplts = Object.keys(templates).map((key,i)=>{
       const shape = templates[key];
       const style = {
-        fontWeight: selected && selected.templateId === shape.id ? "bold" : "normal", 
+        fontWeight: path && path === shape.id ? "bold" : "normal", 
       }
-      return <Box key={i} style={style} onClick={this.props.actions.templateSelected.bind(null, {templateId:shape.id, type:shape.type})}>{shape.label}></Box>
+      return <Box key={i} style={style} onClick={this.props.actions.templateSelected.bind(null, {path:[shape.id], type:shape.type})}>{shape.label}></Box>
     });
 
 
-    const attrs = selected != null ? <Attributes {
+    const attrs = path != null ? <Attributes {
                                                       ...{
-                                                            attributes: Object.keys(schemaLookup(templates[selected.templateId].type).attributes), 
-                                                            onSelect: this.props.actions.mapToAttribute.bind(null, selected)
+                                                            attributes: Object.keys(schemaLookup(templates[path].type).attributes), 
+                                                            onSelect: this.props.actions.mapToAttribute.bind(null, path)
                                                           }
                                                   }
                                       /> : null;
     
-    const style = selected != null ? <Attributes {
+    const style = path != null ? <Attributes {
                                                       ...{
-                                                            attributes:  Object.keys(schemaLookup(templates[selected.templateId].type).style), 
-                                                            onSelect: this.props.actions.mapToStyle.bind(null, selected)
+                                                            attributes:  Object.keys(schemaLookup(templates[path].type).style), 
+                                                            onSelect: this.props.actions.mapToStyle.bind(null, path)
                                                           }
                                                   }
                                       /> : null;
 
-    const transforms = selected != null ? <Attributes {
+    const transforms = path != null ? <Attributes {
                                                           ...{
                                                               attributes: ["transform"],
-                                                              onSelect: this.props.actions.mapToTransform.bind(null, selected)
+                                                              onSelect: this.props.actions.mapToTransform.bind(null, path)
                                                           }
                                                       }
                                       /> : null;
@@ -143,17 +149,21 @@ export default class Mapper extends Component {
   }
 
   renderProperties(){
-      const { activeTabIndex } = this.state;
-      const {canvas:{templates, selected}} = this.props;
-      const template  = templates[selected.templateId];
 
-      return <Properties template={template} updateAttribute={this.props.actions.updateTemplateAttribute.bind(null,selected.templateId)} updateStyle={this.props.actions.updateTemplateStyle.bind(null,selected.templateId)}/>
+      const { activeTabIndex } = this.state;
+      const {canvas:{templates, selected:{path}}} = this.props; 
+      const template = templateForPath(path, templates);
+      
+      console.log("found template");
+      console.log(template);
+      return <Properties template={template} updateAttribute={this.props.actions.updateTemplateAttribute.bind(null,path)} updateStyle={this.props.actions.updateTemplateStyle.bind(null,path)}/>
   }
 
   render() {
 
     const {mapper:{open, selectedMapping, transformers}, canvas:{selected}} = this.props;
-   
+
+
     return (
               <div id="mapper" style={{width:viewConstants.MAPPER_WIDTH}}>
                  <Paper key={1} zDepth={1}>

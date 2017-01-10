@@ -1,13 +1,10 @@
 import React, { Component } from 'react';
 
-export default class Rectangle extends Component {
+export default class Rect extends Component {
 
 	render(){
-		const {x,y,width,height} = this.props
-		const style ={
-			stroke: "#000",
-			strokeWidth: 2
-		}
+		const {x,y,width,height,style} = this.props
+		
 		return <rect x={x} y={y} width={width} height={height} style={style}/>
 	}
 

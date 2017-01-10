@@ -7,6 +7,16 @@ type Circle = {
   r: number,
 };
 
+type Ellipse = {
+  id: string,
+  label: string,
+  type: string,
+  cx: number,
+  cy: number,
+  rx: number,
+  ry: number,
+};
+
 type Text = {
 	id: string,
   label: string,
@@ -36,7 +46,7 @@ type Rect = {
   h: number,
 }
 
-type Shape = | Circle | Text | Rect | Line;
+type Shape = | Circle | Text | Rect | Line | Ellipse;
 
 export type State = {
   shapes: Array<Shape>,

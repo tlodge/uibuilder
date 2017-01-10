@@ -17,6 +17,7 @@ export default class TemplateList extends Component {
           key={template.id}
           id={template.id}
           type={template.type}
+          children={template.children}
           selected={this.props.selected===template.id}
           {...this.props.actions} />
       )

@@ -1,3 +1,16 @@
+import _ from 'lodash';
+
+function _group_schema(){
+	return {
+		attributes:{},
+		style:{
+			fill: 	{type:"colour", description:"fill colour"},
+			stroke: {type:"colour", description:"stroke colour"},
+			"stroke-width": {type:"number", description:"stroke width"},
+			opacity: {type:"number", description:"opacity from 0 (transparent) to 1 (opaque)"},
+		}
+	}
+}
 
 function _circle_schema(){
 	return {
@@ -16,6 +29,27 @@ function _circle_schema(){
 		}
 	}
 }
+
+
+function _ellipse_schema(){
+	return {
+		
+		attributes:{
+			cx: {type:"number", description:"x coordinate of circle center"},
+			cy: {type:"number", description:"y coordinate of circle center"},
+			rx: {type:"number", description:"circle x radius (px)"},
+			ry: {type:"number", description:"circle y radius (px)"},
+		},
+		
+		style:{
+			fill: 	{type:"colour", description:"fill colour"},
+			stroke: {type:"colour", description:"stroke colour"},
+			"stroke-width": {type:"number", description:"stroke width"},
+			opacity: {type:"number", description:"opacity from 0 (transparent) to 1 (opaque)"},
+		}
+	}
+}
+
 
 function _line_schema(){
 	return {
@@ -97,6 +131,25 @@ function _circle(x:number,y:number){
 	}
 }
 
+function _ellipse(x:number,y:number){
+	const id =generateId();
+	return {
+		id,
+		label: `ellipse:${id}`,
+		type: "ellipse",
+		cx: x,
+		cy: y,
+		rx: 40,
+		ry: 30,
+		style:{
+			fill:'black',
+			stroke: 'black',
+			'stroke-width': 1,
+			opacity: 1,
+		}
+	}
+}
+
 function _line(x:number,y:number){
 	const id =generateId();
 	return {
@@ -146,6 +199,23 @@ function _text(x:number, y:number){
 }
 
 
+function _group(x:number, y:number, children){
+	const id =generateId();
+	return {
+		id,
+		label: `group:${id}`,
+		type: "group",
+		x: x,
+		y: y,
+		children,
+		style:{
+			fill: 'none',
+			stroke: 'none',
+			opacity: 1,
+			'stroke-width': 0,
+		}
+	}
+}
 
 export function typeForProperty(type, property){
 	const schema = schemaLookup(type);
@@ -170,8 +240,14 @@ export function schemaLookup(type){
 		case "circle":
 			return _circle_schema();
 
+		case "ellipse":
+			return _ellipse_schema();
+
 		case "text":
 			return _text_schema();
+
+		case "group":
+			return _group_schema();
 
 		default:
 			return null;
@@ -188,6 +264,9 @@ export function createTemplate(type:string, x:number, y:number){
 
 		case "circle":
 			return _circle(x,y);
+		
+		case "ellipse":
+			return _ellipse(x,y);
 
 		case "text":
 			return _text(x,y);
@@ -195,6 +274,11 @@ export function createTemplate(type:string, x:number, y:number){
 		default:
 			return null;
 	}
+}
+
+export function createGroupTemplate(children, x:number, y:number){
+	return _group(x,y,children);
+
 }
 
 export function originForNode(node){
@@ -208,6 +292,7 @@ export function originForNode(node){
 		case "rect":
 			return {x:node.x, y:node.y}
 
+		case "ellipse":
 		case "circle":
 			return {x:node.cx, y:node.cy}
 
@@ -221,6 +306,17 @@ export function scalePreservingOrigin(x,y,sf){
 	return `scale(${sf}) translate(${-(x - (x/sf))},${-(y - (y/sf))})`
 }
 
+export function camelise(style){
+	
+	style = style || {};
+
+	return Object.keys(style).reduce((acc,key)=>{
+		acc[_.camelCase(key)] = style[key];
+		return acc;
+	},{});
+
+}
+
 export function componentsFromTransform(a)
 {
     var b={};
@@ -232,7 +328,20 @@ export function componentsFromTransform(a)
     return b;
 }
 
+export function templateForPath(path, templates)
+{
+  if (path.length <= 0){
+    return null;
+  }
 
+  const [id, ...rest] = path;
+
+  if (path.length == 1){
+    return templates[id]
+  }
+
+  return templateForPath(rest, templates[id].children);
+}
 
 export function generateId(){
 	return (1+Math.random()*4294967295).toString(16);

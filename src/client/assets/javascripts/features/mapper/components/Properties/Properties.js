@@ -25,7 +25,8 @@ export default class Properties extends Component {
   
   renderAttributes(){
       const { template, updateAttribute }       = this.props;
-      const ignore = ["id", "style", "type"];
+      const ignore = ["id", "style", "type", "children"];
+
       const form = Object.keys(template).filter((key)=>ignore.indexOf(key)==-1).map((key,i)=>{
           return <TextField key={i} onChange={this._updateAttribute.bind(null,key)} id={key} label={key} value={template[key]} className="md-cell md-cell--12"/>
       });
@@ -34,16 +35,21 @@ export default class Properties extends Component {
 
 
   renderStyle(){
+      
+      
       const { template: {style}, updateStyle } = this.props;
+      
       const form = Object.keys(style).map((key,i)=>{
           return <TextField onChange={this._updateStyle.bind(null,key)} key={i} id={key} label={key} value={style[key]} className="md-cell md-cell--12"/>
       });
+      
       return <div>{form}</div>
   }
+                
 
   render(){
-      const { activeTabIndex } = this.state;
-  
+      const { activeTabIndex} = this.state;
+      const {template:{style}} = this.props;
       return (<div>
                 <Box><h2>property editor</h2></Box>
                 <Flex>
@@ -64,6 +70,7 @@ export default class Properties extends Component {
                             </CSSTransitionGroup>
                           </Tab>
                         </Tabs>
+
                       </TabsContainer>
                 </Flex>
               </div>);

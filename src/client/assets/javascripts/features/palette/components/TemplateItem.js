@@ -20,9 +20,11 @@ const templateSource = {
 
   beginDrag(props) {
     return {
-      template: props.type
+      template: props.type,
+      children: props.children,
     };
   },
+
 };
 
 

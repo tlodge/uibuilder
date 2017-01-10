@@ -16,7 +16,7 @@ const degToRad = (degrees)=>{
 	return (Math.PI / 180) + degrees; 
 }
 
-export default class Circle extends Component {
+export default class Ellipse extends Component {
 	
 	static defaultProps = {
    		transform: "translate(0,0)"
@@ -24,11 +24,13 @@ export default class Circle extends Component {
 
 	render(){
 	
-		const {id,cx,cy,r,selected, transform, onSelect} = this.props;
+		const {id,cx,cy,rx,ry,selected, transform, onSelect} = this.props;
+
 		let {style} = this.props;
 
 		style = camelise(style);
 		
+
 		const interpolatedStyles = styles.filter(key=>types[key]==="number").filter(key=>style[key]).reduce((acc, key)=>{
 			const n = Number(style[key]);
 			if (!isNaN(n)){
@@ -38,15 +40,12 @@ export default class Circle extends Component {
 		},{});
 
 		return (	
-						<Motion style={{cx: spring(Number(cx) || 0), cy: spring(Number(cy) || 0), r:spring(Number(r) || 0), ...interpolatedStyles}}>
+						<Motion style={{cx: spring(Number(cx) || 0), cy: spring(Number(cy) || 0), rx:spring(Number(rx) || 0), ry:spring(Number(ry) || 0), ...interpolatedStyles}}>
 			 				{(item) => {
 			 					const _style = Object.assign({},style,item);
 			 					
-			 					//const sx = item.cx + (item.r * Math.sin(degToRad(45)));
-			 					//const sy = item.cy + (item.r * Math.cos(degToRad(45)));
-
 			 					return 	<g transform={transform}>
-			 								<circle cx={item.cx} cy={item.cy} r={item.r} style={_style} onClick={onSelect}/>
+			 								<ellipse cx={item.cx} cy={item.cy} rx={item.rx} ry={item.ry} style={_style} onClick={onSelect}/>
 			 							</g>
 						 	}}	 
 						</Motion>

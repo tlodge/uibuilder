@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { actionCreators as canvasActions, selector } from '../';
 import './Canvas.scss';
-import {Circle,Text,Rect,Line} from './svg/';
+import {Circle,Ellipse,Text,Rect,Line,Group} from './svg/';
 import { DropTarget } from 'react-dnd';
 import {DatasourceManager} from '../../../datasources';
 import Toolbar from 'react-md/lib/Toolbars';
@@ -18,11 +18,14 @@ function collect(connect, monitor) {
 
 const canvasTarget = {
   drop(props,monitor) {
-   
-    const {template} = monitor.getItem();
+    const {template,children} = monitor.getItem();
+
     const {x,y}   = monitor.getSourceClientOffset()
-    props.dispatch(canvasActions.templateDropped(template,(x-100),y))
-     //this.shapeDropped(props.type,x,y);
+    if (template !== "group"){
+      props.dispatch(canvasActions.templateDropped(template,(x-100),y))
+    }else{
+      props.dispatch(canvasActions.groupTemplateDropped(children, (x-100), y))
+    }
   }
 };
 
@@ -51,7 +54,7 @@ class Canvas extends Component {
   renderTemplate(template, selected){
       const props = {
                        selected: selected,
-                       onSelect: this.templateSelected.bind(null,{templateId:template.id, type:template.type}),
+                       onSelect: this.templateSelected.bind(null,{path:[template.id], type:template.type}),
                        ...template, 
                     };
 
@@ -60,6 +63,9 @@ class Canvas extends Component {
           case "circle":
             return <Circle key={template.id} {...props}/>
           
+          case "ellipse":
+            return <Ellipse key={template.id} {...props}/>
+
           case "rect":
             return <Rect key={template.id} {...template}/>
           
@@ -67,13 +73,24 @@ class Canvas extends Component {
             return <Text key={template.id}  {
                                               ...{
                                                   ...{selected: selected},
-                                                  ...{onSelect: this.templateSelected.bind(null,{templateId:template.id, type:template.type})},
+                                                  ...{onSelect: this.templateSelected.bind(null,{path:[template.id], type:template.type})},
                                                   ...template, 
                                               }
                                           }/>
           
           case "line":
             return <Line key={template.id}  {...template}/>
+
+          case "group":
+           
+            return <Group key={template.id} {
+                                              ...{
+                                                  selected: selected,
+                                                  ...template,
+                                                  onSelect: this.templateSelected,
+                                              }
+                                            }/>
+
        }
       
        return null;
@@ -86,6 +103,9 @@ class Canvas extends Component {
           case "circle":
             return <Circle key={node.id} {...{...node}}/>
 
+          case "ellipse":
+            return <Ellipse key={node.id} {...{...node}}/>
+
           case "rect":
             return <Rect key={node.id} {...node}/>
           
@@ -94,6 +114,8 @@ class Canvas extends Component {
           
           case "line":
             return <Line key={node.id} {...node}/>
+
+         
        }
       
        return null;
@@ -124,8 +146,6 @@ class Canvas extends Component {
   }
 
   render() {
-
-   
 
   	const {w,h, canvas:{view}, connectDropTarget} = this.props;
   	const actions = [];

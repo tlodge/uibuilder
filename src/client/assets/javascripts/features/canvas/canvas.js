@@ -2,7 +2,7 @@
 
 import { createStructuredSelector } from 'reselect';
 import { State } from 'models/canvas';
-import {createTemplate, typeForProperty, generateId, componentsFromTransform, scalePreservingOrigin, originForNode} from '../../utils/';
+import {createTemplate, createGroupTemplate, typeForProperty, generateId, componentsFromTransform, scalePreservingOrigin, originForNode} from '../../utils/';
 import _ from 'lodash';
 
 // Action Types
@@ -10,6 +10,7 @@ import _ from 'lodash';
 
 const MOUSE_MOVE                 = 'uibuilder/canvas/MOUSE_MOVE';
 const TEMPLATE_DROPPED           = 'uibuilder/canvas/TEMPLATE_DROPPED';
+const GROUP_TEMPLATE_DROPPED     = 'uibuilder/canvas/GROUP_TEMPLATE_DROPPED';
 const TEMPLATE_SELECTED          = 'uibuilder/canvas/TEMPLATE_SELECTED ';
 const NODE_ENTER                 = 'uibuilder/canvas/NODE_ENTER';
 const UPDATE_NODE_ATTRIBUTE      = 'uibuilder/canvas/UPDATE_NODE_ATTRIBUTE';
@@ -88,14 +89,9 @@ const _updateNodeTransforms = (templates, nodes, action)=>{
 
   const node = parent[action.enterKey] || createNode(templates, action.templateId);
   
-  console.log("node is");
-  console.log(node);
-
   //const transform = `translate(${-node.cx/sf}, ${-node.cy/sf}) scale(${sf}) `;
   const {x,y}     =  originForNode(node);
   const transform = `${scalePreservingOrigin(x, y, sf)} rotate(${degcount}, ${x}, ${y})`; 
-
-  
 
   const newNode = Object.assign({}, node, {transform : transform});
   
@@ -103,20 +99,72 @@ const _updateNodeTransforms = (templates, nodes, action)=>{
 }
 
 
-
-//TODO - WOULD BE MUCH BETTER IF TEMPLATES WERE AN OBJECT RATHER THAN ARRAY!
-
 const _updateTemplateStyle = (templates, action)=>{
+  const path = action.path;
+
+  if (path.length == 0){
+    return templates;
+  }
+
+  const [id, ...rest] = action.path;
+
+  if (path.length == 1){
+    const template = Object.assign({},templates[id]);
+    template.style = Object.assign({}, template.style, {[action.property]:action.value});
+    return Object.assign({}, templates, {[template.id]: template});
+  }
   
-  const template = Object.assign({},templates[action.templateId]);
-  template.style = Object.assign({}, template.style, {[action.property]:action.value});
-  return Object.assign({}, templates, {[template.id]: template});
+  return Object.assign({}, templates, {
+                                          [template.id] :  Object.assign({}, templates[id], {
+                                              children: _updateTemplateStyle(templates[id], {
+                                                path: rest,
+                                                property: action.property,
+                                                value: action.value,
+                                              })
+                                          })});
+
+  // _updateTemplateStyle(templates.children[id], )});
 }
 
 const _updateTemplateAttribute = (templates, action)=>{
 
-  const template = Object.assign({},templates[action.templateId], {[action.property]:action.value});
-  return Object.assign({}, templates, {[template.id]: template});
+  console.log("in update template attribute!!!")
+  console.log("action is !!");
+  console.log(action);
+
+  const path = action.path;
+
+  if (path.length == 0){
+    return templates;
+  }
+
+  const [id, ...rest] = action.path;
+
+  if (path.length == 1){
+    console.log("----> path length is now 1");
+    const template = Object.assign({},templates[id], {[action.property]:action.value});
+    return Object.assign({}, templates, {[template.id]: template});
+  }
+
+  console.log("am in here");
+  console.log(id);
+  console.log(rest);
+
+  console.log("template is");
+  console.log(templates[id]);
+  console.log("children are");
+  console.log(templates[id].children);
+
+  
+  return Object.assign({}, templates, {
+                                          [id] :  Object.assign({}, templates[id], {
+                                              children: _updateTemplateAttribute(templates[id].children, {
+                                                path: rest,
+                                                property: action.property,
+                                                value: action.value,
+                                              })
+                                        })});
+ 
 }
 
 export default function reducer(state: State = initialState, action: any = {}): State {
@@ -133,8 +181,12 @@ export default function reducer(state: State = initialState, action: any = {}): 
       const template = createTemplate(action.template, action.x, action.y);
       return Object.assign({}, state, {templates: Object.assign({}, state.templates,  {[template.id]:template})});
     
+    case GROUP_TEMPLATE_DROPPED:
+      const grouptemplate = createGroupTemplate(action.children, action.x, action.y);
+      return Object.assign({}, state, {templates: Object.assign({}, state.templates,  {[grouptemplate.id]:grouptemplate})});
+    
     case TEMPLATE_SELECTED: 
-      return Object.assign({}, state,  {selected: action.template});
+      return Object.assign({}, state,  {selected: action.path});
 
     case NODE_ENTER:
       //return Object.assign({}, state,  {shapes: [...state.shapes, cloneShape(state.shapes, action.id)]});
@@ -187,10 +239,19 @@ function templateDropped(template:string, x:number, y:number) {
   };
 }
 
-function templateSelected(template) {
+function groupTemplateDropped(children, x:number, y:number){
+  return {
+    type: GROUP_TEMPLATE_DROPPED,
+    children,
+    x,
+    y,
+  };
+}
+
+function templateSelected(path) {
   return {
     type: TEMPLATE_SELECTED,
-    template,
+    path,
   };
 }
 
@@ -202,19 +263,19 @@ function nodeEnter(id:string){
 }
 
 
-function updateTemplateAttribute(templateId:string, property:string, value){
+function updateTemplateAttribute(path:Array, property:string, value){
  return {
     type: UPDATE_TEMPLATE_ATTRIBUTE,
-    templateId,
+    path,
     property,
     value,
   };
 }
 
-function updateTemplateStyle(templateId:string, property:string, value){
+function updateTemplateStyle(path:Array, property:string, value){
   return {
     type: UPDATE_TEMPLATE_STYLE,
-    templateId,
+    path,
     property:property ,
     value,
   };
@@ -269,6 +330,7 @@ export const actionCreators = {
   mouseMove,
   setView,
   templateDropped,
+  groupTemplateDropped,
   templateSelected,
   nodeEnter,
   updateNodeAttribute,
