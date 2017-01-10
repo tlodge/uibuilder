@@ -2,7 +2,7 @@
 
 import { createStructuredSelector } from 'reselect';
 import { State } from 'models/canvas';
-import {createTemplate, createGroupTemplate, typeForProperty, generateId, componentsFromTransform, scalePreservingOrigin, originForNode} from '../../utils/';
+import {createTemplate, createGroupTemplate, typeForProperty, generateId, componentsFromTransform, scalePreservingOrigin, originForNode, templateForPath} from '../../utils/';
 import _ from 'lodash';
 
 // Action Types
@@ -41,20 +41,17 @@ const initialState: State = {
 };
 
 const createNode = (templates, templateId)=>{
-  
-   const template = templates[templateId];
-
-   /*.reduce((acc,t)=>{
-      return  (t.id === templateId) ? t : acc;
-   },{});*/
-
-   const id = generateId();
-   return Object.assign({}, template, {id, label:`${template.type}:${id}`});
+  const template = templates[templateId];
+  const id = generateId();
+  return Object.assign({}, template, {id, label:`${template.type}:${id}`});
 }
 
+
+//TODO:  HOW DO WE DEAL WITH ID?
 const _updateNodeAttributes = (templates, nodes, action)=>{
  
-  const parent = nodes[action.templateId] || {};
+  //const parent = nodes[action.templateId] || {};
+  const parent = templateForPath(action.path, nodes);
 
   const node = parent[action.enterKey] || createNode(templates, action.templateId);
   
@@ -63,10 +60,13 @@ const _updateNodeAttributes = (templates, nodes, action)=>{
   return Object.assign({}, nodes, {[action.templateId] : Object.assign({}, parent, {[action.enterKey] : newNode})});
 }
 
+//TODO:  HOW DO WE DEAL WITH ID?
 const _updateNodeStyles = (templates, nodes, action)=>{
  
-  const parent = nodes[action.templateId] || {};
-
+  //const parent = nodes[action.templateId] || {};
+  
+  const parent = templateForPath(action.path, nodes);
+  
   const node = parent[action.enterKey] || createNode(templates, action.templateId);
   
   const newNode = Object.assign({}, node, {style: Object.assign({}, node.style, {[action.property] : action.value})});
@@ -74,19 +74,18 @@ const _updateNodeStyles = (templates, nodes, action)=>{
   return Object.assign({}, nodes, {[action.templateId] : Object.assign({}, parent, {[action.enterKey] : newNode})});
 }
 
+//TODO:  HOW DO WE DEAL WITH ID?
 const _updateNodeTransforms = (templates, nodes, action)=>{
  
   const {scale} = componentsFromTransform(action.transform);
   
   sfcount = sfcount + 0.1;
   degcount = degcount + 10;
-  const sf = sfcount;//sfcount;//scale && scale.length > 0 ? Number(scale[0]) : 1;
- 
-  //console.log("scale factore is ");
-  //console.log(Number(scale[0]));
+  const sf = sfcount;
 
-  const parent = nodes[action.templateId] || {};
-
+  //const parent = nodes[action.templateId] || {};
+  const parent = templateForPath(action.path, nodes);
+  
   const node = parent[action.enterKey] || createNode(templates, action.templateId);
   
   //const transform = `translate(${-node.cx/sf}, ${-node.cy/sf}) scale(${sf}) `;
@@ -115,8 +114,8 @@ const _updateTemplateStyle = (templates, action)=>{
   }
   
   return Object.assign({}, templates, {
-                                          [template.id] :  Object.assign({}, templates[id], {
-                                              children: _updateTemplateStyle(templates[id], {
+                                          [id] :  Object.assign({}, templates[id], {
+                                              children: _updateTemplateStyle(templates[id].children, {
                                                 path: rest,
                                                 property: action.property,
                                                 value: action.value,
@@ -128,10 +127,6 @@ const _updateTemplateStyle = (templates, action)=>{
 
 const _updateTemplateAttribute = (templates, action)=>{
 
-  console.log("in update template attribute!!!")
-  console.log("action is !!");
-  console.log(action);
-
   const path = action.path;
 
   if (path.length == 0){
@@ -141,21 +136,10 @@ const _updateTemplateAttribute = (templates, action)=>{
   const [id, ...rest] = action.path;
 
   if (path.length == 1){
-    console.log("----> path length is now 1");
     const template = Object.assign({},templates[id], {[action.property]:action.value});
     return Object.assign({}, templates, {[template.id]: template});
   }
 
-  console.log("am in here");
-  console.log(id);
-  console.log(rest);
-
-  console.log("template is");
-  console.log(templates[id]);
-  console.log("children are");
-  console.log(templates[id].children);
-
-  
   return Object.assign({}, templates, {
                                           [id] :  Object.assign({}, templates[id], {
                                               children: _updateTemplateAttribute(templates[id].children, {
@@ -281,31 +265,31 @@ function updateTemplateStyle(path:Array, property:string, value){
   };
 }
 
-function updateNodeAttribute(templateId:string, enterKey:string, property:string, value) {
+function updateNodeAttribute(path:Array, enterKey:string, property:string, value) {
 
   return {
     type: UPDATE_NODE_ATTRIBUTE,
-    templateId,
+    path,
     enterKey,
     property,
     value,
   };
 }
 
-function updateNodeStyle(templateId:string, enterKey:string, property:string, value){
+function updateNodeStyle(path:Array, enterKey:string, property:string, value){
    return {
     type: UPDATE_NODE_STYLE,
-    templateId,
+    path,
     enterKey,
     property: property,
     value,
   };
 }
 
-function updateNodeTransform(templateId:string, enterKey:string, transform:string){
+function updateNodeTransform(path:Array, enterKey:string, transform:string){
     return {
     type: UPDATE_NODE_TRANSFORM,
-    templateId,
+    path,
     enterKey,
     transform,
   };

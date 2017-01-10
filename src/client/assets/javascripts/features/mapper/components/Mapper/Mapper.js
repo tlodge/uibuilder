@@ -85,10 +85,7 @@ export default class Mapper extends Component {
     const {canvas:{templates, selected}} = this.props;
 
     const path = selected ? selected.path[0] : null;
-
-    console.log("in render componets and path is");
-    console.log(path);
-
+    
     const tmplts = Object.keys(templates).map((key,i)=>{
       const shape = templates[key];
       const style = {

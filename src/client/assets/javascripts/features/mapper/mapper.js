@@ -70,8 +70,8 @@ const createSubscription = (state, action, onData)=>{
 								type: state.from.type,
 							},
 							{
-								templateId: action.template.templateId,
-								type: action.template.type,
+								path: action.path,
+								type: action.type,
 								property: action.property,
 							}, 
 							onData.bind(null, action.mappingId)
@@ -130,14 +130,14 @@ function mapFrom(sourceId, key, path, type){
 	};
 }
 
-function mapToAttribute(template, property){
+function mapToAttribute(path, property){
 	return (dispatch,getState)=>{
 		
 		dispatch(templateActions.templateSelected(template));
 
 		const action = {
 			type: MAP_TO,
-			template,
+			path,
 			property,
 			mappingId: generateId(),
 		}
@@ -146,14 +146,14 @@ function mapToAttribute(template, property){
 		const onData = (mappingId, enterKey, source, template, value)=>{
 			const transformer = getState().mapper.transformers[mappingId] || `return ${source.key}`;
 			const transform = Function(source.key, transformer);
-			dispatch(templateActions.updateNodeAttribute(template.templateId,enterKey,property,transform(value)));
+			dispatch(templateActions.updateNodeAttribute(template.path,enterKey,property,transform(value)));
 		}
 		createSubscription(getState().mapper, action, onData);
 		dispatch(action);
 	}
 }
 
-function mapToStyle(template, property){
+function mapToStyle(path, property){
 	
 	return (dispatch,getState)=>{
 
@@ -161,7 +161,7 @@ function mapToStyle(template, property){
 
 		const action = {
 			type: MAP_TO,
-			template,
+			path,
 			property,
 			mappingId: generateId(),
 		}
@@ -169,20 +169,21 @@ function mapToStyle(template, property){
 		const onData = (mappingId, enterKey, source, template, value)=>{
 			const transformer = getState().mapper.transformers[mappingId] || `return ${source.key}`;
 			const transform = Function(source.key, transformer);
-			dispatch(templateActions.updateNodeStyle(template.templateId,enterKey,property,transform(value)));
+			dispatch(templateActions.updateNodeStyle(template.path,enterKey,property,transform(value)));
 		}
 		createSubscription(getState().mapper, action, onData);
 		dispatch(action);
 	}
 }
 
-function mapToTransform(template, property){
+
+function mapToTransform(path, property){
 	return (dispatch, getState)=>{
 		dispatch(templateActions.templateSelected(template));
 
 		const action = {
 			type: MAP_TO,
-			template,
+			path,
 			property,
 			mappingId: generateId(),
 		}
@@ -191,7 +192,7 @@ function mapToTransform(template, property){
 			const sf = Math.random() * 2;
 			const transformer = getState().mapper.transformers[mappingId] || `return "scale(${sf})"`;
 			const transform = Function(source.key, transformer);
-			dispatch(templateActions.updateNodeTransform(template.templateId,enterKey,transform(value)));
+			dispatch(templateActions.updateNodeTransform(template.path,enterKey,transform(value)));
 		}
 
 		createSubscription(getState().mapper, action, onData);
