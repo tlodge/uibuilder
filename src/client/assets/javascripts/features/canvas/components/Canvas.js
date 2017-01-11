@@ -67,19 +67,13 @@ class Canvas extends Component {
             return <Ellipse key={template.id} {...props}/>
 
           case "rect":
-            return <Rect key={template.id} {...template}/>
+            return <Rect key={template.id} {...props}/>
           
           case "text":
-            return <Text key={template.id}  {
-                                              ...{
-                                                  ...{selected: selected},
-                                                  ...{onSelect: this.templateSelected.bind(null,{path:[template.id], type:template.type})},
-                                                  ...template, 
-                                              }
-                                          }/>
+            return <Text key={template.id} {...props}/>
           
           case "line":
-            return <Line key={template.id}  {...template}/>
+            return <Line key={template.id}  {...props}/>
 
           case "group":
            
@@ -114,6 +108,9 @@ class Canvas extends Component {
           
           case "line":
             return <Line key={node.id} {...node}/>
+
+          case "group":
+            return <Group key={node.id} {...node}/>
 
          
        }

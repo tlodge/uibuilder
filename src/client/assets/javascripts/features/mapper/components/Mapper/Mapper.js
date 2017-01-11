@@ -55,10 +55,12 @@ export default class Mapper extends Component {
   }
 
   renderSources() {
+   
 
     const {sources:{sources, selected}} = this.props;
-    
-    const path = selected ? selected.path[0] : null;
+    const path = selected;
+
+    //const path = selected ? selected.path[0] : null;
 
     const srcs = sources.map((source) =>{
         return <Box key={source.id} onClick={this.props.actions.selectSource.bind(null, source.id)}>{source.name}</Box>
@@ -82,31 +84,35 @@ export default class Mapper extends Component {
 
   renderComponents() {
     
+  
     const {canvas:{templates, selected}} = this.props;
 
-    const path = selected ? selected.path[0] : null;
-    
+    const {path=null} = selected || {};
+
     const tmplts = Object.keys(templates).map((key,i)=>{
       const shape = templates[key];
+    
       const style = {
         fontWeight: path && path === shape.id ? "bold" : "normal", 
       }
+
       return <Box key={i} style={style} onClick={this.props.actions.templateSelected.bind(null, {path:[shape.id], type:shape.type})}>{shape.label}></Box>
     });
 
+    const template = path != null ? templateForPath(path, templates) : null;
 
     const attrs = path != null ? <Attributes {
                                                       ...{
-                                                            attributes: Object.keys(schemaLookup(templates[path].type).attributes), 
-                                                            onSelect: this.props.actions.mapToAttribute.bind(null, path)
+                                                            attributes: Object.keys(schemaLookup(template.type).attributes), 
+                                                            onSelect: this.props.actions.mapToAttribute.bind(null, path, template.type)
                                                           }
                                                   }
                                       /> : null;
     
     const style = path != null ? <Attributes {
                                                       ...{
-                                                            attributes:  Object.keys(schemaLookup(templates[path].type).style), 
-                                                            onSelect: this.props.actions.mapToStyle.bind(null, path)
+                                                            attributes:  Object.keys(schemaLookup(template.type).style), 
+                                                            onSelect: this.props.actions.mapToStyle.bind(null, path, template.type)
                                                           }
                                                   }
                                       /> : null;
@@ -114,7 +120,7 @@ export default class Mapper extends Component {
     const transforms = path != null ? <Attributes {
                                                           ...{
                                                               attributes: ["transform"],
-                                                              onSelect: this.props.actions.mapToTransform.bind(null, path)
+                                                              onSelect: this.props.actions.mapToTransform.bind(null, path, template.type)
                                                           }
                                                       }
                                       /> : null;
@@ -139,10 +145,12 @@ export default class Mapper extends Component {
           return acc;
         },item.from.sourceId);
 
-        const templateName = templates[item.to.templateId].label;
-
+        const [id, ...rest] = item.to.path; 
+        const templateName = templates[id].label;
+        
         return <div onClick={this.props.actions.selectMapping.bind(null,item)} key={i}>{`${sourceName}:${item.from.path}`}->{`${templateName}:${item.to.property}`}</div>
     })
+    return null;
   }
 
   renderProperties(){
@@ -150,16 +158,12 @@ export default class Mapper extends Component {
       const { activeTabIndex } = this.state;
       const {canvas:{templates, selected:{path}}} = this.props; 
       const template = templateForPath(path, templates);
-      
-      console.log("found template");
-      console.log(template);
       return <Properties template={template} updateAttribute={this.props.actions.updateTemplateAttribute.bind(null,path)} updateStyle={this.props.actions.updateTemplateStyle.bind(null,path)}/>
   }
 
   render() {
 
     const {mapper:{open, selectedMapping, transformers}, canvas:{selected}} = this.props;
-
 
     return (
               <div id="mapper" style={{width:viewConstants.MAPPER_WIDTH}}>

@@ -40,61 +40,206 @@ const initialState: State = {
   y: 0,
 };
 
-const createNode = (templates, templateId)=>{
-  const template = templates[templateId];
-  const id = generateId();
-  return Object.assign({}, template, {id, label:`${template.type}:${id}`});
+
+
+/*
+example template
+
+{
+    id: xyz,
+    type: "group",
+    children : {
+        xyza: {
+            id: "xyza",
+            type: "group",
+            children: {
+                xyzab: {
+                  id: xyzab,
+                  type: "circle",
+                  cx: 32,
+                  ...
+                },
+                xyzac:{
+                  id: xyzac,
+                  type: "rect",
+                  x: 12,
+                  y: 12,
+                  ...
+                }
+            }
+        },
+        xyzb : {
+          id: "xyzb",
+          type: "circle",
+          cx: 67,
+          ...
+        }
+    }
+}
+*/
+
+
+//create a deep copy of a template
+//we might want to assign ndoeiDs too so we can differentiate between different instances - although this should
+//be possible through templateId->enterKey
+//this needs to be a deep copy!
+const createNode = (template)=>{
+    if (template.type !== "group"){
+        return Object.assign({}, template, {label:`${template.type}:${template.id}`, style: Object.assign({}, template.style)});
+    }
+    return Object.assign({}, template, {children: Object.keys(template.children).reduce((acc,key)=>{
+        acc[key] = createNode(template.children[key]);
+        return acc;
+    },{})});
+            //createNode(template.children[key]))});
+} 
+
+/*
+
+nodes == {
+
+   templateId1 : {
+      enterKey1: {
+            id: templateId1,
+            type: "circle",
+            cx: 2
+            .
+            .
+            .
+      },     
+      enterKey2:{
+            id: nodeId2,
+            type: "circle",
+            cx: 3
+            .
+            .
+            .
+      }
+   },
+
+   templateId2: {
+        enterKey1: {
+            id: templateId2,
+            type: "group",
+            children: {
+
+                id2a: {
+                  id: id2a,
+                  type: "group",
+                  children: {
+                      id2a1:{
+  
+
+                      },
+                      id2a2:{
+  
+
+                      }  
+                  }
+                },
+
+                id2b: {
+                  id: id2b, 
+                  type: "circle",
+                  cx: 32,
+                  ...
+                },  
+            }
+        }
+   },
+
+   ...
+
+}
+*/
+
+const _updateStyle = (node, path, property, value)=>{
+    
+    if (path.length == 0){
+        return Object.assign({}, node, {style : Object.assign({}, node.style, {[property]:value})});
+    }
+
+    const [id, ...rest] = path;
+
+    return Object.assign({}, node, { children : Object.assign(node.children, {}, {[id]: _updateStyle(node.children[id], rest, property, value)})});
 }
 
+const _updateAttribute = (node, path, property, value)=>{
+    
+    if (path.length == 0){
+        return Object.assign({}, node, {[property]:value});
+    }
+
+    const [id, ...rest] = path;
+
+    return Object.assign({}, node, { children : Object.assign(node.children, {}, {[id]: _updateAttribute(node.children[id], rest, property, value)})});
+}
+
+const _updateTransform = (node, path, transform)=>{
+ 
+    if (path.length == 0){
+       return Object.assign({}, node, {transform});
+    }
+
+    const [id, ...rest] = path;
+
+    return Object.assign({}, node, { children : Object.assign(node.children, {}, {[id]: _updateTransform(node.children[id], rest, transform)})});
+}
 
 //TODO:  HOW DO WE DEAL WITH ID?
 const _updateNodeAttributes = (templates, nodes, action)=>{
  
-  //const parent = nodes[action.templateId] || {};
-  const parent = templateForPath(action.path, nodes);
+  const [id, ...rest] = action.path;
+  const parent = nodes[id] || {};
+  const template = parent[action.enterKey] || templates[id];
 
-  const node = parent[action.enterKey] || createNode(templates, action.templateId);
-  
-  const newNode = Object.assign({}, node, {[action.property] : action.value});
-  
-  return Object.assign({}, nodes, {[action.templateId] : Object.assign({}, parent, {[action.enterKey] : newNode})});
+  //create a deep copy to prevent mutation
+  const node = createNode(template);
+
+  //now update the node with the new value;
+  const updated = _updateAttribute(node, rest, action.property, action.value); 
+  return Object.assign({}, nodes, {[id] : Object.assign({}, parent, {[action.enterKey] : updated})});
 }
 
-//TODO:  HOW DO WE DEAL WITH ID?
+
 const _updateNodeStyles = (templates, nodes, action)=>{
  
-  //const parent = nodes[action.templateId] || {};
+  const [id, ...rest] = action.path;
+  const parent = nodes[id] || {};
+  const template = parent[action.enterKey] || templates[id];
+
+  //create a deep copy to prevent mutation
+  const node = createNode(template);
   
-  const parent = templateForPath(action.path, nodes);
+  const updated = _updateStyle(node, rest, action.property, action.value); 
   
-  const node = parent[action.enterKey] || createNode(templates, action.templateId);
+  //const newNode = Object.assign({}, node, {style: Object.assign({}, node.style, {[action.property] : action.value})});
   
-  const newNode = Object.assign({}, node, {style: Object.assign({}, node.style, {[action.property] : action.value})});
-  
-  return Object.assign({}, nodes, {[action.templateId] : Object.assign({}, parent, {[action.enterKey] : newNode})});
+  return Object.assign({}, nodes, {[id] : Object.assign({}, parent, {[action.enterKey] : updated})});
 }
 
-//TODO:  HOW DO WE DEAL WITH ID?
 const _updateNodeTransforms = (templates, nodes, action)=>{
- 
+
+  
   const {scale} = componentsFromTransform(action.transform);
   
+
+
   sfcount = sfcount + 0.1;
   degcount = degcount + 10;
   const sf = sfcount;
 
-  //const parent = nodes[action.templateId] || {};
-  const parent = templateForPath(action.path, nodes);
-  
-  const node = parent[action.enterKey] || createNode(templates, action.templateId);
-  
-  //const transform = `translate(${-node.cx/sf}, ${-node.cy/sf}) scale(${sf}) `;
-  const {x,y}     =  originForNode(node);
-  const transform = `${scalePreservingOrigin(x, y, sf)} rotate(${degcount}, ${x}, ${y})`; 
+  const [id, ...rest] = action.path;
+  const parent = nodes[id] || {};
+  const template = parent[action.enterKey] || templates[id];
 
-  const newNode = Object.assign({}, node, {transform : transform});
-  
-  return Object.assign({}, nodes, {[action.templateId] : Object.assign({}, parent, {[action.enterKey] : newNode})});
+  //create a deep copy to prevent mutation
+  const node    = createNode(template);
+  const {x,y}   =  originForNode(node);
+  const transform = `${scalePreservingOrigin(x, y, sf)} rotate(${degcount}, ${x}, ${y})`; 
+  const updated = _updateTransform(node, rest, transform); 
+
+  return Object.assign({}, nodes, {[id] : Object.assign({}, parent, {[action.enterKey] : updated})});
 }
 
 
@@ -128,6 +273,7 @@ const _updateTemplateStyle = (templates, action)=>{
 const _updateTemplateAttribute = (templates, action)=>{
 
   const path = action.path;
+
 
   if (path.length == 0){
     return templates;
@@ -177,12 +323,10 @@ export default function reducer(state: State = initialState, action: any = {}): 
       return state;
 
     case UPDATE_NODE_ATTRIBUTE: 
-      //console.log("AM IN HERE");
       //llokup the action.enterKey, and create new node from template if doesn't already exist!
-      return Object.assign({}, state, {nodes:_updateNodeAttributes(state.templates, state.nodes, action)})
+     return Object.assign({}, state, {nodes:_updateNodeAttributes(state.templates, state.nodes, action)})
 
     case UPDATE_NODE_STYLE: 
-      //console.log("AM IN HERE");
       //llokup the action.enterKey, and create new node from template if doesn't already exist!
       return Object.assign({}, state, {nodes:_updateNodeStyles(state.templates, state.nodes, action)})
 
@@ -266,7 +410,7 @@ function updateTemplateStyle(path:Array, property:string, value){
 }
 
 function updateNodeAttribute(path:Array, enterKey:string, property:string, value) {
-
+ 
   return {
     type: UPDATE_NODE_ATTRIBUTE,
     path,

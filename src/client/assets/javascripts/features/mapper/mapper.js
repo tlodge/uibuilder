@@ -43,7 +43,7 @@ const createFrom = (action)=>{
 }
 
 const createTo = (action)=>{
-	return {templateId:action.template.templateId, type:action.template.type, property:action.property}
+	return {path:action.path, type:action.shape, property:action.property}
 }
 
 const subscribe = (enterKey, source, template, onData)=>{
@@ -71,7 +71,7 @@ const createSubscription = (state, action, onData)=>{
 							},
 							{
 								path: action.path,
-								type: action.type,
+								type: action.shape,
 								property: action.property,
 							}, 
 							onData.bind(null, action.mappingId)
@@ -130,14 +130,16 @@ function mapFrom(sourceId, key, path, type){
 	};
 }
 
-function mapToAttribute(path, property){
+function mapToAttribute(path, shape, property){
+	
 	return (dispatch,getState)=>{
 		
-		dispatch(templateActions.templateSelected(template));
+		//dispatch(templateActions.templateSelected(path)); //should be {path} - if needed which don't think is!
 
 		const action = {
 			type: MAP_TO,
 			path,
+			shape,
 			property,
 			mappingId: generateId(),
 		}
@@ -153,15 +155,16 @@ function mapToAttribute(path, property){
 	}
 }
 
-function mapToStyle(path, property){
+function mapToStyle(path, shape, property){
 	
 	return (dispatch,getState)=>{
 
-		dispatch(templateActions.templateSelected(template));
+		//dispatch(templateActions.templateSelected(template));
 
 		const action = {
 			type: MAP_TO,
 			path,
+			shape,
 			property,
 			mappingId: generateId(),
 		}
@@ -177,13 +180,14 @@ function mapToStyle(path, property){
 }
 
 
-function mapToTransform(path, property){
+function mapToTransform(path, shape, property){
 	return (dispatch, getState)=>{
-		dispatch(templateActions.templateSelected(template));
+		//dispatch(templateActions.templateSelected(template));
 
 		const action = {
 			type: MAP_TO,
 			path,
+			shape,
 			property,
 			mappingId: generateId(),
 		}

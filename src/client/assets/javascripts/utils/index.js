@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import {spring} from 'react-motion';
 
 function _group_schema(){
 	return {
@@ -160,6 +161,12 @@ function _line(x:number,y:number){
 		x2: x + 30,
 		y1: y,
 		y2: y,
+		style:{
+			fill:'none',
+			stroke: 'black',
+			'stroke-width': 1,
+			opacity: 1,
+		}
 	}
 }
 
@@ -173,6 +180,12 @@ function _rect(x:number,y:number){
 		y: y,
 		width: 40,
 		height: 20,
+		style:{
+			fill:'black',
+			stroke: 'black',
+			'stroke-width': 1,
+			opacity: 1,
+		}
 	}
 }
 
@@ -290,12 +303,13 @@ export function originForNode(node){
 
 		case "text":
 		case "rect":
+		case "group":
 			return {x:node.x, y:node.y}
 
 		case "ellipse":
 		case "circle":
 			return {x:node.cx, y:node.cy}
-
+			
 		default:
 			return null;
 	}
@@ -317,6 +331,19 @@ export function camelise(style){
 
 }
 
+export function interpolatedStyles(styles, types, style){
+
+	style = camelise(style);
+
+	return styles.filter(key=>types[key]==="number").filter(key=>style[key]).reduce((acc, key)=>{
+			const n = Number(style[key]);
+			if (!isNaN(n)){
+				acc[key] = spring(n); 
+			}
+			return acc;
+	},{});
+}
+
 export function componentsFromTransform(a)
 {
     var b={};
@@ -330,6 +357,8 @@ export function componentsFromTransform(a)
 
 export function templateForPath(path, templates)
 {
+
+
   if (path.length <= 0){
     return null;
   }

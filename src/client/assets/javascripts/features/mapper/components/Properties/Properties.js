@@ -42,12 +42,15 @@ export default class Properties extends Component {
       const form = Object.keys(style).map((key,i)=>{
           return <TextField onChange={this._updateStyle.bind(null,key)} key={i} id={key} label={key} value={style[key]} className="md-cell md-cell--12"/>
       });
-      
+
       return <div>{form}</div>
   }
                 
 
   render(){
+      console.log("in properties with props");
+      console.log(this.props);
+      
       const { activeTabIndex} = this.state;
       const {template:{style}} = this.props;
       return (<div>

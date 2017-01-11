@@ -7,6 +7,9 @@ import {camelise} from '../../../../utils';
 
 export default class Group extends Component {
 	
+	static defaultProps = {
+   		onSelect: ()=>{}
+  	};
 
 	renderChildren(children, path){
 
