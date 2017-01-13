@@ -95,22 +95,22 @@ class Canvas extends Component {
       switch(node.type){
           
           case "circle":
-            return <Circle key={node.id} {...{...node}}/>
+            return <Circle key={node.nodeId} {...{...node}}/>
 
           case "ellipse":
-            return <Ellipse key={node.id} {...{...node}}/>
+            return <Ellipse key={node.nodeId} {...{...node}}/>
 
           case "rect":
-            return <Rect key={node.id} {...node}/>
+            return <Rect key={node.nodeId} {...node}/>
           
           case "text":
-            return <Text key={node.id} {...node}/>
+            return <Text key={node.nodeId} {...node}/>
           
           case "line":
-            return <Line key={node.id} {...node}/>
+            return <Line key={node.nodeId} {...node}/>
 
           case "group":
-            return <Group key={node.id} {...node}/>
+            return <Group key={node.nodeId} {...node}/>
 
          
        }

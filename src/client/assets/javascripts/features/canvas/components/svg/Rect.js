@@ -22,16 +22,16 @@ export default class Rect extends Component {
   	};
 
 	render(){
-		const {x,y,width,height,transform,onSelect,style} = this.props
-		
-		const is = _interpolatedStyles(style)
+		const {x,y,width,height,transform,style,onSelect} = this.props
+		const _style = camelise(style);
+		const is = _interpolatedStyles(_style)
 
 		return <Motion style={{x: spring(Number(x) || 0), y: spring(Number(y) || 0), width:spring(Number(width) || 0), height:spring(Number(height) || 0), ...is}}>
 			 		{(item) => {
-			 			const _style = Object.assign({},style,item);
-			 					
+			 			const _s = Object.assign({},_style,item);
+			 				
 			 			return 	<g transform={transform}>
-			 					<rect x={item.x} y={item.y} width={item.width} height={item.height} style={_style} onClick={onSelect}/>
+			 					<rect x={item.x} y={item.y} width={item.width} height={item.height} style={_s} onClick={onSelect}/>
 			 				</g>
 					}}	 
 				</Motion>

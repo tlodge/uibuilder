@@ -35,12 +35,20 @@ const templateName = (templates, templateId)=>{
   return templateId;
 }
 
+const _shouldExpand = (path, selectedPath)=>{
+   
+    if (!selectedPath){
+      return false;
+    }
+    return selectedPath.indexOf(path) != -1;
+}
+
 @connect(selector, (dispatch) => {
   return {
   		actions: {
-                  ...bindActionCreators(mapperActions, dispatch), 
-                  ...bindActionCreators(sourceActions, dispatch), 
-                  ...bindActionCreators(shapeActions, dispatch)
+        ...bindActionCreators(mapperActions, dispatch), 
+        ...bindActionCreators(sourceActions, dispatch), 
+        ...bindActionCreators(shapeActions, dispatch)
       }
 	}
 })
@@ -52,6 +60,7 @@ export default class Mapper extends Component {
       super(props);
       this.state = { activeTabIndex: 0};
       this._handleTabChange = this._handleTabChange.bind(this);
+      this._toggleSelected = this._toggleSelected.bind(this);
   }
 
   renderSources() {
@@ -82,29 +91,48 @@ export default class Mapper extends Component {
             </Flex>
   }
 
+  renderTemplate(template, path, selectedPath){
+     
+      return <div key={template.id}>
+                  <li onClick={this._toggleSelected.bind(null, [...path, template.id], template.type, selectedPath)}>
+                      {`${template.label} (${template.type})`}
+                  </li>
+                  {template.type === "group" && _shouldExpand(template.id,selectedPath) && this.renderTree(template.children, [...path, template.id], selectedPath)}
+             </div>
+  }
+
+  renderTree(templates, path, selectedPath){
+
+      return Object.keys(templates).map((key,i)=>{
+          return <ul key={i}>{this.renderTemplate(templates[key], [...path], selectedPath)}</ul>;
+      });
+  }
+
+  renderObjects(){
+      const {canvas:{templates, selected}} = this.props;
+      const {path=null} = selected || {};
+      const tree = this.renderTree(templates, [], path);
+      return <Flex flexColumn={true}>
+              <Box> 
+                {tree}
+              </Box>
+            </Flex>
+  }
+
   renderComponents() {
     
-  
     const {canvas:{templates, selected}} = this.props;
 
     const {path=null} = selected || {};
 
-    const tmplts = Object.keys(templates).map((key,i)=>{
-      const shape = templates[key];
-    
-      const style = {
-        fontWeight: path && path === shape.id ? "bold" : "normal", 
-      }
-
-      return <Box key={i} style={style} onClick={this.props.actions.templateSelected.bind(null, {path:[shape.id], type:shape.type})}>{shape.label}></Box>
-    });
-
     const template = path != null ? templateForPath(path, templates) : null;
+    console.log("TEMPLATE IS");
+    console.log(template);
 
     const attrs = path != null ? <Attributes {
                                                       ...{
                                                             attributes: Object.keys(schemaLookup(template.type).attributes), 
-                                                            onSelect: this.props.actions.mapToAttribute.bind(null, path, template.type)
+                                                            onSelect: this.props.actions.mapToAttribute.bind(null, {path: path, type:template.type, enterKey:template.enterKey})
                                                           }
                                                   }
                                       /> : null;
@@ -112,7 +140,7 @@ export default class Mapper extends Component {
     const style = path != null ? <Attributes {
                                                       ...{
                                                             attributes:  Object.keys(schemaLookup(template.type).style), 
-                                                            onSelect: this.props.actions.mapToStyle.bind(null, path, template.type)
+                                                            onSelect: this.props.actions.mapToStyle.bind(null, {path: path, type:template.type, enterKey:template.enterKey})
                                                           }
                                                   }
                                       /> : null;
@@ -120,12 +148,11 @@ export default class Mapper extends Component {
     const transforms = path != null ? <Attributes {
                                                           ...{
                                                               attributes: ["transform"],
-                                                              onSelect: this.props.actions.mapToTransform.bind(null, path, template.type)
+                                                              onSelect: this.props.actions.mapToTransform.bind(null, {path: path, type:template.type, enterKey:template.enterKey})
                                                           }
                                                       }
                                       /> : null;
     return  <Flex flexColumn={true}>
-                {tmplts}
                 {attrs}
                 {style}
                 {transforms}
@@ -134,6 +161,17 @@ export default class Mapper extends Component {
   }
 
 
+  renderMapper(){
+      const {canvas:{templates, selected:{path}}} = this.props; 
+      const template = templateForPath(path, templates);
+      return <Box>
+          <h2> mapper <small>{template && template.label}</small></h2>     
+          <Flex>
+              <Box col={6}>{this.renderSources()}</Box>
+              <Box col={6}>{this.renderComponents()}</Box>
+          </Flex>
+      </Box>
+  }
   renderMappings(){
     const {canvas:{templates}, sources:{sources}, mapper:{mappings}} = this.props;
   
@@ -169,12 +207,10 @@ export default class Mapper extends Component {
               <div id="mapper" style={{width:viewConstants.MAPPER_WIDTH}}>
                  <Paper key={1} zDepth={1}>
                   <Flex flexColumn={true}>
+                    <Box><h2>objects</h2></Box>
+                    {this.renderObjects()}
                     {selected && this.renderProperties()}
-                    <Box><h2>mapper</h2></Box>
-                    <Flex>
-                      <Box col={6}>{this.renderSources()}</Box>
-                      <Box col={6}>{this.renderComponents()}</Box>
-                    </Flex>
+                    {selected && this.renderMapper()}
                     <Box><h2>mappings</h2></Box>
                     <Box>
                       {this.renderMappings()}
@@ -189,5 +225,20 @@ export default class Mapper extends Component {
 
    _handleTabChange(activeTabIndex) {
       this.setState({ activeTabIndex });
+   }
+
+   _toggleSelected(path,type,selectedPath){
+      //toogle here by checking laste elements of each path;
+      if (selectedPath != null && path.length > 0 && type==="group"){
+          const id1 = selectedPath[selectedPath.length-1];
+          const id2 = path[path.length-1];
+          if (id1 === id2){
+            this.props.actions.templateParentSelected();
+            return;
+          }
+      }
+      this.props.actions.templateSelected({path:path, type:type});
+      
+     //this.props.actions.templateSelected.bind(null, _path)
    }
 }

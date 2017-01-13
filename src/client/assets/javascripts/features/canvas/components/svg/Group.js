@@ -83,9 +83,17 @@ export default class Group extends Component {
 			 		}}/>
 
 				case "group":
-					return <g key={i} style={camelise(item.style)}>
+					return <Group key={i} {...{
+							id: item.id, 
+							x:  item.x,
+							y:  item.y,
+							style: item.style,
+							children: item.children
+						}}/>
+
+					/*<g key={i} x={item.x} y={item.y} style={camelise(item.style)}>
 								{this.renderChildren(item.children, [...path, item.id])}
-							</g>
+							</g>*/
 							
 				default:
 					return null;

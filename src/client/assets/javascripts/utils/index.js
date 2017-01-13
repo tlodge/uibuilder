@@ -3,7 +3,10 @@ import {spring} from 'react-motion';
 
 function _group_schema(){
 	return {
-		attributes:{},
+		attributes:{
+			x: {type:"number", description:"x translate"},
+			y: {type:"number", description:"y translate"},
+		},
 		style:{
 			fill: 	{type:"colour", description:"fill colour"},
 			stroke: {type:"colour", description:"stroke colour"},
@@ -309,7 +312,7 @@ export function originForNode(node){
 		case "ellipse":
 		case "circle":
 			return {x:node.cx, y:node.cy}
-			
+
 		default:
 			return null;
 	}
@@ -332,8 +335,6 @@ export function camelise(style){
 }
 
 export function interpolatedStyles(styles, types, style){
-
-	style = camelise(style);
 
 	return styles.filter(key=>types[key]==="number").filter(key=>style[key]).reduce((acc, key)=>{
 			const n = Number(style[key]);

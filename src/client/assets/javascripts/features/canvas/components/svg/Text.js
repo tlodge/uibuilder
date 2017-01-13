@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import {Motion, spring} from 'react-motion';
 import _ from 'lodash';
-import {schemaLookup} from '../../../../utils';
+import {schemaLookup, camelise, interpolatedStyles} from '../../../../utils';
 
 const schema = {...schemaLookup("text").attributes, ...schemaLookup("text").style};
 const styles = Object.keys(schemaLookup("text").style).map((c)=>_.camelCase(c));
@@ -11,6 +11,8 @@ const types = Object.keys(schema).reduce((acc,key)=>{
 	return acc;
 },{});
 
+const _interpolatedStyles = interpolatedStyles.bind(null,styles,types);
+
 export default class Text extends Component {
 
 	static defaultProps = {
@@ -18,34 +20,20 @@ export default class Text extends Component {
   	};
 
 	render(){
-		const {x,y,text,selected,transform, onSelect} = this.props;
-		let {style} = this.props;
-		
-		
-		style = style || {};
-		
-		style = Object.keys(style).reduce((acc,key)=>{
-			acc[_.camelCase(key)] = style[key];
-			return acc;
-		},{});
+		const {x,y,text,selected,transform, style, onSelect} = this.props;
 
-		const interpolatedStyles = styles.filter(key=>types[key]==="number").filter(key=>style[key]).reduce((acc, key)=>{
-			const n = Number(style[key]);
-			if (!isNaN(n)){
-				acc[key] = spring(n); 
-			}
-			return acc;
-		},{});
-
-
-		return (<Motion style={{x: spring(Number(x)), y: spring(Number(y)),...interpolatedStyles}}>
+		
+		const _style = camelise(style);
+		const is = _interpolatedStyles(_style);
+		
+		return (<Motion style={{x: spring(Number(x)), y: spring(Number(y)),...is}}>
 			 		{
 			 			(item) => { 
-			 				const _style = Object.assign({},style,item,{fontSize:`${item.fontSize}px`});
-			 				console.log(_style);
+			 				const _s = Object.assign({},_style,item,{fontSize:`${item.fontSize}px`});
+			 			
 
 			 				return 	<g transform={transform}>
-			 							<text x={item.x} y={item.y} style={_style} onClick={onSelect}>{text}</text>
+			 							<text x={item.x} y={item.y} style={_s} onClick={onSelect}>{text}</text>
 			 						</g>
 			 			}
 			 		}

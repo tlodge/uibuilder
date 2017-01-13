@@ -64,6 +64,9 @@ const convertToJson = function(nodeList){
 
             id,
             type: "group",
+            label: `group:${id}`,
+            x: 0,
+            y: 0,
             style:{
               fill: item.style.fill,
               stroke: item.style.stroke,
@@ -80,6 +83,7 @@ const convertToJson = function(nodeList){
           items[id] = {
             id,
             type: "ellipse", 
+            label: `ellipse:${id}`,
             cx: item.cx.baseVal.value,
             cy: item.cy.baseVal.value,
             rx: item.rx.baseVal.value,
@@ -98,6 +102,7 @@ const convertToJson = function(nodeList){
       
           items[id] = {
             id,
+            label: `circle:${id}`,
             type: "circle", 
             cx: item.cx.baseVal.value,
             cy: item.cy.baseVal.value,
@@ -115,6 +120,7 @@ const convertToJson = function(nodeList){
           
           items[id] = {
             id,
+            label: `rect:${id}`,
             type: "rect", 
             x: item.x.baseVal.value,
             y: item.y.baseVal.value,
@@ -134,6 +140,7 @@ const convertToJson = function(nodeList){
          
           items[id] = {
             id,
+            label: `line:${id}`,
             type: "line", 
             x1: item.x1.baseVal.value,
             y1: item.y1.baseVal.value,
@@ -152,6 +159,7 @@ const convertToJson = function(nodeList){
           
           items[id]= {
             id,
+            label: `text:${id}`,
             type: "text", 
             x: item.c.baseVal.value,
             y: item.c.baseVal.value,
