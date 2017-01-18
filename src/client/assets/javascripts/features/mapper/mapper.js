@@ -5,7 +5,7 @@ import { State } from 'models/mapper';
 import {NAME as CANVASNAME, actionCreators as templateActions} from '../canvas'
 import {NAME as SOURCENAME} from '../sources'
 import {DatasourceManager} from '../../datasources';
-import {generateId} from '../../utils';
+import {generateId, defaultCode} from '../../utils';
 // Action Types
 
 // Define types in the form of 'npm-module-or-myapp/feature-name/ACTION_TYPE_NAME'
@@ -47,12 +47,9 @@ const createTo = (action)=>{
 }
 
 const subscribe = (source, template, onData, enterKey)=>{
-	console.log("in subscribe and template is");
-	console.log(template);
-
+	
 	var ds = DatasourceManager.get(source.sourceId);
 	
-
 	if (ds){
     	ds.emitter.addListener('data', (data)=>{
     		const enterKey = template.enterKey ? data[template.enterKey] : null;
@@ -61,8 +58,25 @@ const subscribe = (source, template, onData, enterKey)=>{
     } 
 }
 
-const createSubscription = (state, action, onData)=>{
+const _defaultTransform = (type)=>{
 	
+	switch (type){
+		case "rotate":
+			return "rotate(0)";
+
+		case "translate":
+			return "translate(0,0)";
+
+		case "scale":
+			return "scale(1)";
+
+		default:
+			return "translate(0,0)";
+	}
+}
+
+const createSubscription = (state, action, onData)=>{
+
 	switch(action.type){
 		case MAP_TO:
 			if (state.from){
@@ -79,7 +93,6 @@ const createSubscription = (state, action, onData)=>{
 								enterKey: action.enterKey,
 							}, 
 							onData.bind(null, action.mappingId),
-							/*"id"*/
 						);
 			}
 			break;
@@ -137,7 +150,7 @@ function mapFrom(sourceId, key, path, type){
 
 function mapToAttribute(template, property){
 	
-	const {path, shape, enterKey} = template;
+	const {path, type, enterKey} = template;
 
 	return (dispatch,getState)=>{
 		
@@ -146,7 +159,7 @@ function mapToAttribute(template, property){
 		const action = {
 			type: MAP_TO,
 			path,
-			shape,
+			shape:type,
 			enterKey,
 			property,
 			mappingId: generateId(),
@@ -165,7 +178,7 @@ function mapToAttribute(template, property){
 }
 
 function mapToStyle(template, property){
-	const {path, shape, enterKey} = template;
+	const {path, type, enterKey} = template;
 	return (dispatch,getState)=>{
 
 		//dispatch(templateActions.templateSelected(template));
@@ -173,7 +186,7 @@ function mapToStyle(template, property){
 		const action = {
 			type: MAP_TO,
 			path,
-			shape,
+			shape:type,
 			enterKey,
 			property,
 			mappingId: generateId(),
@@ -191,24 +204,26 @@ function mapToStyle(template, property){
 
 
 function mapToTransform(template, property){
-	const {path, shape, enterKey} = template;
+
+	const {path, type, enterKey} = template;
+
 	return (dispatch, getState)=>{
 		//dispatch(templateActions.templateSelected(template));
 
 		const action = {
 			type: MAP_TO,
 			path,
-			shape,
+			shape: type,
 			enterKey,
 			property,
 			mappingId: generateId(),
 		}
 
 		const onData = (mappingId, source, template, value, enterKey)=>{
-			const sf = Math.random() * 2;
-			const transformer = getState().mapper.transformers[mappingId] || `return "scale(${sf})"`;
+
+			const transformer = getState().mapper.transformers[mappingId] || defaultCode(source.key,property);
 			const transform = Function(source.key, transformer);
-			dispatch(templateActions.updateNodeTransform(template.path,transform(value), enterKey));
+			dispatch(templateActions.updateNodeTransform(template.path,property,transform(value), enterKey));
 		}
 
 		createSubscription(getState().mapper, action, onData);

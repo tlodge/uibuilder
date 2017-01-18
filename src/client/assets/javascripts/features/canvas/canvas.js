@@ -204,6 +204,11 @@ const _updateNodeAttributes = (templates, nodes, action)=>{
   return Object.assign({}, nodes, {[id] : Object.assign({}, parent, {[key] : updated})});
 }
 
+const _createNewNode = (nodes,template)=>{
+  const node = createNode(template);
+  const key  = "root";
+  return Object.assign({}, nodes, {[template.id] : Object.assign({[key]:node})});
+}
 
 const _updateNodeStyles = (templates, nodes, action)=>{
   const key = action.enterKey || "root";
@@ -221,14 +226,52 @@ const _updateNodeStyles = (templates, nodes, action)=>{
   return Object.assign({}, nodes, {[id] : Object.assign({}, parent, {[key] : updated})});
 }
 
-const _updateNodeTransforms = (templates, nodes, action)=>{
 
-  const key = action.enterKey || "root";
-  const {scale} = componentsFromTransform(action.transform);
+const _combine = (newtransform="", oldtransform="")=>{
   
-  sfcount = sfcount + 0.1;
-  degcount = degcount + 10;
-  const sf = sfcount;
+    const {scale, rotate, translate} = Object.assign({}, componentsFromTransform(oldtransform), componentsFromTransform(newtransform));
+    const transforms = [];
+
+    if (scale)
+      transforms.push(`scale(${scale})`);
+
+    if (translate)
+      transforms.push(`translate(${translate})`);
+
+    if (rotate)
+      transforms.push(`rotate(${rotate})`);
+
+    return transforms.join();
+}
+
+const _createTransform = (node, type, transform)=>{
+
+   const {x,y}   =  originForNode(node);
+
+   switch(type){
+      
+      case "scale":
+
+          const {scale} = componentsFromTransform(transform);
+          return _combine(scalePreservingOrigin(x, y, scale || 1), node.transform || "");
+
+      case "translate":
+          const {translate} = componentsFromTransform(transform);
+          return _combine(`translate(${translate})`,  node.transform || "");
+
+      case "rotate":
+          const {rotate} = componentsFromTransform(transform);
+          return _combine(`rotate(${rotate},${x},${y})`, node.transform || "")
+
+      default:
+
+   }
+}
+
+
+const _updateNodeTransforms = (templates, nodes, action)=>{
+  
+  const key = action.enterKey || "root";
 
   const [id, ...rest] = action.path;
   const parent = nodes[id] || {};
@@ -236,8 +279,12 @@ const _updateNodeTransforms = (templates, nodes, action)=>{
 
   //create a deep copy to prevent mutation
   const node    = createNode(template);
-  const {x,y}   =  originForNode(node);
-  const transform = `${scalePreservingOrigin(x, y, sf)} rotate(${degcount}, ${x}, ${y})`; 
+ 
+  const transform = _createTransform(node, action.property, action.transform);
+
+  //const transform = `${scalePreservingOrigin(x, y, sf)} rotate(${degcount}, ${x}, ${y})`; 
+
+
   const updated = _updateTransform(node, rest, transform); 
 
   return Object.assign({}, nodes, {[id] : Object.assign({}, parent, {[key] : updated})});
@@ -319,8 +366,13 @@ export default function reducer(state: State = initialState, action: any = {}): 
     
     case TEMPLATE_DROPPED:
       const template = createTemplate(action.template, action.x, action.y);
-      template.enterKey = "id";
-      return Object.assign({}, state, {templates: Object.assign({}, state.templates,  {[template.id]:template})});
+      template.enterKey = null;//"id";
+
+      //create a template and a new node..
+      return Object.assign({}, state, {
+                                          templates: Object.assign({}, state.templates,  {[template.id]:template}),
+                                          nodes: _createNewNode(state.nodes, template)
+                                       });
     
     case GROUP_TEMPLATE_DROPPED:
       const grouptemplate = createGroupTemplate(action.children, action.x, action.y);
@@ -439,17 +491,20 @@ function updateNodeStyle(path:Array, property:string, value, enterKey:string){
    return {
     type: UPDATE_NODE_STYLE,
     path,
-    property: property,
+    property,
     value,
     enterKey,
   };
 }
 
-function updateNodeTransform(path:Array, transform:string, enterKey:string){
+function updateNodeTransform(path:Array, property:string, transform:string, enterKey:string){
+
     return {
     type: UPDATE_NODE_TRANSFORM,
     path,
+    property,
     transform,
+    enterKey
   };
 }
 

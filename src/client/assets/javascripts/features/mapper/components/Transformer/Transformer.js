@@ -3,15 +3,15 @@ import Dialog from 'react-md/lib/Dialogs';
 import Button from 'react-md/lib/Buttons/Button';
 import TextField from 'react-md/lib/TextFields';
 
-import {schemaLookup} from '../../../../utils';
+import {schemaLookup, defaultCode} from '../../../../utils';
+
+
+
 
 export default class Transformer extends PureComponent {
   
   constructor(props) {
     super(props);
-    console.log("rendering transformer and props are");
-    console.log(props);
-
     this.state = {buffer:props.transformer || null}
   }
   
@@ -23,14 +23,17 @@ export default class Transformer extends PureComponent {
     this.props.saveDialog(this.state.buffer);
   };
 
-  renderTransformer(key){
+
+  renderTransformer(key, property){
+    
+    const defaultcode = defaultCode(key,property);
 
     return <TextField
               id="function"
-              placeholder={`return ${key}`}
+              placeholder={defaultcode}
               block
               rows={4}
-              value={this.state.buffer || `return ${key}`} 
+              value={this.state.buffer || defaultcode} 
               onChange={(e)=>{
                             
                                 this.setState({buffer:e})
@@ -54,9 +57,15 @@ export default class Transformer extends PureComponent {
     }
 
     if (to){
-      const schema = {...schemaLookup(to.type).attributes, ...schemaLookup(to.type).style}; 
-      const property = schema[to.property];
-      ttype = property ? property.type : null;
+  
+      if (["scale", "rotate", "translate"].indexOf(to.property) !== -1){
+          ttype = "transform string"
+      }
+      else{
+        const schema = {...schemaLookup(to.type).attributes, ...schemaLookup(to.type).style}; 
+        const property = schema[to.property];
+        ttype = property ? property.type : null;
+      }
     }
 
     return (
@@ -80,7 +89,7 @@ export default class Transformer extends PureComponent {
         >
           <div>
             <strong>{from.key}:{ftype}->{ttype}</strong>
-            {this.renderTransformer(from.key)}   
+            {this.renderTransformer(from.key, to.property)}   
           </div>
         </Dialog>
       </div>

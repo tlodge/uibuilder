@@ -14,9 +14,11 @@ import { SENTRY_URL } from './config';
 // You can ignore this warning. For details, see:
 // https://github.com/reactjs/react-router/issues/2182
 
-window.Raven && Raven.config(SENTRY_URL).install();
+//window.Raven && Raven.config(SENTRY_URL).install();
 
 const Root = ({ store, history }) => {
+  console.log("here now");
+  
   let ComponentEl = (
     <Provider store={store}>
       <Router history={history} routes={routes} />

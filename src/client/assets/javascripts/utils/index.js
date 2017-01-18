@@ -214,15 +214,111 @@ function _text(x:number, y:number){
 	}
 }
 
+const _circleBounds= function(item){
+
+  return {
+      x: item.cx- item.r,
+      y: item.cy-item.r,
+      width: item.r*2,
+      height: item.r*2
+  }
+}
+
+const _lineBounds = function(item){
+  return {
+      x: Math.min(item.x1, item.x2),
+      y: Math.min(item.y1, item.y2),
+      width: Math.abs(item.x2 - item.x1),
+      height: Math.abs(item.y2- item.y1)
+  }
+}
+
+const _ellipseBounds= function(item){
+  return {
+      x: item.cx - item.rx,
+      y: item.cy - item.ry,
+      width: item.rx*2,
+      height: item.ry*2
+  }
+}
+
+const _rectBounds = function(item){
+  
+  return {
+      x: item.x,
+      y: item.y,
+      width: item.width,
+      height: item.height
+  }
+}
+
+const _minMax = function(bounds, minmax){
+	
+	const {minX, maxX, minY, maxY} = minmax;
+
+	return {
+    		minX : Math.min(bounds.x, minX),
+    		maxX : Math.max(bounds.x+bounds.width,maxX),
+   	 		minY : Math.min(bounds.y, minY),
+    		maxY : Math.max(bounds.y+bounds.height, maxY)
+    }
+}
+
+const _calculateBounds = function(nodes, minX, maxX, minY, maxY){
+ 	
+  const _minmax = Object.keys(nodes).reduce((acc, key)=>{
+  		const item = nodes[key];
+  		const minmax = {
+  							minX:acc.minX,
+  							maxX:acc.maxX,
+  							minY:acc.minY,
+  							maxY:acc.maxY
+  						};
+
+ 		switch(item.type){
+        
+	        case "group":
+	          return _minMax(_calculateBounds(item.children, acc.minX, acc.maxX, acc.minY, acc.maxY), minmax);
+
+	        case "circle":
+	          return _minMax(_circleBounds(item), minmax);
+
+	        case "ellipse":
+	          return _minMax( _ellipseBounds(item), minmax);
+
+	        case "line":
+	          return _minMax(_lineBounds(item), minmax);
+	                 
+
+	        case "rect":
+	          return _minMax(_rectBounds(item), minmax);
+	          
+	    }	
+
+  },{minX:minX, minY:minY, maxX:maxX, maxY:maxY});
+
+
+  return {
+  	x:_minmax.minX,
+  	y: _minmax.minY,
+  	width: _minmax.maxX - _minmax.minX,
+  	height: _minmax.maxY - _minmax.minY
+  }
+}
 
 function _group(x:number, y:number, children){
 	const id =generateId();
+
+	const bounds = _calculateBounds(children, Number.MAX_VALUE, -1, Number.MAX_VALUE, -1);
+	
 	return {
 		id,
 		label: `group:${id}`,
 		type: "group",
 		x: x,
 		y: y,
+		width: bounds.width,
+		height: bounds.height,
 		children,
 		style:{
 			fill: 'none',
@@ -306,8 +402,10 @@ export function originForNode(node){
 
 		case "text":
 		case "rect":
+			return {x:0, y:0}
+
 		case "group":
-			return {x:node.x, y:node.y}
+			return {x:node.width/2, y:node.height/2}
 
 		case "ellipse":
 		case "circle":
@@ -320,7 +418,7 @@ export function originForNode(node){
 
 export function scalePreservingOrigin(x,y,sf){
 	//return `translate(${node.cx},${node.cy}) scale(${sf}) translate(${-node.cx},${-node.cy})`
-	return `scale(${sf}) translate(${-(x - (x/sf))},${-(y - (y/sf))})`
+	return `scale(${sf}),translate(${-(x - (x/sf))},${-(y - (y/sf))})`
 }
 
 export function camelise(style){
@@ -371,6 +469,23 @@ export function templateForPath(path, templates)
   }
 
   return templateForPath(rest, templates[id].children);
+}
+
+export function defaultCode(key, property){
+   if (["scale", "rotate", "translate"].indexOf(property) !== -1){
+      
+      switch (property){
+          case "scale":
+            return `return \`scale(\${${key}%3})\`;`;
+
+          case "rotate":
+            return `return \`rotate(\${${key}%360})\``;
+
+         default:
+            return `return \`translate(\${${key}},\${${key}})\``;
+      }
+   }
+   return `return ${key}`
 }
 
 export function generateId(){

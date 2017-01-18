@@ -3,12 +3,25 @@ import '../Canvas.scss';
 import {Motion, spring} from 'react-motion';
 import _ from 'lodash';
 import {Circle, Text, Line, Rect, Ellipse} from "./"
-import {camelise} from '../../../../utils';
+import {camelise, componentsFromTransform, interpolatedStyles, schemaLookup} from '../../../../utils';
+
+
+const styles = Object.keys(schemaLookup("group").style).map((c)=>_.camelCase(c));
+
+const schema = {...schemaLookup("group").attributes, ...schemaLookup("group").style};
+
+const types = Object.keys(schema).reduce((acc,key)=>{
+	acc[_.camelCase(key)] = schema[key].type;
+	return acc;
+},{});
+
+const _interpolatedStyles = interpolatedStyles.bind(null,styles,types);
 
 export default class Group extends Component {
 	
 	static defaultProps = {
-   		onSelect: ()=>{}
+   		onSelect: ()=>{},
+   		transform: "translate(0,0)",
   	};
 
 	renderChildren(children, path){
@@ -101,12 +114,61 @@ export default class Group extends Component {
 		});
 	}
 
+    //TODO: check why this continuously called by editor when viewing nodes.
+
 	render(){
 		
-		const {id, style, children, x, y} = this.props;
+
+		const {id, style, transform, children, x, y, nodeId} = this.props;
+
+		
+
+		const _style = camelise(style);
+		const is = _interpolatedStyles(_style);
+		
+		const {scale=1,rotate,translate} = componentsFromTransform(transform.replace(/\s+/g,""));
+		const [degrees,rx,ry] = rotate || [0,0,0];
 	
-		return <g style={camelise(style)} transform={`translate(${x}, ${y})`}>
-					{this.renderChildren(children, [id])}
-			 	</g>
+		
+
+		const [tx=0,ty=0] = translate || [0,0];
+
+		if (nodeId){
+			
+			console.log(transform);
+
+			/*console.log(`am here with ${degrees} ${rx} ${ry}`);
+			console.log("nodeID is  --------------" + nodeId);
+			console.log("for transform");
+			console.log(transform);
+
+			console.log("set scale to ");
+			console.log(scale);
+			console.log("--------------");
+
+			console.log(`tx : ${tx}, ty:${ty}`);*/
+		}
+
+		const motionstyle = {
+			scale: spring(Number(scale)),
+			degrees: spring(Number(degrees) || 0),
+			x: spring((Number(x)/Number(scale))+Number(tx)),
+			y: spring((Number(y)/Number(scale))+Number(ty)),
+
+			...is,
+		}
+
+		const dtx = (Number(x)/Number(scale))+Number(tx);
+		const dty = (Number(y)/Number(scale))+Number(ty);
+
+		return <Motion style={motionstyle}>
+			 		{(item) => {
+			 			const _transform = `scale(${scale}),translate(${dtx},${dty}),rotate(${item.degrees},${Number(rx)},${Number(ry)})`; 
+
+			 			return <g style={_style} transform={_transform}>
+							{this.renderChildren(children, [id])}
+			 			</g>
+			 		}}
+			   </Motion>
 	}
 }

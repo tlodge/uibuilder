@@ -60,6 +60,8 @@ const convertToJson = function(nodeList){
       switch(item.nodeName){
       
         case "g":
+          
+   
           items[id] = {
 
             id,
@@ -256,7 +258,7 @@ function loadSVGTemplates(){
     dispatch(fetchingTemplates());
 
     get('/images/test.svg').then((body)=>{
-       dispatch(loadTemplate(body.text));
+      dispatch(loadTemplate(body.text));
     }).catch((err)=>{
       console.log("Seen a network error!!");
       throw err;

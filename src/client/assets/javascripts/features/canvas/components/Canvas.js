@@ -92,13 +92,15 @@ class Canvas extends Component {
   }
 
   renderNode(node){
+     
+      
       switch(node.type){
           
           case "circle":
-            return <Circle key={node.nodeId} {...{...node}}/>
+            return <Circle key={node.nodeId} {...node}/>
 
           case "ellipse":
-            return <Ellipse key={node.nodeId} {...{...node}}/>
+            return <Ellipse key={node.nodeId} {...node}/>
 
           case "rect":
             return <Rect key={node.nodeId} {...node}/>
@@ -120,6 +122,7 @@ class Canvas extends Component {
   }
 
   renderNodes(){
+
       const {canvas:{nodes}} = this.props;
      
       const n = [];
@@ -161,7 +164,7 @@ class Canvas extends Component {
     		  {view==="editor" && this.renderTemplates()}	
           {view==="live" && this.renderNodes()}	
     		</svg>
-        <Toolbar colored title={view} actions={actions} style={{position:'fixed', width:`calc(100vw - 350px)`, background:"#3f51b5", bottom:0}}/>
+        <Toolbar colored title={view} actions={actions} style={{position:'fixed', width:`calc(100vw - 100px)`, background:"#3f51b5", bottom:0}}/>
       </div>
     );
   }

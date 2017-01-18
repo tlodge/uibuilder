@@ -7,7 +7,7 @@ import rootReducer from '../reducer';
 const middlewares = [promiseMiddleware, thunk];
 
 const enhancer = compose(
-  applyMiddleware(...[middlewares])
+  applyMiddleware(...middlewares)  
 )(createStore);
 
 export default function configureStore(initialState) {

@@ -24,11 +24,12 @@ export default class Properties extends Component {
 
   
   renderAttributes(){
-      const { template, updateAttribute }       = this.props;
-      const ignore = ["id", "style", "type", "children"];
 
+      const { template }       = this.props;
+      const ignore = ["id", "style", "type", "children", "enterKey"];
+     
       const form = Object.keys(template).filter((key)=>ignore.indexOf(key)==-1).map((key,i)=>{
-          return <TextField key={i} onChange={this._updateAttribute.bind(null,key)} id={key} label={key} value={template[key]} className="md-cell md-cell--12"/>
+          return <TextField key={i} onChange={this._updateAttribute.bind(null,key)} id={key} label={key} value={template[key] || ""} className="md-cell md-cell--12"/>
       });
       return <div>{form}</div>
   }
@@ -47,10 +48,7 @@ export default class Properties extends Component {
   }
                 
 
-  render(){
-      console.log("in properties with props");
-      console.log(this.props);
-      
+  render(){ 
       const { activeTabIndex} = this.state;
       const {template:{style}} = this.props;
       return (<div>
@@ -85,6 +83,7 @@ export default class Properties extends Component {
   }
 
   _updateAttribute(key, value){
+    console.log("in update attriuvbuted!!!")
     console.log(`${key}:${value}`);
     this.props.updateAttribute(key,value);
 

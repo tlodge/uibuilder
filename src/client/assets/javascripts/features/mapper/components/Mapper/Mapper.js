@@ -126,8 +126,7 @@ export default class Mapper extends Component {
     const {path=null} = selected || {};
 
     const template = path != null ? templateForPath(path, templates) : null;
-    console.log("TEMPLATE IS");
-    console.log(template);
+   
 
     const attrs = path != null ? <Attributes {
                                                       ...{
@@ -147,7 +146,7 @@ export default class Mapper extends Component {
 
     const transforms = path != null ? <Attributes {
                                                           ...{
-                                                              attributes: ["transform"],
+                                                              attributes: ["rotate", "scale", "translate"],
                                                               onSelect: this.props.actions.mapToTransform.bind(null, {path: path, type:template.type, enterKey:template.enterKey})
                                                           }
                                                       }
@@ -185,8 +184,8 @@ export default class Mapper extends Component {
 
         const [id, ...rest] = item.to.path; 
         const templateName = templates[id].label;
-        
-        return <div onClick={this.props.actions.selectMapping.bind(null,item)} key={i}>{`${sourceName}:${item.from.path}`}->{`${templateName}:${item.to.property}`}</div>
+
+        return <div onClick={this.props.actions.selectMapping.bind(null,item)} key={i}>{`${sourceName}:${item.from.key}`}->{`${templateName}:${item.to.property}`}</div>
     })
     return null;
   }
@@ -201,10 +200,10 @@ export default class Mapper extends Component {
 
   render() {
 
-    const {mapper:{open, selectedMapping, transformers}, canvas:{selected}} = this.props;
+    const {mapper:{open, selectedMapping, transformers}, canvas:{selected}, height} = this.props;
 
     return (
-              <div id="mapper" style={{width:viewConstants.MAPPER_WIDTH}}>
+              <div id="mapper" style={{width:viewConstants.MAPPER_WIDTH, boxSizing:'border-box', height: height-78, overflow:'auto'}}>
                  <Paper key={1} zDepth={1}>
                   <Flex flexColumn={true}>
                     <Box><h2>objects</h2></Box>
@@ -215,6 +214,11 @@ export default class Mapper extends Component {
                     <Box>
                       {this.renderMappings()}
                       {selectedMapping && <Transformer selectedMapping={selectedMapping} transformer={transformers[selectedMapping.mappingId]} saveDialog={this.props.actions.saveTransformer.bind(null, selectedMapping.mappingId)} closeDialog={this.props.actions.selectMapping.bind(null,null)}/>}
+                    </Box>
+                    <Box>
+                      <h2> clone on </h2>
+                      <div>[show sources to select key]</div>
+                      <div> [x] hide prior to data </div>
                     </Box>
                   </Flex>
 

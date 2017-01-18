@@ -50,7 +50,7 @@ export default class Editor extends Component {
               <div className="canvascontainer" style={canvasstyle}>
                   <Canvas w={w} h={h}/>
               </div> 
-              <Mapper/>
+              <Mapper height={h}/>
             </DragDropContainer>
           </div>
     	);
