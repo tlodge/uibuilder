@@ -3,21 +3,25 @@ import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { actionCreators as paletteActions, viewConstants, selector } from '../';
 import "./Palette.scss";
-
+import FontIcon from 'react-md/lib/FontIcons';
+import Paper from 'react-md/lib/Papers';
+import Button from 'react-md/lib/Buttons/Button';
 import PaletteLayout from './PaletteLayout';
+
 
 @connect(selector, (dispatch) => {
 	return {
   		actions: bindActionCreators(paletteActions, dispatch)
 	}
 })
-
 export default class Palette extends Component {
+  
   render() {
+
     return (
-      <div className="palettecontainer" style={{width:viewConstants.PALETTE_WIDTH}}>
+      <Paper zDepth={2} style={{position:'absolute', overflowY:'auto', height:'100%', width:viewConstants.PALETTE_WIDTH}}>
         <PaletteLayout {...this.props} />
-      </div>
+      </Paper>
     );
   }
 }

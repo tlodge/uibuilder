@@ -23,5 +23,9 @@ export default class PaletteLayout extends Component {
         <TemplateList templates={templatesById} selected={selected} actions={actions} />
       </div>
     );
+
+
+
+    
   }
 }

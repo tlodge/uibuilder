@@ -2,7 +2,7 @@ import React, { Component, PropTypes } from 'react';
 import classnames from 'classnames';
 import { Flex, Box } from 'reflexbox'
 import { DragSource } from 'react-dnd';
-
+import FontIcon from 'react-md/lib/FontIcons';
 
 function connect(connect, monitor){
     
@@ -27,6 +27,37 @@ const templateSource = {
 
 };
 
+const iconForType = (type)=>{
+    
+
+    switch(type){
+
+      case "circle":
+        return "radio_button_unchecked"
+      
+      case "ellipse":
+        return "radio_button_unchecked"
+
+      case "rect":
+        return "check_box_outline_blank"
+
+      case "line":
+        return "border_color"
+
+      case "path":
+        return  "timeline"
+
+      case "group":
+        return "picture_in_picture"
+
+      case "text":
+        return "text_format"
+
+      default:
+        return "warning"
+    
+    }
+}
 
 class TemplateItem extends Component {
   static propTypes = {
@@ -40,22 +71,19 @@ class TemplateItem extends Component {
   };
 
   render() {
-    const { isDragging, connectDragSource } = this.props;
-
-    const draggable = connectDragSource(  <button className="btn btn-default btnAction" onClick={() => this.props.selectTemplate(this.props.id)}>
-            <i className={classnames('fa', { 'fa-star': this.props.selected}, { 'fa-star-o': !this.props.selected})} />
-          </button>);
+    const { isDragging, connectDragSource, name, type } = this.props;
+   
+    const draggable = connectDragSource( <div style={{paddingTop:20}} onClick={() => this.props.selectTemplate(this.props.id)}><FontIcon>{iconForType(type)}</FontIcon></div>)
     
-    return (
-      <Box col={12} p={2} style={{textAlign:'center'}}>
-        <div className="templateInfo">
-          <div><span>{this.props.name}</span></div>
-        </div>
-        <div className="templateActions">
-           {draggable}
-        </div>
-      </Box>
-    );
+    return  <div style={{textAlign:"center"}}>
+              <div className="templateActions">
+                  {draggable}
+              </div>
+              <div>
+                {name}
+              </div>
+            </div>
+    
   }
 }
 
