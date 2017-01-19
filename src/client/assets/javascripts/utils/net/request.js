@@ -6,6 +6,7 @@ export function get(url, query){
       .get(url)
       .query(query || {})
       //.set('Accept', 'image/svg+xml')
+      .set('Accept', 'application/json')
       .end(function(err, res){
         if (err){
           reject(err);

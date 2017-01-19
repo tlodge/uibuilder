@@ -34,6 +34,7 @@ class TemplateItem extends Component {
     id: PropTypes.number.isRequired,
     selected: PropTypes.bool.isRequired,
     type: PropTypes.string.isRequired,
+    name: PropTypes.string.isRequired,
     connectDragSource: PropTypes.func.isRequired,
     isDragging: PropTypes.bool.isRequired,
   };
@@ -48,7 +49,7 @@ class TemplateItem extends Component {
     return (
       <Box col={12} p={2} style={{textAlign:'center'}}>
         <div className="templateInfo">
-          <div><span>{this.props.type}</span></div>
+          <div><span>{this.props.name}</span></div>
         </div>
         <div className="templateActions">
            {draggable}

@@ -16,7 +16,9 @@ export const NAME = 'editor';
 
 const initialState: State = {
     w : window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth,
-    h : window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight 
+    h : window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight,
+    ow: window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth,
+    oh: window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight,
 };
 
 export default function reducer(state: State = initialState, action: any = {}): State {

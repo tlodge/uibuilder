@@ -11,7 +11,7 @@ import {generateId} from '../../utils'
 const SELECT_TEMPLATE  = 'uibuilder/palette/SELECT_TEMPLATE';
 const FETCHING_TEMPLATES = 'uibuilder/palette/FETCHING_TEMPLATES';
 const LOAD_TEMPLATE = 'uibuilder/palette/LOAD_TEMPLATE';
-
+const LOAD_TEMPLATES = 'uibuilder/palette/LOAD_TEMPLATES';
 // This will be used in our root reducer and selectors
 export const NAME = 'templates';
 
@@ -19,28 +19,38 @@ export const NAME = 'templates';
 
 const initialState: State = {
 
-  templates: [0, 1, 2, 3, 4],
+  templates: [0, 1, 2, 3, 4, 5],
 
   templatesById: [
     {
       id: 0,
-      type: 'circle'
+      type: 'circle',
+      name: 'circle'
     },
     {
       id: 1,
-      type: 'ellipse'
+      type: 'ellipse',
+      name: 'ellipse'
     },
     {
       id: 2,
-      type: 'rect'
+      type: 'rect',
+      name: 'rect'
     },
     {
       id: 3,
-      type: 'line'
+      type: 'line',
+      name: 'line'
     },
     {
       id: 4,
-      type: 'text'
+      type: 'text',
+      name: 'text'
+    },
+    {
+      id: 5,
+      type: 'path',
+      name: 'path'
     }
   ],
 
@@ -53,6 +63,7 @@ const convertToJson = function(nodeList){
     
     const items = {};
    
+   console.log(nodeList)
 
     for (var item of nodeList){
       const id = generateId();
@@ -157,14 +168,30 @@ const convertToJson = function(nodeList){
           };
           break;
 
+        case "path":
+
+          items[id]= {
+            id,
+            label: `path:${id}`,
+            type: "path", 
+            d: item.attributes.d.nodeValue,
+            style:{
+                fill: item.style.fill,
+                stroke: item.style.stroke.trim() === "" ? "none" :  item.style.stroke,
+                'stroke-width': item.style.strokeWidth.trim() === "" ? 0: item.style.strokeWidth,
+                opacity: 1,
+            }
+          };
+          break;
+
         case "text":
           
           items[id]= {
             id,
             label: `text:${id}`,
             type: "text", 
-            x: item.c.baseVal.value,
-            y: item.c.baseVal.value,
+            x: item.x.baseVal.value,
+            y: item.y.baseVal.value,
             text: item.text.baseVal.value,
             style:{
                 fill: item.style.fill,
@@ -210,6 +237,30 @@ export default function reducer(state: State = initialState, action: any = {}): 
       };
     }
 
+    case LOAD_TEMPLATES:{
+        
+        const ids = [];
+        const newTemplatesByIds = action.templates.map((template, i)=>{
+            console.log("ok looking ta");
+            console.log(template);
+
+            ids.push(state.templates.length + i);
+            return {
+                id: state.templates.length + i,
+                type: "group",
+                name: template.image,
+                children: _parseTemplate(template.body),
+            }
+        });
+
+
+        
+        return Object.assign({}, state, {
+          templates: [...state.templates, ...ids],
+          templatesById: [...state.templatesById, ...newTemplatesByIds],
+        })  
+    }
+
     case LOAD_TEMPLATE:{
       
       const template = _parseTemplate(action.template);
@@ -251,14 +302,21 @@ function loadTemplate(template){
   }
 }
 
+function loadTemplates(templates){
+  return {
+    type: LOAD_TEMPLATES,
+    templates
+  }
+}
+
 function loadSVGTemplates(){
 
   return (dispatch,getState)=>{
   
     dispatch(fetchingTemplates());
 
-    get('/images/test.svg').then((body)=>{
-      dispatch(loadTemplate(body.text));
+    get('/images/').then((res)=>{
+      dispatch(loadTemplates(res.body));
     }).catch((err)=>{
       console.log("Seen a network error!!");
       throw err;

@@ -1,6 +1,7 @@
 // Creates a hot reloading development environment
 
 const path = require('path');
+const fs = require('fs');
 const express = require('express');
 const webpack = require('webpack');
 const webpackDevMiddleware = require('webpack-dev-middleware');
@@ -33,6 +34,29 @@ app.use(webpackDevMiddleware(compiler, {
 
 app.use(webpackHotMiddleware(compiler));
 
+
+//just dev, so blocking read of images dir
+app.get('/images/', (req,res)=>{
+  fs.readdir('./src/client/assets/images/', (err, files) => {
+      
+      const images = files.filter((fileName)=>{
+        return fileName.indexOf(".svg") != -1
+      });
+
+      const data = images.map((fileName)=>{
+          const f = path.join(__dirname, `./src/client/assets/images/${fileName}`);
+         
+          var contents = fs.readFileSync(f, 'utf8');
+          
+          return {
+              image: fileName,
+              body: contents,
+          }
+      });
+
+      res.send(data);
+  });
+});
 
 app.get('/images/:name', (req,res)=>{
    res.sendFile(path.join(__dirname, './src/client/assets/images/' + req.params.name));

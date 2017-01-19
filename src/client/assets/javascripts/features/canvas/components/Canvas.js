@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { actionCreators as canvasActions, selector } from '../';
 import './Canvas.scss';
-import {Circle,Ellipse,Text,Rect,Line,Group} from './svg/';
+import {Circle,Ellipse,Text,Rect,Line,Path,Group} from './svg/';
 import { DropTarget } from 'react-dnd';
 import {DatasourceManager} from '../../../datasources';
 import Toolbar from 'react-md/lib/Toolbars';
@@ -39,6 +39,8 @@ class Canvas extends Component {
   	super(props, context);
   	this._onMouseMove = this._onMouseMove.bind(this);
     this.mouseMove = bindActionCreators(canvasActions.mouseMove, props.dispatch);
+    this.onMouseUp = bindActionCreators(canvasActions.onMouseUp, props.dispatch);
+    this.onMouseDown = bindActionCreators(canvasActions.onMouseDown, props.dispatch);
     //this.templateDropped = bindActionCreators(canvasActions.templateDropped, props.dispatch);
     this.templateSelected = bindActionCreators(canvasActions.templateSelected, props.dispatch);
     this.setView = bindActionCreators(canvasActions.setView, props.dispatch);
@@ -47,7 +49,7 @@ class Canvas extends Component {
 
   _onMouseMove(e){
     const {clientX, clientY} = e;
-    this.mouseMove(clientX,clientY);
+    this.mouseMove(clientX-100,clientY);
   }
 
 
@@ -68,6 +70,9 @@ class Canvas extends Component {
 
           case "rect":
             return <Rect key={template.id} {...props}/>
+
+          case "path":
+            return <Path key={template.id} {...props}/>
           
           case "text":
             return <Text key={template.id} {...props}/>
@@ -82,6 +87,8 @@ class Canvas extends Component {
                                                   selected: selected,
                                                   ...template,
                                                   onSelect: this.templateSelected,
+                                                  onMouseDown: this.onMouseDown,
+                                                  onMouseUp: this.onMouseUp,
                                               }
                                             }/>
 
@@ -107,6 +114,9 @@ class Canvas extends Component {
           
           case "text":
             return <Text key={node.nodeId} {...node}/>
+
+          case "path":
+            return <Path key={node.nodeId} {...node}/>
           
           case "line":
             return <Line key={node.nodeId} {...node}/>
@@ -147,7 +157,7 @@ class Canvas extends Component {
 
   render() {
 
-  	const {w,h, canvas:{view}, connectDropTarget} = this.props;
+  	const {w,h,ow,oh,canvas:{view}, connectDropTarget} = this.props;
   	const actions = [];
     
 
@@ -160,7 +170,7 @@ class Canvas extends Component {
 
     return connectDropTarget(
       <div onMouseMove={this._onMouseMove} className="canvas">
-        <svg id="svgchart" width={w} height={h}>
+        <svg id="svgchart" viewBox={`0 0 ${ow} ${oh}`} width={w} height={h} onMouseUp={this.onMouseUp}>
     		  {view==="editor" && this.renderTemplates()}	
           {view==="live" && this.renderNodes()}	
     		</svg>

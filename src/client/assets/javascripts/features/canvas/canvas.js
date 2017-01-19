@@ -9,6 +9,8 @@ import _ from 'lodash';
 
 
 const MOUSE_MOVE                 = 'uibuilder/canvas/MOUSE_MOVE';
+const MOUSE_UP                   = 'uibuilder/canvas/MOUSE_UP';
+const MOUSE_DOWN                 = 'uibuilder/canvas/MOUSE_DOWN';
 const TEMPLATE_DROPPED           = 'uibuilder/canvas/TEMPLATE_DROPPED';
 const GROUP_TEMPLATE_DROPPED     = 'uibuilder/canvas/GROUP_TEMPLATE_DROPPED';
 const TEMPLATE_SELECTED          = 'uibuilder/canvas/TEMPLATE_SELECTED';
@@ -39,6 +41,9 @@ const initialState: State = {
   selected:null,
   x: 0,
   y: 0,
+  dragging: false,
+  dx: 0, //drag x pos
+  dy: 0, //drag y pos
 };
 
 
@@ -354,29 +359,89 @@ const _selectParent = (state, action)=>{
     return {path:parent, type:"group"};
 }
 
+const _moveTemplate = (template, x, y)=>{
+  if (template.type === "group"){
+
+      return Object.assign({}, template, {x:x+template.width/2,y:y+template.height/2});
+  }
+  return template;
+}
+
+const _modifyTemplate = (state, action)=>{
+    if (state.dragging && state.selected){
+        const [id,...rest] = state.selected.path;
+        return Object.assign({}, state.templates, {[id] : _moveTemplate(state.templates[id], action.x-state.dx, action.y-state.dy)});
+    }
+    return state.templates;
+
+}
+
+const _cloneStaticTemplates = (state, action)=>{
+    
+    console.log("IN _CLONE STATIC TEMPLATES!!!!!");
+
+    if (action.view !== "live"){
+        return state.nodes;
+    }
+    return Object.keys(state.templates).filter((key)=>{
+       return state.templates[key].enterKey === null;
+    }).reduce((acc, key)=>{
+        acc[key] = {root: createNode(state.templates[key])}
+        return acc;
+    },{});
+}
+
 export default function reducer(state: State = initialState, action: any = {}): State {
   switch (action.type) {
     
     case MOUSE_MOVE: 
+      
       return {
         ...state,
         x: action.x,
-        y: action.y
-      };
+        y: action.y,
+        templates: _modifyTemplate(state, action),
+      }
+
+    case MOUSE_DOWN:
+
+
+      const {path} = action.path;
+      const [id,...rest] = path;
+      const _tmpl = state.templates[id];
+
+      return Object.assign({}, state,  {
+                                            selected: action.path,
+                                            dragging: true,
+                                            dx: state.x-_tmpl.x,
+                                            dy: state.y-_tmpl.y,
+                                        });
+
+    case MOUSE_UP:
+       return Object.assign({}, state,  {
+                                            selected: null,
+                                            dragging: false
+                                        });
     
     case TEMPLATE_DROPPED:
       const template = createTemplate(action.template, action.x, action.y);
       template.enterKey = null;//"id";
 
-      //create a template and a new node..
+      //originally created a new node here but reasoned mych more efficient to clone templates when switch to live screen
+
       return Object.assign({}, state, {
                                           templates: Object.assign({}, state.templates,  {[template.id]:template}),
-                                          nodes: _createNewNode(state.nodes, template)
+                                          
                                        });
     
     case GROUP_TEMPLATE_DROPPED:
       const grouptemplate = createGroupTemplate(action.children, action.x, action.y);
-      return Object.assign({}, state, {templates: Object.assign({}, state.templates,  {[grouptemplate.id]:grouptemplate})});
+      grouptemplate.enterKey = null;
+
+      return Object.assign({}, state, {
+                                          templates: Object.assign({}, state.templates,  {[grouptemplate.id]:grouptemplate}),
+                                
+                                        });
     
     case TEMPLATE_SELECTED: 
       return Object.assign({}, state,  {selected: action.path});
@@ -402,7 +467,10 @@ export default function reducer(state: State = initialState, action: any = {}): 
       return Object.assign({}, state, {templates:_updateTemplateAttribute(state.templates,action)});
 
     case SET_VIEW:
-      return Object.assign({}, state, {view:action.view})
+      return Object.assign({}, state, {
+                                          view:action.view,
+                                          nodes: _cloneStaticTemplates(state,action),
+                                      })
 
     default:
       return state;
@@ -417,6 +485,20 @@ function mouseMove(x: number, y:number) {
     x,
     y,
   };
+}
+
+function onMouseDown(path, type){
+  return {
+    type: MOUSE_DOWN,
+    path,
+  };
+}
+
+function onMouseUp(){
+  return {
+    type: MOUSE_UP
+  };
+
 }
 
 function templateDropped(template:string, x:number, y:number) {
@@ -525,6 +607,8 @@ export const selector = createStructuredSelector({
 
 export const actionCreators = {
   mouseMove,
+  onMouseUp,
+  onMouseDown,
   setView,
   templateDropped,
   groupTemplateDropped,

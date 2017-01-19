@@ -36,7 +36,7 @@ export default class Editor extends Component {
 
   	render() {
   		
-  		const {w,h} = this.props.editor;
+  		const {w,h,ow,oh} = this.props.editor;
       
       const canvasstyle ={
         left: viewConstants.PALETTE_WIDTH,
@@ -48,7 +48,7 @@ export default class Editor extends Component {
             <DragDropContainer w={w} h={h}>
               <Palette/>
               <div className="canvascontainer" style={canvasstyle}>
-                  <Canvas w={w} h={h}/>
+                  <Canvas w={w} h={h} ow={ow} oh={oh}/>
               </div> 
               <Mapper height={h}/>
             </DragDropContainer>

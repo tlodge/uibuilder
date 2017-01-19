@@ -74,6 +74,22 @@ function _line_schema(){
 	}
 }
 
+function _path_schema(){
+	return {
+		
+		attributes:{
+			d: {type:"string", description:"svg path string"},
+		},
+		
+		style:{
+			fill: 	{type:"colour", description:"fill colour"},
+			stroke: {type:"colour", description:"stroke colour"},
+			"stroke-width": {type:"number", description:"stroke width"},
+			opacity: {type:"number", description:"opacity from 0 (transparent) to 1 (opaque)"},
+		}
+	}
+}
+
 function _rect_schema(){
 	return {
 		
@@ -192,6 +208,22 @@ function _rect(x:number,y:number){
 	}
 }
 
+function _path(x:number,y:number){
+	const id =generateId();
+	return {
+		id,
+		label: `path:${id}`,
+		type: "path",
+		d: `M ${x} ${y} ${x+100} ${y+50}`,
+		style:{
+			fill:'black',
+			stroke: 'black',
+			'stroke-width': 2,
+			opacity: 1,
+		}
+	}
+}
+
 function _text(x:number, y:number){
 	const id =generateId();
 	return {
@@ -213,6 +245,30 @@ function _text(x:number, y:number){
 		}
 	}
 }
+
+function _group(x:number, y:number, children){
+	const id =generateId();
+
+	const bounds = _calculateBounds(children, Number.MAX_VALUE, -1, Number.MAX_VALUE, -1);
+	
+	return {
+		id,
+		label: `group:${id}`,
+		type: "group",
+		x: x,
+		y: y,
+		width: bounds.width,
+		height: bounds.height,
+		children,
+		style:{
+			fill: 'none',
+			stroke: 'none',
+			opacity: 1,
+			'stroke-width': 0,
+		}
+	}
+}
+
 
 const _circleBounds= function(item){
 
@@ -252,6 +308,17 @@ const _rectBounds = function(item){
   }
 }
 
+const _pathBounds = function(item){
+  
+  return {
+      x: 0,
+      y: 0,
+      width: 10,
+      height: 10
+  }
+}
+
+
 const _minMax = function(bounds, minmax){
 	
 	const {minX, maxX, minY, maxY} = minmax;
@@ -288,7 +355,9 @@ const _calculateBounds = function(nodes, minX, maxX, minY, maxY){
 
 	        case "line":
 	          return _minMax(_lineBounds(item), minmax);
-	                 
+	         
+	       case "path":
+	       	  return _minMax(_pathBounds(item), minmax);     
 
 	        case "rect":
 	          return _minMax(_rectBounds(item), minmax);
@@ -306,28 +375,6 @@ const _calculateBounds = function(nodes, minX, maxX, minY, maxY){
   }
 }
 
-function _group(x:number, y:number, children){
-	const id =generateId();
-
-	const bounds = _calculateBounds(children, Number.MAX_VALUE, -1, Number.MAX_VALUE, -1);
-	
-	return {
-		id,
-		label: `group:${id}`,
-		type: "group",
-		x: x,
-		y: y,
-		width: bounds.width,
-		height: bounds.height,
-		children,
-		style:{
-			fill: 'none',
-			stroke: 'none',
-			opacity: 1,
-			'stroke-width': 0,
-		}
-	}
-}
 
 export function typeForProperty(type, property){
 	const schema = schemaLookup(type);
@@ -361,6 +408,9 @@ export function schemaLookup(type){
 		case "group":
 			return _group_schema();
 
+	    case "path":
+	    	return _path_schema();
+
 		default:
 			return null;
 	}
@@ -383,6 +433,9 @@ export function createTemplate(type:string, x:number, y:number){
 		case "text":
 			return _text(x,y);
 
+		case "path":
+			return _path(x,y);
+
 		default:
 			return null;
 	}
@@ -402,6 +455,7 @@ export function originForNode(node){
 
 		case "text":
 		case "rect":
+		case "path":
 			return {x:0, y:0}
 
 		case "group":

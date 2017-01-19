@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import '../Canvas.scss';
 import {Motion, spring} from 'react-motion';
 import _ from 'lodash';
-import {Circle, Text, Line, Rect, Ellipse} from "./"
+import {Circle, Text, Line, Rect, Ellipse,Path} from "./"
 import {camelise, componentsFromTransform, interpolatedStyles, schemaLookup} from '../../../../utils';
 
 
@@ -22,6 +22,8 @@ export default class Group extends Component {
 	static defaultProps = {
    		onSelect: ()=>{},
    		transform: "translate(0,0)",
+   		onMouseUp: ()=>{},
+   		onMouseDown: ()=>{},
   	};
 
 	renderChildren(children, path){
@@ -95,6 +97,16 @@ export default class Group extends Component {
 
 			 		}}/>
 
+			 	case "path":
+					return <Path key={item.id} {...{
+			 				id: item.id,
+			 				d: item.d,
+			 				style:item.style,
+							selected: false,
+							onSelect: onSelect.bind(null,{path:[...path,item.id], type:item.type}),
+
+			 		}}/>
+
 				case "group":
 					return <Group key={i} {...{
 							id: item.id, 
@@ -119,9 +131,7 @@ export default class Group extends Component {
 	render(){
 		
 
-		const {id, style, transform, children, x, y, nodeId} = this.props;
-
-		
+		const {id, style, transform, children, x, y, nodeId, onSelect, onMouseDown, onMouseUp} = this.props;
 
 		const _style = camelise(style);
 		const is = _interpolatedStyles(_style);
@@ -129,25 +139,10 @@ export default class Group extends Component {
 		const {scale=1,rotate,translate} = componentsFromTransform(transform.replace(/\s+/g,""));
 		const [degrees,rx,ry] = rotate || [0,0,0];
 	
-		
 
 		const [tx=0,ty=0] = translate || [0,0];
 
-		if (nodeId){
-			
-			console.log(transform);
 
-			/*console.log(`am here with ${degrees} ${rx} ${ry}`);
-			console.log("nodeID is  --------------" + nodeId);
-			console.log("for transform");
-			console.log(transform);
-
-			console.log("set scale to ");
-			console.log(scale);
-			console.log("--------------");
-
-			console.log(`tx : ${tx}, ty:${ty}`);*/
-		}
 
 		const motionstyle = {
 			scale: spring(Number(scale)),
@@ -163,9 +158,17 @@ export default class Group extends Component {
 
 		return <Motion style={motionstyle}>
 			 		{(item) => {
-			 			const _transform = `scale(${scale}),translate(${dtx},${dty}),rotate(${item.degrees},${Number(rx)},${Number(ry)})`; 
 
-			 			return <g style={_style} transform={_transform}>
+			 			let _transform;
+			 			
+			 			if (scale == 1){
+			 			  _transform = `scale(${scale}),translate(${item.x},${item.y}),rotate(${item.degrees},${Number(rx)},${Number(ry)})`; 
+						}else{
+						  _transform = `scale(${scale}),translate(${dtx},${dty}),rotate(${item.degrees},${Number(rx)},${Number(ry)})`; 
+						}
+			 			return <g style={_style} transform={_transform} onMouseDown={onMouseDown.bind(null,{path:[id]})}
+			 															onMouseUp={onMouseUp}	
+			 															onClick={onSelect.bind(null,{path:[id],type:"group"})}>
 							{this.renderChildren(children, [id])}
 			 			</g>
 			 		}}
