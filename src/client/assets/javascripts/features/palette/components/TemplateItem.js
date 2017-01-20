@@ -36,7 +36,7 @@ const iconForType = (type)=>{
         return "radio_button_unchecked"
       
       case "ellipse":
-        return "radio_button_unchecked"
+        return "vignette"
 
       case "rect":
         return "check_box_outline_blank"
@@ -45,7 +45,7 @@ const iconForType = (type)=>{
         return "border_color"
 
       case "path":
-        return  "timeline"
+        return  "gesture"
 
       case "group":
         return "picture_in_picture"
@@ -73,14 +73,11 @@ class TemplateItem extends Component {
   render() {
     const { isDragging, connectDragSource, name, type } = this.props;
    
-    const draggable = connectDragSource( <div style={{paddingTop:20}} onClick={() => this.props.selectTemplate(this.props.id)}><FontIcon>{iconForType(type)}</FontIcon></div>)
+    const draggable = connectDragSource( <div style={{paddingTop:20}} onClick={() => this.props.selectTemplate(this.props.id)}><FontIcon style={{color:"white", fontSize:"2em"}}>{iconForType(type)}</FontIcon></div>)
     
     return  <div style={{textAlign:"center"}}>
               <div className="templateActions">
                   {draggable}
-              </div>
-              <div>
-                {name}
               </div>
             </div>
     

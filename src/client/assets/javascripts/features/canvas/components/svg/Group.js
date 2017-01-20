@@ -167,7 +167,6 @@ export default class Group extends Component {
 						  _transform = `scale(${scale}),translate(${dtx},${dty}),rotate(${item.degrees},${Number(rx)},${Number(ry)})`; 
 						}
 			 			return <g style={_style} transform={_transform} onMouseDown={onMouseDown.bind(null,{path:[id]})}
-			 															onMouseUp={onMouseUp}	
 			 															onClick={onSelect.bind(null,{path:[id],type:"group"})}>
 							{this.renderChildren(children, [id])}
 			 			</g>

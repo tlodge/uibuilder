@@ -2,7 +2,7 @@
 
 import { createStructuredSelector } from 'reselect';
 import { State } from 'models/canvas';
-import {createTemplate, createGroupTemplate, typeForProperty, generateId, componentsFromTransform, scalePreservingOrigin, originForNode, templateForPath} from '../../utils/';
+import {createTemplate, createGroupTemplate, typeForProperty, generateId, componentsFromTransform, scalePreservingOrigin, originForNode, templateForPath} from '../../../../utils/';
 import _ from 'lodash';
 
 // Action Types
@@ -18,10 +18,9 @@ const TEMPLATE_PARENT_SELECTED   = 'uibuilder/canvas/TEMPLATE_PARENT_SELECTED';
 const UPDATE_NODE_ATTRIBUTE      = 'uibuilder/canvas/UPDATE_NODE_ATTRIBUTE';
 const UPDATE_NODE_STYLE          = 'uibuilder/canvas/UPDATE_NODE_STYLE';
 const UPDATE_NODE_TRANSFORM      = 'uibuilder/canvas/UPDATE_NODE_TRANSFORM';
-const SET_STATIC                 = 'uibuilder/canvas/SET_STATIC';
 const UPDATE_TEMPLATE_ATTRIBUTE  = 'uibuilder/canvas/UPDATE_TEMPLATE_ATTRIBUTE';
 const UPDATE_TEMPLATE_STYLE      = 'uibuilder/canvas/UPDATE_TEMPLATE_STYLE';
-const SET_VIEW                   = 'uibuilder/canvas/SET_VIEW';
+const INIT_NODES                 = 'uibuilder/canvas/INIT_NODES';
 
 // This will be used in our root reducer and selectors
 
@@ -35,9 +34,7 @@ const enterKey = "name";
 // Define the initial state for `shapes` module
 
 const initialState: State = {
-  view: "editor", //editor or live
   templates: {},     //templates
-  nodes: {},     //these are the 
   selected:null,
   x: 0,
   y: 0,
@@ -100,200 +97,6 @@ const createNode = (template)=>{
         return acc;
     },{})});
 } 
-
-/*
-
-nodes == {
-
-   templateId1 : {
-      enterKey1: {
-            id: templateId1,
-            type: "circle",
-            cx: 2
-            .
-            .
-            .
-      },     
-      enterKey2:{
-            id: nodeId2,
-            type: "circle",
-            cx: 3
-            .
-            .
-            .
-      }
-   },
-
-   templateId2: {
-        enterKey1: {
-            id: templateId2,
-            type: "group",
-            children: {
-
-                id2a: {
-                  id: id2a,
-                  type: "group",
-                  children: {
-                      id2a1:{
-  
-
-                      },
-                      id2a2:{
-  
-
-                      }  
-                  }
-                },
-
-                id2b: {
-                  id: id2b, 
-                  type: "circle",
-                  cx: 32,
-                  ...
-                },  
-            }
-        }
-   },
-
-   ...
-
-}
-*/
-
-const _updateStyle = (node, path, property, value)=>{
-    
-    if (path.length == 0){
-        return Object.assign({}, node, {style : Object.assign({}, node.style, {[property]:value})});
-    }
-
-    const [id, ...rest] = path;
-
-    return Object.assign({}, node, { children : Object.assign(node.children, {}, {[id]: _updateStyle(node.children[id], rest, property, value)})});
-}
-
-const _updateAttribute = (node, path, property, value)=>{
-    
-    if (path.length == 0){
-        return Object.assign({}, node, {[property]:value});
-    }
-
-    const [id, ...rest] = path;
-
-    return Object.assign({}, node, { children : Object.assign(node.children, {}, {[id]: _updateAttribute(node.children[id], rest, property, value)})});
-}
-
-const _updateTransform = (node, path, transform)=>{
- 
-    if (path.length == 0){
-       return Object.assign({}, node, {transform});
-    }
-
-    const [id, ...rest] = path;
-
-    return Object.assign({}, node, { children : Object.assign(node.children, {}, {[id]: _updateTransform(node.children[id], rest, transform)})});
-}
-
-const _updateNodeAttributes = (templates, nodes, action)=>{
- 
-
-  const [id, ...rest] = action.path;
-  const parent    = nodes[id]  || {};
-  const key  = action.enterKey  || "root";
-  const template  = parent[key] || templates[id];
-
-  //create a deep copy to prevent mutation
-  const node = createNode(template);
-
-  //now update the node with the new value;
-  const updated = _updateAttribute(node, rest, action.property, action.value); 
-  return Object.assign({}, nodes, {[id] : Object.assign({}, parent, {[key] : updated})});
-}
-
-const _createNewNode = (nodes,template)=>{
-  const node = createNode(template);
-  const key  = "root";
-  return Object.assign({}, nodes, {[template.id] : Object.assign({[key]:node})});
-}
-
-const _updateNodeStyles = (templates, nodes, action)=>{
-  const key = action.enterKey || "root";
-  const [id, ...rest] = action.path;
-  const parent = nodes[id] || {};
-  const template = parent[key] || templates[id];
-
-  //create a deep copy to prevent mutation
-  const node = createNode(template);
-  
-  const updated = _updateStyle(node, rest, action.property, action.value); 
-  
-  //const newNode = Object.assign({}, node, {style: Object.assign({}, node.style, {[action.property] : action.value})});
-  
-  return Object.assign({}, nodes, {[id] : Object.assign({}, parent, {[key] : updated})});
-}
-
-
-const _combine = (newtransform="", oldtransform="")=>{
-  
-    const {scale, rotate, translate} = Object.assign({}, componentsFromTransform(oldtransform), componentsFromTransform(newtransform));
-    const transforms = [];
-
-    if (scale)
-      transforms.push(`scale(${scale})`);
-
-    if (translate)
-      transforms.push(`translate(${translate})`);
-
-    if (rotate)
-      transforms.push(`rotate(${rotate})`);
-
-    return transforms.join();
-}
-
-const _createTransform = (node, type, transform)=>{
-
-   const {x,y}   =  originForNode(node);
-
-   switch(type){
-      
-      case "scale":
-
-          const {scale} = componentsFromTransform(transform);
-          return _combine(scalePreservingOrigin(x, y, scale || 1), node.transform || "");
-
-      case "translate":
-          const {translate} = componentsFromTransform(transform);
-          return _combine(`translate(${translate})`,  node.transform || "");
-
-      case "rotate":
-          const {rotate} = componentsFromTransform(transform);
-          return _combine(`rotate(${rotate},${x},${y})`, node.transform || "")
-
-      default:
-
-   }
-}
-
-
-const _updateNodeTransforms = (templates, nodes, action)=>{
-  
-  const key = action.enterKey || "root";
-
-  const [id, ...rest] = action.path;
-  const parent = nodes[id] || {};
-  const template = parent[key] || templates[id];
-
-  //create a deep copy to prevent mutation
-  const node    = createNode(template);
- 
-  const transform = _createTransform(node, action.property, action.transform);
-
-  //const transform = `${scalePreservingOrigin(x, y, sf)} rotate(${degcount}, ${x}, ${y})`; 
-
-
-  const updated = _updateTransform(node, rest, transform); 
-
-  return Object.assign({}, nodes, {[id] : Object.assign({}, parent, {[key] : updated})});
-}
 
 
 const _updateTemplateStyle = (templates, action)=>{
@@ -360,36 +163,49 @@ const _selectParent = (state, action)=>{
 }
 
 const _moveTemplate = (template, x, y)=>{
-  if (template.type === "group"){
 
-      return Object.assign({}, template, {x:x+template.width/2,y:y+template.height/2});
+  switch (template.type){
+      case "group":
+      case "rect":
+        return Object.assign({}, template, {x,y});
+      
+      case "ellipse":
+      case "circle":
+        return Object.assign({}, template, {cx:x,cy:y});
+
   }
+  
   return template;
 }
 
 const _modifyTemplate = (state, action)=>{
+
     if (state.dragging && state.selected){
         const [id,...rest] = state.selected.path;
-        return Object.assign({}, state.templates, {[id] : _moveTemplate(state.templates[id], action.x-state.dx, action.y-state.dy)});
+        return Object.assign({}, state.templates, {[id] : _moveTemplate(state.templates[id], action.x-state.dx, action.y-state.dy)});       
     }
     return state.templates;
 
 }
 
-const _cloneStaticTemplates = (state, action)=>{
-    
-    console.log("IN _CLONE STATIC TEMPLATES!!!!!");
 
-    if (action.view !== "live"){
-        return state.nodes;
-    }
-    return Object.keys(state.templates).filter((key)=>{
-       return state.templates[key].enterKey === null;
-    }).reduce((acc, key)=>{
-        acc[key] = {root: createNode(state.templates[key])}
-        return acc;
-    },{});
+const _templatecoords = (template)=>{
+
+  switch(template.type){
+    
+    case "rect":
+    case "group":
+        return {x:template.x, y:template.y};
+
+    case "circle":
+    case "ellipse":
+        return {x:template.cx, y:template.cy};
+
+    default: 
+        return {x:0,y:0};
+  }
 }
+
 
 export default function reducer(state: State = initialState, action: any = {}): State {
   switch (action.type) {
@@ -409,13 +225,15 @@ export default function reducer(state: State = initialState, action: any = {}): 
       const {path} = action.path;
       const [id,...rest] = path;
       const _tmpl = state.templates[id];
+      const {x,y} = _templatecoords(_tmpl);
 
       return Object.assign({}, state,  {
                                             selected: action.path,
                                             dragging: true,
-                                            dx: state.x-_tmpl.x,
-                                            dy: state.y-_tmpl.y,
+                                            dx: state.x-x,
+                                            dy: state.y-y,
                                         });
+      return state;
 
     case MOUSE_UP:
        return Object.assign({}, state,  {
@@ -449,28 +267,13 @@ export default function reducer(state: State = initialState, action: any = {}): 
     case TEMPLATE_PARENT_SELECTED: 
       return Object.assign({}, state,  {selected: _selectParent(state,action)});
 
-    case UPDATE_NODE_ATTRIBUTE: 
-      //llokup the action.enterKey, and create new node from template if doesn't already exist!
-     return Object.assign({}, state, {nodes:_updateNodeAttributes(state.templates, state.nodes, action)})
-
-    case UPDATE_NODE_STYLE: 
-      //llokup the action.enterKey, and create new node from template if doesn't already exist!
-      return Object.assign({}, state, {nodes:_updateNodeStyles(state.templates, state.nodes, action)})
-
-    case UPDATE_NODE_TRANSFORM:
-       return Object.assign({}, state, {nodes: _updateNodeTransforms(state.templates, state.nodes, action)})
-
+   
     case UPDATE_TEMPLATE_STYLE: 
       return Object.assign({}, state, {templates:_updateTemplateStyle(state.templates,action)});
 
     case UPDATE_TEMPLATE_ATTRIBUTE:
       return Object.assign({}, state, {templates:_updateTemplateAttribute(state.templates,action)});
 
-    case SET_VIEW:
-      return Object.assign({}, state, {
-                                          view:action.view,
-                                          nodes: _cloneStaticTemplates(state,action),
-                                      })
 
     default:
       return state;
@@ -498,7 +301,6 @@ function onMouseUp(){
   return {
     type: MOUSE_UP
   };
-
 }
 
 function templateDropped(template:string, x:number, y:number) {
@@ -533,13 +335,6 @@ function templateParentSelected(path) {
 }
 
 
-function setStatic(path:Array){
-  return {
-    type: SET_STATIC,
-    path
-  };
-}
-
 function updateTemplateAttribute(path:Array, property:string, value){
  return {
     type: UPDATE_TEMPLATE_ATTRIBUTE,
@@ -558,44 +353,7 @@ function updateTemplateStyle(path:Array, property:string, value){
   };
 }
 
-function updateNodeAttribute(path:Array, property:string, value, enterKey:string) {
- 
-  return {
-    type: UPDATE_NODE_ATTRIBUTE,
-    path,
-    property,
-    value,
-    enterKey
-  };
-}
 
-function updateNodeStyle(path:Array, property:string, value, enterKey:string){
-   return {
-    type: UPDATE_NODE_STYLE,
-    path,
-    property,
-    value,
-    enterKey,
-  };
-}
-
-function updateNodeTransform(path:Array, property:string, transform:string, enterKey:string){
-
-    return {
-    type: UPDATE_NODE_TRANSFORM,
-    path,
-    property,
-    transform,
-    enterKey
-  };
-}
-
-function setView(view:string){
-  return{
-    type: SET_VIEW,
-    view,
-  }
-}
 
 // Selectors
 
@@ -609,14 +367,10 @@ export const actionCreators = {
   mouseMove,
   onMouseUp,
   onMouseDown,
-  setView,
   templateDropped,
   groupTemplateDropped,
   templateSelected,
   templateParentSelected,
-  updateNodeAttribute,
-  updateNodeStyle,
-  updateNodeTransform,
   updateTemplateAttribute,
   updateTemplateStyle,
 };

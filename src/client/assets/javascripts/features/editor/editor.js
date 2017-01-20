@@ -7,7 +7,7 @@ import { State } from 'models/editor';
 
 // Define types in the form of 'npm-module-or-myapp/feature-name/ACTION_TYPE_NAME'
 const SCREEN_RESIZE  = 'uibuilder/editor/SCREEN_RESIZE';
-
+const SET_VIEW  = 'uibuilder/editor/SET_VIEW';
 // This will be used in our root reducer and selectors
 
 export const NAME = 'editor';
@@ -19,6 +19,7 @@ const initialState: State = {
     h : window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight,
     ow: window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth,
     oh: window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight,
+    view: "editor",
 };
 
 export default function reducer(state: State = initialState, action: any = {}): State {
@@ -31,6 +32,9 @@ export default function reducer(state: State = initialState, action: any = {}): 
       };
     }
 
+    case SET_VIEW:
+      return Object.assign({}, state, {view:action.view})
+      
     default:
       return state;
   }
@@ -46,6 +50,13 @@ function screenResize(w: number, h:number) {
   };
 }
 
+function setView(view:string){
+  return{
+    type: SET_VIEW,
+    view,
+  }
+}
+
 // Selectors
 
 const editor = (state) => state[NAME];
@@ -55,5 +66,6 @@ export const selector = createStructuredSelector({
 });
 
 export const actionCreators = {
-  screenResize
+  screenResize,
+  setView,
 };

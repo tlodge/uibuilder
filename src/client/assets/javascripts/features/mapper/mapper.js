@@ -2,7 +2,8 @@
 
 import { createStructuredSelector } from 'reselect';
 import { State } from 'models/mapper';
-import {NAME as CANVASNAME, actionCreators as templateActions} from '../canvas'
+import {NAME as CANVASNAME, actionCreators as templateActions} from '../canvas/reducers/canvas'
+import {NAME as LIVENAME, actionCreators as liveActions} from '../canvas/reducers/live'
 import {NAME as SOURCENAME} from '../sources'
 import {DatasourceManager} from '../../datasources';
 import {generateId, defaultCode} from '../../utils';
@@ -169,7 +170,7 @@ function mapToAttribute(template, property){
 		const onData = (mappingId, source, template, value, enterKey)=>{
 			const transformer = getState().mapper.transformers[mappingId] || `return ${source.key}`;
 			const transform = Function(source.key, transformer);
-			dispatch(templateActions.updateNodeAttribute(template.path,property,transform(value), enterKey));
+			dispatch(liveActions.updateNodeAttribute(template.path,property,transform(value), enterKey));
 		}
 
 		createSubscription(getState().mapper, action, onData);
@@ -195,7 +196,7 @@ function mapToStyle(template, property){
 		const onData = (mappingId, source, template, value, enterKey)=>{
 			const transformer = getState().mapper.transformers[mappingId] || `return ${source.key}`;
 			const transform = Function(source.key, transformer);
-			dispatch(templateActions.updateNodeStyle(template.path,property,transform(value), enterKey));
+			dispatch(liveActions.updateNodeStyle(template.path,property,transform(value), enterKey));
 		}
 		createSubscription(getState().mapper, action, onData);
 		dispatch(action);
@@ -223,7 +224,7 @@ function mapToTransform(template, property){
 
 			const transformer = getState().mapper.transformers[mappingId] || defaultCode(source.key,property);
 			const transform = Function(source.key, transformer);
-			dispatch(templateActions.updateNodeTransform(template.path,property,transform(value), enterKey));
+			dispatch(liveActions.updateNodeTransform(template.path,property,transform(value), enterKey));
 		}
 
 		createSubscription(getState().mapper, action, onData);

@@ -26,7 +26,7 @@ export default class Ellipse extends Component {
 
 	render(){
 	
-		const {id,cx,cy,rx,ry,selected, style,transform, onSelect} = this.props;
+		const {id,cx,cy,rx,ry,selected, style,transform, onSelect, onMouseDown} = this.props;
 
 		const _style = camelise(style);
 		const is = _interpolatedStyles(_style);
@@ -37,7 +37,7 @@ export default class Ellipse extends Component {
 			 					const _s = Object.assign({},_style,item);
 			 					
 			 					return 	<g transform={transform}>
-			 								<ellipse cx={item.cx} cy={item.cy} rx={item.rx} ry={item.ry} style={_s} onClick={onSelect}/>
+			 								<ellipse cx={item.cx} cy={item.cy} rx={item.rx} ry={item.ry} style={_s} onClick={onSelect} onMouseDown={onMouseDown}/>
 			 							</g>
 						 	}}	 
 						</Motion>

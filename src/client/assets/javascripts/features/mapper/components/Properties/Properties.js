@@ -52,7 +52,6 @@ export default class Properties extends Component {
       const { activeTabIndex} = this.state;
       const {template:{style}} = this.props;
       return (<div>
-                <Box><h2>property editor</h2></Box>
                 <Flex>
                      <TabsContainer onTabChange={this._handleTabChange} activeTabIndex={activeTabIndex} panelClassName="md-grid" colored>
                         <Tabs tabId="tab">

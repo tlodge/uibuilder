@@ -2,6 +2,7 @@ export {
   default,
   actionCreators,
   selector,
+  constants,
   NAME
 } from './templates';
 

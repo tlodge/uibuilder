@@ -20,7 +20,7 @@ export default class Text extends Component {
   	};
 
 	render(){
-		const {x,y,text,selected,transform, style, onSelect} = this.props;
+		const {x,y,text,selected,transform, style, onSelect,onMouseDown} = this.props;
 
 		
 		const _style = camelise(style);
@@ -33,7 +33,7 @@ export default class Text extends Component {
 			 			
 
 			 				return 	<g transform={transform}>
-			 							<text x={item.x} y={item.y} style={_s} onClick={onSelect}>{text}</text>
+			 							<text x={item.x} y={item.y} style={_s} onClick={onSelect} onMouseDown={onMouseDown}>{text}</text>
 			 						</g>
 			 			}
 			 		}

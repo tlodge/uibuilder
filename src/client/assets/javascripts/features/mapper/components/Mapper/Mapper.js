@@ -3,7 +3,7 @@ import CSSTransitionGroup from 'react-addons-css-transition-group';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { actionCreators as mapperActions, viewConstants, selector } from '../..';
-import { actionCreators as shapeActions } from '../../../canvas';
+import { actionCreators as shapeActions } from '../../../canvas/reducers/canvas';
 import { actionCreators as sourceActions } from '../../../sources';
 
 import Schema from "../Schema";
@@ -14,8 +14,15 @@ import Properties  from "../Properties";
 import "./Mapper.scss";
 import { Flex, Box } from 'reflexbox'
 import '../../../../../styles/index.scss';
-import Paper from 'react-md/lib/Papers';
 import {schemaLookup, templateForPath} from '../../../../utils';
+import Paper from 'react-md/lib/Papers';
+
+
+import Card from 'react-md/lib/Cards/Card';
+import CardTitle from 'react-md/lib/Cards/CardTitle';
+import CardActions from 'react-md/lib/Cards/CardActions';
+import CardText from 'react-md/lib/Cards/CardText';
+
 
 const sourceName = (sources, sourceId)=>{
   for (source in sources){
@@ -163,13 +170,13 @@ export default class Mapper extends Component {
   renderMapper(){
       const {canvas:{templates, selected:{path}}} = this.props; 
       const template = templateForPath(path, templates);
-      return <Box>
-          <h2> mapper <small>{template && template.label}</small></h2>     
-          <Flex>
-              <Box col={6}>{this.renderSources()}</Box>
-              <Box col={6}>{this.renderComponents()}</Box>
-          </Flex>
-      </Box>
+      return  <Box>
+                <div style={{paddingBottom:7, fontWeight:"bold"}}>{template.label}</div>
+                <Flex>
+                    <Box col={6}>{this.renderSources()}</Box>
+                    <Box col={6}>{this.renderComponents()}</Box>
+                </Flex>
+            </Box>
   }
   renderMappings(){
     const {canvas:{templates}, sources:{sources}, mapper:{mappings}} = this.props;
@@ -200,28 +207,46 @@ export default class Mapper extends Component {
 
   render() {
 
+
     const {mapper:{open, selectedMapping, transformers}, canvas:{selected}, height} = this.props;
 
     return (
-              <div id="mapper" style={{width:viewConstants.MAPPER_WIDTH, boxSizing:'border-box', height: height-78, overflow:'auto'}}>
+              <div id="mapper" style={{width:viewConstants.MAPPER_WIDTH, boxSizing:'border-box', height: height, overflow:'auto'}}>
                  <Paper key={1} zDepth={1}>
-                  <Flex flexColumn={true}>
-                    <Box><h2>objects</h2></Box>
-                    {this.renderObjects()}
-                    {selected && this.renderProperties()}
-                    {selected && this.renderMapper()}
-                    <Box><h2>mappings</h2></Box>
-                    <Box>
-                      {this.renderMappings()}
-                      {selectedMapping && <Transformer selectedMapping={selectedMapping} transformer={transformers[selectedMapping.mappingId]} saveDialog={this.props.actions.saveTransformer.bind(null, selectedMapping.mappingId)} closeDialog={this.props.actions.selectMapping.bind(null,null)}/>}
-                    </Box>
-                    <Box>
-                      <h2> clone on </h2>
-                      <div>[show sources to select key]</div>
-                      <div> [x] hide prior to data </div>
-                    </Box>
-                  </Flex>
-
+                    <Card className="md-block-centered">
+                        <CardActions expander>
+                          objects
+                        </CardActions>
+                        <CardText style={{padding:0}}  expandable>
+                          {this.renderObjects()}
+                        </CardText>
+                    </Card>
+                    {selected && <Card className="md-block-centered">
+                        <CardActions expander>
+                          properties
+                        </CardActions>
+                        <CardText style={{padding:0}} expandable>
+                          {this.renderProperties()}
+                        </CardText>
+                    </Card>}
+                    {selected && <Card className="md-block-centered">
+                        <CardActions expander>
+                          mapper
+                        </CardActions>
+                        <CardText expandable>
+                          {this.renderMapper()}
+                        </CardText>
+                    </Card>}
+                    <Card className="md-block-centered">
+                        <CardActions expander>
+                          mappings
+                        </CardActions>
+                        <CardText expandable>
+                          {this.renderMappings()}
+                          <div>[show sources to select key]</div>
+                          <div> [x] hide prior to data </div>
+                        </CardText>
+                    </Card>
                   </Paper>
               </div>
            );

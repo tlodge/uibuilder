@@ -22,7 +22,7 @@ export default class Rect extends Component {
   	};
 
 	render(){
-		const {x,y,width,height,transform,style,onSelect} = this.props
+		const {x,y,rx,ry,width,height,transform,style,onSelect,onMouseDown} = this.props
 		const _style = camelise(style);
 		const is = _interpolatedStyles(_style)
 
@@ -31,7 +31,7 @@ export default class Rect extends Component {
 			 			const _s = Object.assign({},_style,item);
 			 				
 			 			return 	<g transform={transform}>
-			 					<rect x={item.x} y={item.y} width={item.width} height={item.height} style={_s} onClick={onSelect}/>
+			 					<rect rx={rx} ry={ry} x={item.x} y={item.y} width={item.width} height={item.height} style={_s} onClick={onSelect} onMouseDown={onMouseDown}/>
 			 				</g>
 					}}	 
 				</Motion>

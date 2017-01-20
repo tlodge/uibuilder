@@ -1,1 +1,1 @@
-export const PALETTE_WIDTH = 120;
+export const PALETTE_WIDTH = 60;

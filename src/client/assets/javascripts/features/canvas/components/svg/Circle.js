@@ -25,7 +25,7 @@ export default class Circle extends Component {
 
 	render(){
 	
-		const {id,cx,cy,r,selected, style, transform, onSelect} = this.props;
+		const {id,cx,cy,r,selected, style, transform, onSelect, onMouseDown} = this.props;
 		const _style = camelise(style);
 		const is = _interpolatedStyles(_style);
 		const {scale=1,rotate,translate} = componentsFromTransform(transform);
@@ -48,9 +48,9 @@ export default class Circle extends Component {
 			 					const _s = Object.assign({},_style,item);
 			 					
 			 					const _transform = `scale(${item.scale}),translate(${x},${y}),rotate(${item.rotate})`; 
-			 					
+			 														
 			 					return 	<g transform={transform}>
-			 								<circle cx={cx} cy={cy} r={item.r} style={_s} onClick={onSelect}/>
+			 								<circle cx={cx} cy={cy} r={item.r} style={_s} onClick={onSelect} onMouseDown={onMouseDown}/>
 			 							</g>
 						 	}}	 
 						</Motion>
