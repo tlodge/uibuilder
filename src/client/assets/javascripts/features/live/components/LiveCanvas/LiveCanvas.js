@@ -1,11 +1,15 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import { actionCreators as liveActions, selector } from '../../reducers/live';
-import '../Canvas.scss';
+import { actionCreators as liveActions, selector } from '../../';
+import './Canvas.scss';
 import {Circle,Ellipse,Text,Rect,Line,Path,Group} from '../svg/';
-import {PALETTE_WIDTH} from '../../../palette/constants';
+import {PALETTE_WIDTH} from 'features/palette/constants';
 
+
+/*
+  TODO:   MAKE THIS A NEW FEATURE SET and SPLIT OUT SVG COMPONENTS!!
+*/
 
 @connect(selector, (dispatch) => {
   return{

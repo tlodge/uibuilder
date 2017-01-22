@@ -2,8 +2,8 @@
 
 import { createStructuredSelector } from 'reselect';
 import { State } from 'models/mapper';
-import {NAME as CANVASNAME, actionCreators as templateActions} from '../canvas/reducers/canvas'
-import {NAME as LIVENAME, actionCreators as liveActions} from '../canvas/reducers/live'
+import {NAME as CANVASNAME, actionCreators as templateActions} from '../canvas/'
+import {NAME as LIVENAME, actionCreators as liveActions} from '../live'
 import {NAME as SOURCENAME} from '../sources'
 import {DatasourceManager} from '../../datasources';
 import {generateId, defaultCode} from '../../utils';

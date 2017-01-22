@@ -2,7 +2,6 @@ import React, { Component, PropTypes } from 'react';
 
 import TemplateItem from './TemplateItem';
 import { Flex, Box } from 'reflexbox'
-import Divider from 'react-md/lib/Dividers';
 
 export default class TemplateList extends Component {
   
@@ -45,7 +44,6 @@ export default class TemplateList extends Component {
     return (
       <Flex column align="center" justify="center">
         {this.renderShapes()}
-       <Divider inset/>
         {this.renderGroups()}
       </Flex>
     );

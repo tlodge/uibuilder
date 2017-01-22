@@ -1,12 +1,12 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import { actionCreators as canvasActions, selector } from '../../reducers/canvas';
-import '../Canvas.scss';
+import { actionCreators as canvasActions, selector } from '../../';
+import './Canvas.scss';
 import {Circle,Ellipse,Text,Rect,Line,Path,Group} from '../svg/';
 import { DropTarget } from 'react-dnd';
-import {DatasourceManager} from '../../../../datasources';
-import {PALETTE_WIDTH} from '../../../palette/constants';
+import {DatasourceManager} from 'datasources';
+import {PALETTE_WIDTH} from 'features/palette/constants';
 
 
 function collect(connect, monitor) {

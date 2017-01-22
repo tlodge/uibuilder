@@ -3,7 +3,7 @@ import CSSTransitionGroup from 'react-addons-css-transition-group';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { actionCreators as mapperActions, viewConstants, selector } from '../..';
-import { actionCreators as shapeActions } from '../../../canvas/reducers/canvas';
+import { actionCreators as shapeActions } from '../../../canvas/';
 import { actionCreators as sourceActions } from '../../../sources';
 
 import Schema from "../Schema";

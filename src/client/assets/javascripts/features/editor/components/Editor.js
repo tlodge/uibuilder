@@ -6,7 +6,7 @@ import { actionCreators as editorActions, selector } from '../';
 import { actionCreators as sourceActions} from '../../sources';
 
 import EditorCanvas from '../../canvas/components/EditorCanvas';
-import LiveCanvas from '../../canvas/components/LiveCanvas';
+import LiveCanvas from '../../live/components/LiveCanvas';
 
 import Palette from '../../palette/components';
 import Mapper from '../../mapper/components/Mapper';
@@ -65,7 +65,7 @@ export default class Editor extends Component {
               </div> 
             </DragDropContainer>
             <Mapper height={h}/>
-            <Toolbar colored title={view} actions={actions} style={{position:'fixed', width:w-MAPPER_WIDTH-PALETTE_WIDTH-15, background:"#3f51b5", left:PALETTE_WIDTH, bottom:0}}/>
+            <Toolbar colored title={view} actions={actions} style={{position:'fixed', width:w-MAPPER_WIDTH-PALETTE_WIDTH/*-15*/, background:"#3f51b5", left:PALETTE_WIDTH, bottom:0}}/>
           </div>
     	);
   	}

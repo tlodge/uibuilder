@@ -2,7 +2,7 @@
 
 import { createStructuredSelector } from 'reselect';
 import { State } from 'models/canvas';
-import {createTemplate, createGroupTemplate, typeForProperty, generateId, componentsFromTransform, scalePreservingOrigin, originForNode, templateForPath} from '../../../../utils/';
+import {createTemplate, createGroupTemplate, typeForProperty, generateId, componentsFromTransform, scalePreservingOrigin, originForNode, templateForPath} from 'utils';
 import _ from 'lodash';
 
 // Action Types
