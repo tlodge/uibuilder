@@ -244,7 +244,7 @@ function _text(x:number, y:number){
 			opacity: 1,
 			'text-decoration': 'none',
 			'font-weight': 'normal',
-			'font-size': 10,
+			'font-size': 30,
 			'font-style': 'normal',
 		}
 	}

@@ -1,19 +1,7 @@
 import React, { Component } from 'react';
-import {Motion, spring} from 'react-motion';
-import {schemaLookup, camelise, interpolatedStyles,componentsFromTransform } from 'utils';
-import _ from 'lodash';
+import '../EditorCanvas/Canvas.scss';
+import {camelise} from 'utils';
 
-
-const styles = Object.keys(schemaLookup("circle").style).map((c)=>_.camelCase(c));
-
-const schema = {...schemaLookup("circle").attributes, ...schemaLookup("circle").style};
-
-const types = Object.keys(schema).reduce((acc,key)=>{
-	acc[_.camelCase(key)] = schema[key].type;
-	return acc;
-},{});
-
-const _interpolatedStyles = interpolatedStyles.bind(null,styles,types);
 
 export default class Circle extends Component {
 	
@@ -22,39 +10,49 @@ export default class Circle extends Component {
    		onSelect: ()=>{}
   	};
 
-	render(){
-	
-		const {id,cx,cy,r,selected, style, transform, onSelect, onMouseDown} = this.props;
-		const _style = camelise(style);
-		const is = _interpolatedStyles(_style);
-		const {scale=1,rotate,translate} = componentsFromTransform(transform);
-		const [x,y]= translate || [0,0];
-		
-		const motionstyle = {
-			cx: spring(Number(cx) || 0),
-			cy: spring(Number(cy) || 0),
-			r:spring(Number(r) || 0),
-			scale: spring(Number(scale)),
-			tx: spring(Number(x) || 0),
-			ty: spring(Number(y) || 0),
-			rotate: spring(Number(rotate) || 0),
-			...is,
+  	constructor(props){
+  		super(props);
+  		
+  	}
+
+  	renderControls(r){
+  		
+  		const {cx,cy,onExpand} = this.props;
+  		
+  		const style = {
+			stroke: "black",
+			strokeWidth: 1,
+			fill: '#3f51b5',
 		}
 
-		return (	
-						<Motion style={motionstyle}>
-			 				{(item) => {
-			 					const _s = Object.assign({},_style,item);
-			 					
-			 					const _transform = `scale(${item.scale}),translate(${x},${y}),rotate(${item.rotate})`; 
-			 														
-			 					return 	<g transform={transform}>
-			 								<circle cx={cx} cy={cy} r={item.r} style={_s} onClick={onSelect} onMouseDown={onMouseDown}/>
-			 							</g>
-						 	}}	 
-						</Motion>
-					
-				)
+  		return 	<g>
+  					<circle style={style} cx={cx-r} cy={cy-r} r={6} onMouseDown={onExpand}/> 
+  					<circle style={style} cx={cx+r} cy={cy+r} r={6} onMouseDown={onExpand}/> 
+  					<circle style={style} cx={cx+r} cy={cy-r} r={6} onMouseDown={onExpand}/> 
+  					<circle style={style} cx={cx-r} cy={cy+r} r={6} onMouseDown={onExpand}/>
+  				</g>
+  	}
+
+	render(){
+
+		const {id,cx,cy,r,selected, style, transform, onSelect, onMouseDown} = this.props;
+		const _style = camelise(style);
+
+
+		const _selectedstyle = {
+			stroke: "#3f51b5",
+			strokeWidth: 2,
+			fill: 'none',
+		}
+	
+		const selectedr = (Number(r)+2+Number(_style.strokeWidth ? _style.strokeWidth/2:0));
+
+		return 	<g transform={transform}>
+			 		<circle cx={cx} cy={cy} r={r} style={_style} onClick={onSelect} onMouseDown={onMouseDown}></circle>
+			 		{selected && <circle cx={cx} cy={cy} r={selectedr} style={_selectedstyle}></circle>}
+			 		{selected && this.renderControls(selectedr)}
+			 	</g>
+		
 		
 	}
 }

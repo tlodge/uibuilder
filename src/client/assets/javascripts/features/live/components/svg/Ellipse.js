@@ -13,9 +13,6 @@ const types = Object.keys(schema).reduce((acc,key)=>{
 
 const _interpolatedStyles = interpolatedStyles.bind(null,styles,types);
 
-const degToRad = (degrees)=>{
-	return (Math.PI / 180) + degrees; 
-}
 
 export default class Ellipse extends Component {
 	

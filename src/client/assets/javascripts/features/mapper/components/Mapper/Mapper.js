@@ -213,7 +213,7 @@ export default class Mapper extends Component {
     return (
               <div id="mapper" style={{width:viewConstants.MAPPER_WIDTH, boxSizing:'border-box', height: height, overflow:'auto'}}>
                  <Paper key={1} zDepth={1}>
-                    <Card className="md-block-centered">
+                    <Card className="md-block-centered" >
                         <CardActions expander>
                           objects
                         </CardActions>

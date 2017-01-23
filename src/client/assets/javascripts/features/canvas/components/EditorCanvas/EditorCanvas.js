@@ -42,6 +42,8 @@ class EditorCanvas extends Component {
     this.onMouseUp = bindActionCreators(canvasActions.onMouseUp, props.dispatch);
     this.onMouseDown = bindActionCreators(canvasActions.onMouseDown, props.dispatch);
     this.templateSelected = bindActionCreators(canvasActions.templateSelected, props.dispatch);
+    this.onExpand = bindActionCreators(canvasActions.onExpand, props.dispatch);
+
   }	
 
   _onMouseMove(e){
@@ -55,12 +57,14 @@ class EditorCanvas extends Component {
                        selected: selected,
                        onSelect: this.templateSelected.bind(null,{path:[template.id], type:template.type}),
                        onMouseDown: this.onMouseDown.bind(null, {path:[template.id], type: template.type}),
+                       onExpand: this.onExpand.bind(null, template.id),
                        ...template, 
                     };
-
+    
       switch(template.type){
           
           case "circle":
+          
             return <Circle key={template.id} {...props}/>
           
           case "ellipse":
@@ -146,9 +150,12 @@ class EditorCanvas extends Component {
   
     const {canvas:{templates, selected}} = this.props;
     
-    return Object.keys(templates).map((key)=>{
+    console.log("in render templates and selected is");
+    console.log(selected);
 
-       return this.renderTemplate(templates[key], selected && selected.templateId === templates[key].id);
+    return Object.keys(templates).map((key)=>{
+       const amselected = selected && selected.path.indexOf(templates[key].id) !== -1;
+       return this.renderTemplate(templates[key], amselected);
     });
   }
 

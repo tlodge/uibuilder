@@ -7,7 +7,7 @@ import _ from 'lodash';
 
 // Action Types
 
-
+const EXPAND                     = 'uibuilder/canvas/EXPAND';
 const MOUSE_MOVE                 = 'uibuilder/canvas/MOUSE_MOVE';
 const MOUSE_UP                   = 'uibuilder/canvas/MOUSE_UP';
 const MOUSE_DOWN                 = 'uibuilder/canvas/MOUSE_DOWN';
@@ -23,13 +23,9 @@ const UPDATE_TEMPLATE_STYLE      = 'uibuilder/canvas/UPDATE_TEMPLATE_STYLE';
 const INIT_NODES                 = 'uibuilder/canvas/INIT_NODES';
 
 // This will be used in our root reducer and selectors
-
-let sfcount = 1;
-let degcount = 0;
-
 export const NAME = 'canvas';
 
-const enterKey = "name";
+
 
 // Define the initial state for `shapes` module
 
@@ -39,6 +35,7 @@ const initialState: State = {
   x: 0,
   y: 0,
   dragging: false,
+  expanding: false,
   dx: 0, //drag x pos
   dy: 0, //drag y pos
 };
@@ -126,6 +123,7 @@ const _updateTemplateStyle = (templates, action)=>{
   // _updateTemplateStyle(templates.children[id], )});
 }
 
+
 const _updateTemplateAttribute = (templates, action)=>{
 
   const path = action.path;
@@ -167,6 +165,7 @@ const _moveTemplate = (template, x, y)=>{
   switch (template.type){
       case "group":
       case "rect":
+      case "text":
         return Object.assign({}, template, {x,y});
       
       case "ellipse":
@@ -178,12 +177,75 @@ const _moveTemplate = (template, x, y)=>{
   return template;
 }
 
+
+const _expandTemplate = (template, x, y)=>{
+    switch (template.type){
+
+      case "circle":
+        const dx = x - template.cx;
+        const dy = y - template.cy;
+        const r  = Math.sqrt((dx*dx) + (dy*dy)); 
+        return Object.assign({}, template, {r});
+
+      case "ellipse":
+        const rx = Math.abs(x - template.cx);
+        const ry = Math.abs(y - template.cy); 
+        return Object.assign({}, template, {rx, ry});
+      
+      case "rect":
+
+        const right   = Math.abs(x - template.x) >  Math.abs(x- (template.x + template.width));
+        const bottom  = Math.abs(y - template.y) > Math.abs(y - (template.y + template.height));
+
+        if (right && bottom){
+            return Object.assign({}, template, {width:x-template.x,height:y-template.y})
+        }
+        if (right && !bottom){
+            return Object.assign({}, template, {
+                                                  width:x-template.x, 
+                                                  y:y,
+                                                  height: template.height + template.y-y
+                                                });
+        }
+        if (!right && bottom){
+             return Object.assign({}, template, {
+                                                    x: x,
+                                                    width: template.width + template.x-x,
+                                                    height:y-template.y})
+        }
+
+        if (!right && !bottom){
+          return Object.assign({}, template, {
+                                                  x: x,
+                                                  y: y,
+                                                  width: template.width + template.x-x,
+                                                  height: template.height + template.y-y
+                                              });
+          
+        }
+
+      default:
+        return template;
+    }
+}
+
+
+
 const _modifyTemplate = (state, action)=>{
 
-    if (state.dragging && state.selected){
+    if (state.selected){
         const [id,...rest] = state.selected.path;
-        return Object.assign({}, state.templates, {[id] : _moveTemplate(state.templates[id], action.x-state.dx, action.y-state.dy)});       
+        const _tmpl = state.templates[id];
+
+        if (state.dragging){
+          return Object.assign({}, state.templates, {[id] : _moveTemplate(_tmpl, action.x-state.dx, action.y-state.dy)});       
+        }
+
+        if (state.expanding){
+          return Object.assign({}, state.templates, {[id] : _expandTemplate(_tmpl, action.x, action.y)});
+        }
     }
+
     return state.templates;
 
 }
@@ -195,6 +257,7 @@ const _templatecoords = (template)=>{
     
     case "rect":
     case "group":
+    case "text":
         return {x:template.x, y:template.y};
 
     case "circle":
@@ -237,8 +300,9 @@ export default function reducer(state: State = initialState, action: any = {}): 
 
     case MOUSE_UP:
        return Object.assign({}, state,  {
-                                            selected: null,
-                                            dragging: false
+                                            selected: state.expanding? state.selected: null,
+                                            dragging: false,
+                                            expanding: false,
                                         });
     
     case TEMPLATE_DROPPED:
@@ -274,6 +338,8 @@ export default function reducer(state: State = initialState, action: any = {}): 
     case UPDATE_TEMPLATE_ATTRIBUTE:
       return Object.assign({}, state, {templates:_updateTemplateAttribute(state.templates,action)});
 
+    case EXPAND:
+      return Object.assign({}, state, {expanding:true});
 
     default:
       return state;
@@ -301,6 +367,13 @@ function onMouseUp(){
   return {
     type: MOUSE_UP
   };
+}
+
+function onExpand(templateId){
+  return {
+    type: EXPAND,
+    templateId,
+  }
 }
 
 function templateDropped(template:string, x:number, y:number) {
@@ -367,6 +440,7 @@ export const actionCreators = {
   mouseMove,
   onMouseUp,
   onMouseDown,
+  onExpand,
   templateDropped,
   groupTemplateDropped,
   templateSelected,

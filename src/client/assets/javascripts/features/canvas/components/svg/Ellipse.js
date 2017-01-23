@@ -1,21 +1,5 @@
 import React, { Component } from 'react';
-import {Motion, spring} from 'react-motion';
-import {schemaLookup, camelise, interpolatedStyles} from 'utils';
-import _ from 'lodash';
-
-const schema = {...schemaLookup("circle").attributes, ...schemaLookup("circle").style};
-const styles = Object.keys(schemaLookup("circle").style).map((c)=>_.camelCase(c));
-
-const types = Object.keys(schema).reduce((acc,key)=>{
-	acc[_.camelCase(key)] = schema[key].type;
-	return acc;
-},{});
-
-const _interpolatedStyles = interpolatedStyles.bind(null,styles,types);
-
-const degToRad = (degrees)=>{
-	return (Math.PI / 180) + degrees; 
-}
+import {camelise} from 'utils';
 
 export default class Ellipse extends Component {
 	
@@ -23,25 +7,43 @@ export default class Ellipse extends Component {
    		transform: "translate(0,0)"
   	};
 
+  	renderControls(rx, ry){
+  		
+  		const {cx,cy,onExpand} = this.props;
+  		
+  		const style = {
+			stroke: "black",
+			strokeWidth: 1,
+			fill: '#3f51b5',
+		}
+
+  		return 	<g>
+  					<circle style={style} cx={cx-rx} cy={cy-ry} r={6} onMouseDown={onExpand}/> 
+  					<circle style={style} cx={cx+rx} cy={cy+ry} r={6} onMouseDown={onExpand}/> 
+  					<circle style={style} cx={cx+rx} cy={cy-ry} r={6} onMouseDown={onExpand}/> 
+  					<circle style={style} cx={cx-rx} cy={cy+ry} r={6} onMouseDown={onExpand}/>
+  				</g>
+  	}
+
 	render(){
 	
 		const {id,cx,cy,rx,ry,selected, style,transform, onSelect, onMouseDown} = this.props;
 
 		const _style = camelise(style);
-		const is = _interpolatedStyles(_style);
-
-		return (	
-						<Motion style={{cx: spring(Number(cx) || 0), cy: spring(Number(cy) || 0), rx:spring(Number(rx) || 0), ry:spring(Number(ry) || 0), ...is}}>
-			 				{(item) => {
-			 					const _s = Object.assign({},_style,item);
-			 					
-			 					return 	<g transform={transform}>
-			 								<ellipse cx={item.cx} cy={item.cy} rx={item.rx} ry={item.ry} style={_s} onClick={onSelect} onMouseDown={onMouseDown}/>
-			 							</g>
-						 	}}	 
-						</Motion>
-					
-				)
 		
+		const _selectedstyle = {
+			stroke: "#3f51b5",
+			strokeWidth: 2,
+			fill: 'none',
+		}
+	
+		const selectedrx = (Number(rx)+2+Number(_style.strokeWidth ? _style.strokeWidth/2:0));
+		const selectedry = (Number(ry)+2+Number(_style.strokeWidth ? _style.strokeWidth/2:0));
+		
+		return 	<g transform={transform}>
+			 		<ellipse cx={cx} cy={cy} rx={rx} ry={ry} style={_style} onClick={onSelect} onMouseDown={onMouseDown}/>
+			 		{selected && this.renderControls(selectedrx, selectedry)}
+			 	</g>
+
 	}
 }
