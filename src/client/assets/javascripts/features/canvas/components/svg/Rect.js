@@ -10,7 +10,7 @@ export default class Rect extends Component {
 
   	renderControls(x,y, width, height){
   		
-  		const {onExpand} = this.props;
+  		const {onExpand, onRotate, r} = this.props;
   		
   		const style = {
 			stroke: "black",
@@ -18,7 +18,20 @@ export default class Rect extends Component {
 			fill: '#3f51b5',
 		}
 
+		const rotatestyle = {
+			stroke: "black",
+			strokeWidth: 1,
+			fill: 'red',
+		}
+
+		const linestyle = {
+			stroke: "#3f51b5",
+			strokeWidth: 2,
+		}
+
   		return 	<g>
+  					<circle style={rotatestyle}  cx={x+width/2} cy={y-40} r={6} onMouseDown={onRotate}/>
+  					<line style={linestyle} x1={x+width/2} x2={x+width/2} y1={y-40+6} y2={y}/>
   					<circle style={style} cx={x} cy={y} r={6} onMouseDown={onExpand}/> 
   					<circle style={style} cx={x} cy={y+height} r={6} onMouseDown={onExpand}/> 
   					<circle style={style} cx={x+width} cy={y} r={6} onMouseDown={onExpand}/> 

@@ -10,6 +10,7 @@ const commands = ['M','m','L','l', 'H', 'h', 'V', 'v', 'C', 'c','S', 's', 'Q', '
 // Action Types
 
 const EXPAND                     = 'uibuilder/canvas/EXPAND';
+const ROTATE                     = 'uibuilder/canvas/ROTATE';
 const MOUSE_MOVE                 = 'uibuilder/canvas/MOUSE_MOVE';
 const MOUSE_UP                   = 'uibuilder/canvas/MOUSE_UP';
 const MOUSE_DOWN                 = 'uibuilder/canvas/MOUSE_DOWN';
@@ -35,6 +36,7 @@ const initialState: State = {
   y: 0,
   dragging: false,
   expanding: false,
+  rotating: false,
   dx: 0, //drag x pos
   dy: 0, //drag y pos
 };
@@ -246,6 +248,33 @@ const _scaleTemplate = (template, sf)=>{
     }
 }
 
+
+const _rotateTemplate = (template, x, y)=>{
+    switch (template.type){
+        
+        case "rect":
+          
+            const dx = x - template.x; 
+            const r = 40 + template.height/2;
+
+            console.log("dx is " + dx);
+            console.log("r is " + r);
+            console.log(dx/r);
+
+            const theta = Math.asin(dx/r);
+            console.log("theta is  " + theta);
+
+            const angle = theta * (180/Math.PI)
+            console.log("amgle is " + angle);
+            return Object.assign({}, template, {
+                transform: `rotate(${angle}, ${template.x + template.width/2}, ${template.y + template.height/2})`
+            });
+
+        default:
+            return template;
+    }
+}
+
 const _expandTemplate = (template, x, y)=>{
   
     switch (template.type){
@@ -358,6 +387,10 @@ const _modifyTemplate = (state, action)=>{
         if (state.expanding){
           return Object.assign({}, state.templates, {[id] : _expandTemplate(_tmpl, action.x, action.y)});
         }
+
+        if (state.rotating){
+          return Object.assign({}, state.templates, {[id] : _rotateTemplate(_tmpl, action.x, action.y)});
+        }
     }
 
     return state.templates;
@@ -453,7 +486,10 @@ export default function reducer(state: State = initialState, action: any = {}): 
       return Object.assign({}, state, {templates:_updateTemplateAttribute(state.templates,action)});
 
     case EXPAND:
-      return Object.assign({}, state, {expanding:true, dragging:false});
+      return Object.assign({}, state, {expanding:true, dragging:false, rotating:false});
+
+    case ROTATE:
+      return Object.assign({}, state, {expanding:false, dragging:false, rotating:true});
 
     case DELETE:
       return Object.assign({}, state, {templates: _deleteTemplate(state), selected: null});
@@ -490,6 +526,12 @@ function onExpand(templateId){
   return {
     type: EXPAND,
     templateId,
+  }
+}
+
+function onRotate(){
+  return {
+    type: ROTATE,
   }
 }
 
@@ -565,6 +607,7 @@ export const actionCreators = {
   onMouseUp,
   onMouseDown,
   onExpand,
+  onRotate,
   deletePressed,
   templateDropped,
   groupTemplateDropped,

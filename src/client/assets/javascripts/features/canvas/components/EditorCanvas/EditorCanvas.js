@@ -38,12 +38,16 @@ class EditorCanvas extends Component {
   constructor(props, context){
   	super(props, context);
   	this._onMouseMove = this._onMouseMove.bind(this);
+
+    
     this.mouseMove = bindActionCreators(canvasActions.mouseMove, props.dispatch);
     this.onMouseUp = bindActionCreators(canvasActions.onMouseUp, props.dispatch);
     this.onMouseDown = bindActionCreators(canvasActions.onMouseDown, props.dispatch);
     this.templateSelected = bindActionCreators(canvasActions.templateSelected, props.dispatch);
     this.onExpand = bindActionCreators(canvasActions.onExpand, props.dispatch);
+    this.onRotate =bindActionCreators(canvasActions.onRotate, props.dispatch);
     this.deletePressed = bindActionCreators(canvasActions.deletePressed, props.dispatch);
+
     this._handleKeyDown = this._handleKeyDown.bind(this);
 
     window.addEventListener('keydown', this._handleKeyDown);
@@ -61,6 +65,7 @@ class EditorCanvas extends Component {
                        onSelect: this.templateSelected.bind(null,{path:[template.id], type:template.type}),
                        onMouseDown: this.onMouseDown.bind(null, {path:[template.id], type: template.type}),
                        onExpand: this.onExpand.bind(null, template.id),
+                       onRotate: this.onRotate.bind(null, template.id),
                        ...template, 
                     };
     
@@ -107,9 +112,6 @@ class EditorCanvas extends Component {
   renderTemplates(){
   
     const {canvas:{templates, selected}} = this.props;
-    
-    console.log("in render templates and selected is");
-    console.log(selected);
 
     return Object.keys(templates).map((key)=>{
        const path = selected ? selected.path : [];
