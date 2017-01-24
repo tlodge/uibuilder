@@ -65,7 +65,7 @@ export default class Mapper extends Component {
   
   constructor(props){
       super(props);
-      this.state = { activeTabIndex: 0};
+      this.state = { activeTabIndex: 0, propertiesExpanded:false, objectsExpanded:false, mapperExpanded:false, mappingsExpanded:false};
       this._handleTabChange = this._handleTabChange.bind(this);
       this._toggleSelected = this._toggleSelected.bind(this);
   }
@@ -170,6 +170,13 @@ export default class Mapper extends Component {
   renderMapper(){
       const {canvas:{templates, selected:{path}}} = this.props; 
       const template = templateForPath(path, templates);
+
+      console.log("***************************");
+      console.log("getting template for path");
+      console.log(path);
+      console.log(template);
+       console.log("***************************");
+
       return  <Box>
                 <div style={{paddingBottom:7, fontWeight:"bold"}}>{template.label}</div>
                 <Flex>
@@ -209,36 +216,37 @@ export default class Mapper extends Component {
 
 
     const {mapper:{open, selectedMapping, transformers}, canvas:{selected}, height} = this.props;
+    const {propertiesExpanded, objectsExpanded, mappingsExpanded, mapperExpanded} = this.state;
 
     return (
               <div id="mapper" style={{width:viewConstants.MAPPER_WIDTH, boxSizing:'border-box', height: height, overflow:'auto'}}>
                  <Paper key={1} zDepth={1}>
-                    <Card className="md-block-centered" >
-                        <CardActions expander>
+                    <Card className="md-block-centered"  expanded={objectsExpanded} onExpanderClick={()=>{this.setState({objectsExpanded:!objectsExpanded})}}>
+                        <CardActions expander onClick={()=>{this.setState({objectsExpanded:!objectsExpanded})}}>
                           objects
                         </CardActions>
                         <CardText style={{padding:0}}  expandable>
                           {this.renderObjects()}
                         </CardText>
                     </Card>
-                    {selected && <Card className="md-block-centered">
-                        <CardActions expander>
+                    {selected && <Card className="md-block-centered" defaultExpanded onExpanderClick={()=>{this.setState({propertiesExpanded:!propertiesExpanded})}}>
+                        <CardActions expander onClick={()=>{this.setState({propertiesExpanded:!propertiesExpanded})}}>
                           properties
                         </CardActions>
                         <CardText style={{padding:0}} expandable>
                           {this.renderProperties()}
                         </CardText>
                     </Card>}
-                    {selected && <Card className="md-block-centered">
-                        <CardActions expander>
+                    {selected && <Card className="md-block-centered" expanded={mapperExpanded} onExpanderClick={()=>{this.setState({mapperExpanded:!mapperExpanded})}}>
+                        <CardActions expander onClick={()=>{this.setState({mapperExpanded:!mapperExpanded})}}>
                           mapper
                         </CardActions>
                         <CardText expandable>
                           {this.renderMapper()}
                         </CardText>
                     </Card>}
-                    <Card className="md-block-centered">
-                        <CardActions expander>
+                    <Card className="md-block-centered" expanded={mappingsExpanded} onExpanderClick={()=>{this.setState({mappingsExpanded:!mappingsExpanded})}}>
+                        <CardActions expander onClick={()=>{this.setState({mappingsExpanded:!mappingsExpanded})}}>
                           mappings
                         </CardActions>
                         <CardText expandable>

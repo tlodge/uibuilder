@@ -2,8 +2,10 @@
 
 import { createStructuredSelector } from 'reselect';
 import { State } from 'models/canvas';
-import {createTemplate, createGroupTemplate, typeForProperty, generateId, componentsFromTransform, scalePreservingOrigin, originForNode, templateForPath} from 'utils';
+import {createTemplate, createGroupTemplate, typeForProperty, generateId, componentsFromTransform, scalePreservingOrigin, originForNode, templateForPath, pathBounds} from 'utils';
 import _ from 'lodash';
+
+const commands = ['M','m','L','l', 'H', 'h', 'V', 'v', 'C', 'c','S', 's', 'Q', 'q', 'T', 't', 'A', 'a', 'Z', 'z'];
 
 // Action Types
 
@@ -15,12 +17,9 @@ const TEMPLATE_DROPPED           = 'uibuilder/canvas/TEMPLATE_DROPPED';
 const GROUP_TEMPLATE_DROPPED     = 'uibuilder/canvas/GROUP_TEMPLATE_DROPPED';
 const TEMPLATE_SELECTED          = 'uibuilder/canvas/TEMPLATE_SELECTED';
 const TEMPLATE_PARENT_SELECTED   = 'uibuilder/canvas/TEMPLATE_PARENT_SELECTED';
-const UPDATE_NODE_ATTRIBUTE      = 'uibuilder/canvas/UPDATE_NODE_ATTRIBUTE';
-const UPDATE_NODE_STYLE          = 'uibuilder/canvas/UPDATE_NODE_STYLE';
-const UPDATE_NODE_TRANSFORM      = 'uibuilder/canvas/UPDATE_NODE_TRANSFORM';
 const UPDATE_TEMPLATE_ATTRIBUTE  = 'uibuilder/canvas/UPDATE_TEMPLATE_ATTRIBUTE';
 const UPDATE_TEMPLATE_STYLE      = 'uibuilder/canvas/UPDATE_TEMPLATE_STYLE';
-const INIT_NODES                 = 'uibuilder/canvas/INIT_NODES';
+const DELETE                     = 'uibuilder/canvas/DELETE';
 
 // This will be used in our root reducer and selectors
 export const NAME = 'canvas';
@@ -177,8 +176,78 @@ const _moveTemplate = (template, x, y)=>{
   return template;
 }
 
+export function _scalePath(sf, path){
+  
+  let lasttoken = "";
+
+  return path.split(/\s+/).map((token)=>{
+    if (commands.indexOf(token.trim()) == -1){
+           
+      let [x, y] = token.split(",");
+      x = parseFloat(x) * sf;
+      y = parseFloat(y) * sf;
+      return `${x},${y}`
+    }
+    lasttoken = token;
+    return token;
+  }).join(" ");
+
+}
+
+export function _expandPath(x,y, template){
+
+  //calculate the new width of the path
+  
+  const b = pathBounds(template);
+  const nw = x-b.x;
+  const sf = nw/b.width; 
+  return _scalePath(sf,template.path);
+}
+
+
+const _scaleTemplate = (template, sf)=>{
+    switch (template.type){
+      
+      case "circle":
+        return Object.assign({}, template, {
+                                              r:template.r*sf,
+                                              cx: template.cx*sf,
+                                              cy: template.cy*sf,
+                                            });
+
+      case "ellipse":
+        return Object.assign({}, template, {
+                                              rx:template.rx*sf, 
+                                              ry:template.ry*sf,  
+                                              cx: template.cx*sf,
+                                              cy: template.cy*sf,
+                                          });
+
+      case "rect":
+        return Object.assign({}, template, {
+                                                x: template.x*sf,
+                                                y: template.y*sf,
+                                                width:template.width*sf, 
+                                                height:template.height*sf
+                                            });
+
+      case "path":
+        return Object.assign({}, template, {d: _scalePath(sf,template.d)});
+
+      case "group":
+        return Object.assign({}, template, {
+                                                width: template.width * sf,
+                                                height: template.height * sf,
+                                                children: Object.keys(template.children).reduce((acc,key)=>{
+                                                      acc[key] = _scaleTemplate(template.children[key],sf)
+                                                      return acc;
+                                                },{})
+                                            })
+    }
+}
 
 const _expandTemplate = (template, x, y)=>{
+  
     switch (template.type){
 
       case "circle":
@@ -224,12 +293,57 @@ const _expandTemplate = (template, x, y)=>{
           
         }
 
+      case "path":
+
+        return Object.assign({}, template, {
+                                                d: _expandPath(x,y,template)
+
+                                            });
+
+      //recursively alter size of all!
+
+      case "group":
+         const nw = x-template.x;
+         const nh = y-template.y;
+         const sf = Math.max(nw/template.width, nh/template.height);
+         if (sf > 0){
+            const attrs = {
+              width: sf * template.width,
+              height: sf * template.height,
+            }
+         
+            return Object.assign({}, template, {
+                                                ...attrs,
+                                                children: Object.keys(template.children).reduce((acc,key)=>{
+                                                      acc[key] = _scaleTemplate(template.children[key],sf);
+                                                      return acc;
+                                                },{})
+                                            })
+        }
+
+        return template;
+
       default:
         return template;
     }
 }
 
+const _deleteTemplate = (state)=>{
 
+    if (state.selected && state.selected.path){
+
+        const [id, ...rest] = state.selected.path;
+      
+        return  Object.keys(state.templates).reduce((acc,key)=>{
+            if (key !== id){
+              acc[key] = state.templates[key];
+            }
+            return acc;
+        },{});     
+    }
+
+    return state.templates;
+}
 
 const _modifyTemplate = (state, action)=>{
 
@@ -292,7 +406,7 @@ export default function reducer(state: State = initialState, action: any = {}): 
 
       return Object.assign({}, state,  {
                                             selected: action.path,
-                                            dragging: true,
+                                            dragging: !state.expanding,
                                             dx: state.x-x,
                                             dy: state.y-y,
                                         });
@@ -339,7 +453,10 @@ export default function reducer(state: State = initialState, action: any = {}): 
       return Object.assign({}, state, {templates:_updateTemplateAttribute(state.templates,action)});
 
     case EXPAND:
-      return Object.assign({}, state, {expanding:true});
+      return Object.assign({}, state, {expanding:true, dragging:false});
+
+    case DELETE:
+      return Object.assign({}, state, {templates: _deleteTemplate(state), selected: null});
 
     default:
       return state;
@@ -373,6 +490,13 @@ function onExpand(templateId){
   return {
     type: EXPAND,
     templateId,
+  }
+}
+
+function deletePressed(){
+
+  return {
+    type: DELETE,
   }
 }
 
@@ -441,6 +565,7 @@ export const actionCreators = {
   onMouseUp,
   onMouseDown,
   onExpand,
+  deletePressed,
   templateDropped,
   groupTemplateDropped,
   templateSelected,

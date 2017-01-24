@@ -43,7 +43,10 @@ class EditorCanvas extends Component {
     this.onMouseDown = bindActionCreators(canvasActions.onMouseDown, props.dispatch);
     this.templateSelected = bindActionCreators(canvasActions.templateSelected, props.dispatch);
     this.onExpand = bindActionCreators(canvasActions.onExpand, props.dispatch);
+    this.deletePressed = bindActionCreators(canvasActions.deletePressed, props.dispatch);
+    this._handleKeyDown = this._handleKeyDown.bind(this);
 
+    window.addEventListener('keydown', this._handleKeyDown);
   }	
 
   _onMouseMove(e){
@@ -52,9 +55,9 @@ class EditorCanvas extends Component {
   }
 
 
-  renderTemplate(template, selected){
+  renderTemplate(template, path){
       const props = {
-                       selected: selected,
+                       selected: path,
                        onSelect: this.templateSelected.bind(null,{path:[template.id], type:template.type}),
                        onMouseDown: this.onMouseDown.bind(null, {path:[template.id], type: template.type}),
                        onExpand: this.onExpand.bind(null, template.id),
@@ -86,10 +89,11 @@ class EditorCanvas extends Component {
            
             return <Group key={template.id} {
                                               ...{
-                                                  selected: selected,
+                                                  selected: path,
                                                   ...template,
                                                   onSelect: this.templateSelected,
                                                   onMouseDown: this.onMouseDown,
+                                                  onExpand: this.onExpand.bind(null, template.id),
                                               }
                                             }/>
 
@@ -99,52 +103,6 @@ class EditorCanvas extends Component {
 
   }
 
-  renderNode(node){
-     
-      
-      switch(node.type){
-          
-          case "circle":
-            return <Circle key={node.nodeId} {...node}/>
-
-          case "ellipse":
-            return <Ellipse key={node.nodeId} {...node}/>
-
-          case "rect":
-            return <Rect key={node.nodeId} {...node}/>
-          
-          case "text":
-            return <Text key={node.nodeId} {...node}/>
-
-          case "path":
-            return <Path key={node.nodeId} {...node}/>
-          
-          case "line":
-            return <Line key={node.nodeId} {...node}/>
-
-          case "group":
-            return <Group key={node.nodeId} {...node}/>
-
-         
-       }
-      
-       return null;
-
-  }
-
-  renderNodes(){
-
-      const {canvas:{nodes}} = this.props;
-     
-      const n = [];
-      Object.keys(nodes).map((templatekey)=>{
-          Object.keys(nodes[templatekey]).map((nodekey)=>{
-              
-              n.push(this.renderNode(nodes[templatekey][nodekey]));
-          })
-      });
-      return n;
-  }
 
   renderTemplates(){
   
@@ -154,8 +112,8 @@ class EditorCanvas extends Component {
     console.log(selected);
 
     return Object.keys(templates).map((key)=>{
-       const amselected = selected && selected.path.indexOf(templates[key].id) !== -1;
-       return this.renderTemplate(templates[key], amselected);
+       const path = selected ? selected.path : [];
+       return this.renderTemplate(templates[key], path);
     });
   }
 
@@ -172,6 +130,17 @@ class EditorCanvas extends Component {
       </div>
     );
   }
+
+  _handleKeyDown(e) {
+      var rx = /INPUT|SELECT|TEXTAREA|DIV/i;
+      if( e.which == 8 ){ // 8 == backspace
+            if(!rx.test(e.target.tagName) || e.target.disabled || e.target.readOnly ){
+                this.deletePressed();
+                e.preventDefault();
+            }
+      }
+  }
+
 }
 
 export default connect(selector)(DropTarget(ItemTypes.TEMPLATE, canvasTarget, collect)(EditorCanvas));

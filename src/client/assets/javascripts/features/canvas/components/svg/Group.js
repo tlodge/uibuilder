@@ -11,7 +11,11 @@ export default class Group extends Component {
    		onMouseDown: ()=>{},
   	};
 
-	renderChildren(children, path){
+  	constructor(props){
+  		super(props);
+  	}
+
+	renderChildren(children, path, selected){
 
 		const {onSelect} = this.props;
 		
@@ -29,7 +33,7 @@ export default class Group extends Component {
 			 				cy: item.cy,
 			 				r: item.r,
 			 				style:item.style,
-							selected: false,
+							selected,
 							onSelect: onSelect.bind(null,{path:[...path,item.id], type:item.type}),
 			 		}}/>
 			 	
@@ -41,7 +45,7 @@ export default class Group extends Component {
 			 				rx: item.rx,
 			 				ry: item.ry,
 			 				style:item.style,
-							selected: false,
+							selected,
 							onSelect: onSelect.bind(null,{path:[...path,item.id], type:item.type}),
 					}}/>
 
@@ -53,7 +57,7 @@ export default class Group extends Component {
 			 				width: item.width,
 			 				height: item.height,
 			 				style:item.style,
-							selected: false,
+							selected,
 							onSelect: onSelect.bind(null,{path:[...path,item.id], type:item.type}),
 			 		}}/>
 
@@ -64,7 +68,7 @@ export default class Group extends Component {
 			 				y: item.y,
 			 				text: item.text,
 			 				style:item.style,
-							selected: false,
+							selected,
 							onSelect: onSelect.bind(null,{path:[...path,item.id], type:item.type}),
 
 			 		}}/>
@@ -77,7 +81,7 @@ export default class Group extends Component {
 			 				x2: item.x2,
 			 				y2: item.y2,
 			 				style:item.style,
-							selected: false,
+							selected,
 							onSelect: onSelect.bind(null,{path:[...path,item.id], type:item.type}),
 
 			 		}}/>
@@ -87,18 +91,15 @@ export default class Group extends Component {
 			 				id: item.id,
 			 				d: item.d,
 			 				style:item.style,
-							selected: false,
+							selected,
 							onSelect: onSelect.bind(null,{path:[...path,item.id], type:item.type}),
 
 			 		}}/>
 
 				case "group":
 					return <Group key={i} {...{
-							id: item.id, 
-							x:  item.x,
-							y:  item.y,
-							style: item.style,
-							children: item.children
+							...item,
+							selected,
 						}}/>
 							
 				default:
@@ -107,10 +108,27 @@ export default class Group extends Component {
 		});
 	}
 
-	render(){
-		
+	renderControls(x,y, width, height){
+  		
+  		const {onExpand} = this.props;
+  		
+  		const style = {
+			stroke: "black",
+			strokeWidth: 1,
+			fill: '#3f51b5',
+		}
 
-		const {id, style, transform, children, x, y, nodeId, onSelect, onMouseDown, onMouseUp} = this.props;
+  		return 	<g>
+  					<circle style={style} cx={x+width+10} cy={y+height+10} r={10} onMouseDown={onExpand}/>
+  				</g>
+  	}
+
+	render(){
+
+		const {id,x, y, width, height,  style, transform, children, nodeId, selected=[], onSelect, onMouseDown, onMouseUp} = this.props;
+		
+		const amSelected = selected.indexOf(id) !== -1 && selected.length == 1;
+		const [tid, ...rest] = selected;
 
 		const _style = camelise(style);
 		
@@ -121,12 +139,22 @@ export default class Group extends Component {
 		const dtx = (Number(x)/Number(scale))+Number(tx);
 		const dty = (Number(y)/Number(scale))+Number(ty);
 
-		const _transform = `scale(${scale}),translate(${dtx},${dty}),rotate(${degrees},${Number(rx)},${Number(ry)})`; 
+		const _selectedstyle = {
+			stroke: "#3f51b5",
+			strokeWidth: 2,
+			fill: 'none',
+		}
 
+		const _transform = `scale(${scale}),translate(${dtx},${dty}),rotate(${degrees},${Number(rx)},${Number(ry)})`; 
+		
 		return <g style={_style} transform={_transform} onMouseDown={onMouseDown.bind(null,{path:[id]})} onClick={onSelect.bind(null,{path:[id],type:"group"})}>
-					{this.renderChildren(children, [id])}
+				    {amSelected && this.renderControls(0, 0, width, height)}
+					{this.renderChildren(children, [id], rest)}
+				    {amSelected && <rect x={0} y={0} width={width} height={height} style={_selectedstyle} />}
 			 	</g>
 
 
 	}
+
+
 }

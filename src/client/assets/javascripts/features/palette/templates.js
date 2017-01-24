@@ -2,8 +2,8 @@
 
 import { createStructuredSelector } from 'reselect';
 import { State } from 'models/templates';
-import {get} from '../../utils/net'
-import {generateId} from '../../utils'
+import {get} from 'utils/net'
+import {generateId, calculateBounds, convertToJson} from 'utils'
 
 // Action Types
 
@@ -59,154 +59,6 @@ const initialState: State = {
 };
 
 
-const convertToJson = function(nodeList){
-    
-    const items = {};
-   
-   console.log(nodeList)
-
-    for (var item of nodeList){
-      const id = generateId();
-      
-      switch(item.nodeName){
-      
-        case "g":
-          
-   
-          items[id] = {
-
-            id,
-            type: "group",
-            label: `group:${id}`,
-            x: 0,
-            y: 0,
-            style:{
-              fill: item.style.fill,
-              stroke: item.style.stroke,
-              'stroke-width': item.style.strokeWidth.trim() === "" ? 0: item.style.strokeWidth,
-              opacity: 1,
-            },
-            children: convertToJson(item.childNodes), 
-          }
-
-          break;
-
-        case "ellipse":
-          
-          items[id] = {
-            id,
-            type: "ellipse", 
-            label: `ellipse:${id}`,
-            cx: item.cx.baseVal.value,
-            cy: item.cy.baseVal.value,
-            rx: item.rx.baseVal.value,
-            ry: item.ry.baseVal.value,
-            style:{
-                fill: item.style.fill,
-                stroke: item.style.stroke.trim() === "" ? "none" :  item.style.stroke,
-                'stroke-width': item.style.strokeWidth.trim() === "" ? 0: item.style.strokeWidth,
-                opacity: 1,
-            }
-          };
-
-          break;
-        
-        case "circle":
-      
-          items[id] = {
-            id,
-            label: `circle:${id}`,
-            type: "circle", 
-            cx: item.cx.baseVal.value,
-            cy: item.cy.baseVal.value,
-            r: item.r.baseVal.value,
-            style:{
-                fill: item.style.fill,
-                stroke: item.style.stroke.trim() === "" ? "none" :  item.style.stroke,
-                'stroke-width': item.style.strokeWidth.trim() === "" ? 0: item.style.strokeWidth,
-                opacity: 1,
-            }
-          };
-          break;
-        
-        case "rect":
-          
-          items[id] = {
-            id,
-            label: `rect:${id}`,
-            type: "rect", 
-            x: item.x.baseVal.value,
-            y: item.y.baseVal.value,
-            width: item.width.baseVal.value,
-            height: item.height.baseVal.value,
-            style:{
-                fill: item.style.fill,
-                stroke: item.style.stroke.trim() === "" ? "none" :  item.style.stroke,
-                'stroke-width': item.style.strokeWidth.trim() === "" ? 0: item.style.strokeWidth,
-                opacity: 1,
-            }
-          };
-
-          break;
-        
-        case "line":
-         
-          items[id] = {
-            id,
-            label: `line:${id}`,
-            type: "line", 
-            x1: item.x1.baseVal.value,
-            y1: item.y1.baseVal.value,
-            x2: item.x2.baseVal.value,
-            y2: item.y2.baseVal.value,
-            style:{
-                fill: item.style.fill,
-                stroke: item.style.stroke.trim() === "" ? "none" :  item.style.stroke,
-                'stroke-width': item.style.strokeWidth.trim() === "" ? 0: item.style.strokeWidth,
-                opacity: 1,
-            }
-          };
-          break;
-
-        case "path":
-
-          items[id]= {
-            id,
-            label: `path:${id}`,
-            type: "path", 
-            d: item.attributes.d.nodeValue,
-            style:{
-                fill: item.style.fill,
-                stroke: item.style.stroke.trim() === "" ? "none" :  item.style.stroke,
-                'stroke-width': item.style.strokeWidth.trim() === "" ? 0: item.style.strokeWidth,
-                opacity: 1,
-            }
-          };
-          break;
-
-        case "text":
-          
-          items[id]= {
-            id,
-            label: `text:${id}`,
-            type: "text", 
-            x: item.x.baseVal.value,
-            y: item.y.baseVal.value,
-            text: item.text.baseVal.value,
-            style:{
-                fill: item.style.fill,
-                stroke: item.style.stroke.trim() === "" ? "none" :  item.style.stroke,
-                'stroke-width': item.style.strokeWidth.trim() === "" ? 0: item.style.strokeWidth,
-                opacity: 1,
-            }
-          };
-          break;
-
-      }
-    }
-
-    return items;
-}
 
 const _parseTemplate = function(template){
   const parser = new DOMParser();
@@ -241,9 +93,7 @@ export default function reducer(state: State = initialState, action: any = {}): 
         
         const ids = [];
         const newTemplatesByIds = action.templates.map((template, i)=>{
-            console.log("ok looking ta");
-            console.log(template);
-
+           
             ids.push(state.templates.length + i);
             return {
                 id: state.templates.length + i,

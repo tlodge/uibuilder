@@ -27,8 +27,12 @@ export default class Rect extends Component {
   	}
 
 	render(){
-		const {x,y,rx,ry,width,height,transform,selected,style,onSelect,onMouseDown} = this.props
+		const {id,x,y,rx,ry,width,height,transform,selected,style,onSelect,onMouseDown} = this.props
 		const _style = camelise(style);
+		const amSelected = selected.indexOf(id) !== -1 && selected.length == 1;
+
+
+
 
 		const _selectedstyle = {
 			stroke: "#3f51b5",
@@ -36,15 +40,17 @@ export default class Rect extends Component {
 			fill: 'none',
 		}
 	
-		const selectedx = (Number(x)-2-Number(_style.strokeWidth ? _style.strokeWidth/2:0));
-		const selectedy = (Number(y)-2-Number(_style.strokeWidth ? _style.strokeWidth/2:0));
-		const selectedw = (Number(width)+4+Number(_style.strokeWidth ? _style.strokeWidth/2:0));
-		const selectedh = (Number(height)+4+Number(_style.strokeWidth ? _style.strokeWidth/2:0));
+		const sw = _style.strokeWidth ? Number(sw) ? Number(sw) : 0 : 0;
+
+		const selectedx = (Number(x)-2-sw/2);
+		const selectedy = (Number(y)-2-sw/2);
+		const selectedw = (Number(width)+4+sw/2);
+		const selectedh = (Number(height)+4+sw/2);
 
 		return 	<g transform={transform}>
 			 		<rect rx={rx} ry={ry} x={x} y={y} width={width} height={height} style={_style} onClick={onSelect} onMouseDown={onMouseDown}/>
-			 		{selected && <rect rx={rx} ry={ry} x={selectedx} y={selectedy} width={selectedw} height={selectedh} style={_selectedstyle} />}
-			 		{selected && this.renderControls(selectedx, selectedy, selectedw, selectedh)}
+			 		{amSelected && <rect rx={rx} ry={ry} x={selectedx} y={selectedy} width={selectedw} height={selectedh} style={_selectedstyle} />}
+			 		{amSelected && this.renderControls(selectedx, selectedy, selectedw, selectedh)}
 			 	</g>
 
 	}

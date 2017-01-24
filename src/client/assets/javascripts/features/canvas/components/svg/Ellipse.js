@@ -28,6 +28,7 @@ export default class Ellipse extends Component {
 	render(){
 	
 		const {id,cx,cy,rx,ry,selected, style,transform, onSelect, onMouseDown} = this.props;
+		const amSelected = selected.indexOf(id) !== -1 && selected.length == 1;
 
 		const _style = camelise(style);
 		
@@ -37,12 +38,14 @@ export default class Ellipse extends Component {
 			fill: 'none',
 		}
 	
-		const selectedrx = (Number(rx)+2+Number(_style.strokeWidth ? _style.strokeWidth/2:0));
-		const selectedry = (Number(ry)+2+Number(_style.strokeWidth ? _style.strokeWidth/2:0));
+		const sw = _style.strokeWidth ? Number(sw) ? Number(sw) : 0 : 0;
+
+		const selectedrx = Number(rx)+2+sw/2;
+		const selectedry = Number(ry)+2+sw/2;
 		
 		return 	<g transform={transform}>
 			 		<ellipse cx={cx} cy={cy} rx={rx} ry={ry} style={_style} onClick={onSelect} onMouseDown={onMouseDown}/>
-			 		{selected && this.renderControls(selectedrx, selectedry)}
+			 		{amSelected && this.renderControls(selectedrx, selectedry)}
 			 	</g>
 
 	}

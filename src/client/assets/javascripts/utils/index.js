@@ -1,6 +1,8 @@
 import _ from 'lodash';
 import {spring} from 'react-motion';
 
+
+
 function _group_schema(){
 	return {
 		attributes:{
@@ -253,7 +255,7 @@ function _text(x:number, y:number){
 function _group(x:number, y:number, children){
 	const id =generateId();
 
-	const bounds = _calculateBounds(children, Number.MAX_VALUE, -1, Number.MAX_VALUE, -1);
+	const bounds = calculateBounds(children, Number.MAX_VALUE, -1, Number.MAX_VALUE, -1);
 	
 	return {
 		id,
@@ -273,8 +275,162 @@ function _group(x:number, y:number, children){
 	}
 }
 
+const commands = ['M','m','L','l', 'H', 'h', 'V', 'v', 'C', 'c','S', 's', 'Q', 'q', 'T', 't', 'A', 'a', 'Z', 'z'];
 
-const _circleBounds= function(item){
+export function convertToJson(nodeList){
+    
+    const items = {};
+   
+  
+    for (var item of nodeList){
+      const id = generateId();
+      
+      switch(item.nodeName){
+      
+        case "g":
+
+          const children = convertToJson(item.childNodes);
+          
+          const bounds = calculateBounds(children, Number.MAX_VALUE, -1, Number.MAX_VALUE, -1);
+   
+          items[id] = {
+
+            id,
+            type: "group",
+            label: `group:${id}`,
+            x: 0,
+            y: 0,
+            width: bounds.width,
+            height: bounds.height,
+            style:{
+              fill: item.style.fill,
+              stroke: item.style.stroke,
+              'stroke-width': item.style.strokeWidth.trim() === "" ? 0: item.style.strokeWidth,
+              opacity: 1,
+            },
+            children
+          }
+
+          break;
+
+        case "ellipse":
+          
+          items[id] = {
+            id,
+            type: "ellipse", 
+            label: `ellipse:${id}`,
+            cx: item.cx.baseVal.value,
+            cy: item.cy.baseVal.value,
+            rx: item.rx.baseVal.value,
+            ry: item.ry.baseVal.value,
+            style:{
+                fill: item.style.fill,
+                stroke: item.style.stroke.trim() === "" ? "none" :  item.style.stroke,
+                'stroke-width': item.style.strokeWidth.trim() === "" ? 0: item.style.strokeWidth,
+                opacity: 1,
+            }
+          };
+
+          break;
+        
+        case "circle":
+      
+          items[id] = {
+            id,
+            label: `circle:${id}`,
+            type: "circle", 
+            cx: item.cx.baseVal.value,
+            cy: item.cy.baseVal.value,
+            r: item.r.baseVal.value,
+            style:{
+                fill: item.style.fill,
+                stroke: item.style.stroke.trim() === "" ? "none" :  item.style.stroke,
+                'stroke-width': item.style.strokeWidth.trim() === "" ? 0: item.style.strokeWidth,
+                opacity: 1,
+            }
+          };
+          break;
+        
+        case "rect":
+          
+          items[id] = {
+            id,
+            label: `rect:${id}`,
+            type: "rect", 
+            x: item.x.baseVal.value,
+            y: item.y.baseVal.value,
+            width: item.width.baseVal.value,
+            height: item.height.baseVal.value,
+            style:{
+                fill: item.style.fill,
+                stroke: item.style.stroke.trim() === "" ? "none" :  item.style.stroke,
+                'stroke-width': item.style.strokeWidth.trim() === "" ? 0: item.style.strokeWidth,
+                opacity: 1,
+            }
+          };
+
+          break;
+        
+        case "line":
+         
+          items[id] = {
+            id,
+            label: `line:${id}`,
+            type: "line", 
+            x1: item.x1.baseVal.value,
+            y1: item.y1.baseVal.value,
+            x2: item.x2.baseVal.value,
+            y2: item.y2.baseVal.value,
+            style:{
+                fill: item.style.fill,
+                stroke: item.style.stroke.trim() === "" ? "none" :  item.style.stroke,
+                'stroke-width': item.style.strokeWidth.trim() === "" ? 0: item.style.strokeWidth,
+                opacity: 1,
+            }
+          };
+          break;
+
+        case "path":
+        
+          items[id]= {
+            id,
+            label: `path:${id}`,
+            type: "path", 
+            d: item.attributes.d.nodeValue.replace(/([A-Za-z])/g, ' $1 ').trim(),
+            style:{
+                fill: item.style.fill,
+                stroke: item.style.stroke.trim() === "" ? "none" :  item.style.stroke,
+                'stroke-width': item.style.strokeWidth.trim() === "" ? 0: item.style.strokeWidth,
+                opacity: 1,
+            }
+          };
+          break;
+
+        case "text":
+          
+          items[id]= {
+            id,
+            label: `text:${id}`,
+            type: "text", 
+            x: item.x.baseVal.value,
+            y: item.y.baseVal.value,
+            text: item.text.baseVal.value,
+            style:{
+                fill: item.style.fill,
+                stroke: item.style.stroke.trim() === "" ? "none" :  item.style.stroke,
+                'stroke-width': item.style.strokeWidth.trim() === "" ? 0: item.style.strokeWidth,
+                opacity: 1,
+            }
+          };
+          break;
+
+      }
+    }
+
+    return items;
+}
+
+export function circleBounds(item){
 
   return {
       x: item.cx- item.r,
@@ -284,7 +440,7 @@ const _circleBounds= function(item){
   }
 }
 
-const _lineBounds = function(item){
+export function lineBounds(item){
   return {
       x: Math.min(item.x1, item.x2),
       y: Math.min(item.y1, item.y2),
@@ -293,7 +449,7 @@ const _lineBounds = function(item){
   }
 }
 
-const _ellipseBounds= function(item){
+export function ellipseBounds(item){
   return {
       x: item.cx - item.rx,
       y: item.cy - item.ry,
@@ -302,7 +458,7 @@ const _ellipseBounds= function(item){
   }
 }
 
-const _rectBounds = function(item){
+export function rectBounds(item){
   
   return {
       x: item.x,
@@ -312,14 +468,28 @@ const _rectBounds = function(item){
   }
 }
 
-const _pathBounds = function(item){
-  
-  return {
-      x: 0,
-      y: 0,
-      width: 10,
-      height: 10
+export function pathBounds(item){
+
+  var path = document.createElementNS("http://www.w3.org/2000/svg", 'path');
+  path.setAttribute("d", item.d);
+
+  const pathLength = path.getTotalLength();
+  const precision = 8;
+
+  // linear scan for coarse approximation
+  let miny = Number.MAX_VALUE;
+  let minx = Number.MAX_VALUE;
+  let maxx = -Number.MAX_VALUE;
+  let maxy = -Number.MAX_VALUE;
+
+  for (var scan, scanLength = 0, scanDistance; scanLength <= pathLength; scanLength += precision) {
+    let point = path.getPointAtLength(scanLength);
+    miny = Math.min(miny, point.y);
+    minx = Math.min(minx, point.x);
+    maxy = Math.max(maxy, point.y);
+    maxx = Math.max(maxx, point.x);
   }
+  return {x: minx, y: miny, width: maxx-minx, height: maxy-miny};
 }
 
 
@@ -335,7 +505,7 @@ const _minMax = function(bounds, minmax){
     }
 }
 
-const _calculateBounds = function(nodes, minX, maxX, minY, maxY){
+export function calculateBounds(nodes, minX, maxX, minY, maxY){
  	
   const _minmax = Object.keys(nodes).reduce((acc, key)=>{
   		const item = nodes[key];
@@ -349,22 +519,22 @@ const _calculateBounds = function(nodes, minX, maxX, minY, maxY){
  		switch(item.type){
         
 	        case "group":
-	          return _minMax(_calculateBounds(item.children, acc.minX, acc.maxX, acc.minY, acc.maxY), minmax);
+	          return _minMax(calculateBounds(item.children, acc.minX, acc.maxX, acc.minY, acc.maxY), minmax);
 
 	        case "circle":
-	          return _minMax(_circleBounds(item), minmax);
+	          return _minMax(circleBounds(item), minmax);
 
 	        case "ellipse":
-	          return _minMax( _ellipseBounds(item), minmax);
+	          return _minMax(ellipseBounds(item), minmax);
 
 	        case "line":
-	          return _minMax(_lineBounds(item), minmax);
+	          return _minMax(lineBounds(item), minmax);
 	         
 	       case "path":
-	       	  return _minMax(_pathBounds(item), minmax);     
+	       	  return _minMax(pathBounds(item), minmax);     
 
 	        case "rect":
-	          return _minMax(_rectBounds(item), minmax);
+	          return _minMax(rectBounds(item), minmax);
 	          
 	    }	
 

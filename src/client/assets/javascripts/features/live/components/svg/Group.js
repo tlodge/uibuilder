@@ -130,7 +130,7 @@ export default class Group extends Component {
 	render(){
 		
 
-		const {id, style, transform, children, x, y, nodeId, onSelect, onMouseDown, onMouseUp} = this.props;
+		const {id, x, y, style, transform, children, nodeId, onSelect, onMouseDown, onMouseUp} = this.props;
 
 		const _style = camelise(style);
 		const is = _interpolatedStyles(_style);
@@ -165,8 +165,7 @@ export default class Group extends Component {
 						}else{
 						  _transform = `scale(${scale}),translate(${dtx},${dty}),rotate(${item.degrees},${Number(rx)},${Number(ry)})`; 
 						}
-			 			return <g style={_style} transform={_transform} onMouseDown={onMouseDown.bind(null,{path:[id]})}
-			 															onClick={onSelect.bind(null,{path:[id],type:"group"})}>
+			 			return <g style={_style} transform={_transform} onMouseDown={onMouseDown.bind(null,{path:[id]})} onClick={onSelect.bind(null,{path:[id],type:"group"})}>
 							{this.renderChildren(children, [id])}
 			 			</g>
 			 		}}
