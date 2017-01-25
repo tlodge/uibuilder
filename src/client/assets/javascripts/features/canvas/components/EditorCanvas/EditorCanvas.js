@@ -99,6 +99,7 @@ class EditorCanvas extends Component {
                                                   onSelect: this.templateSelected,
                                                   onMouseDown: this.onMouseDown,
                                                   onExpand: this.onExpand.bind(null, template.id),
+                                                  onRotate: this.onRotate.bind(null, template.id),
                                               }
                                             }/>
 

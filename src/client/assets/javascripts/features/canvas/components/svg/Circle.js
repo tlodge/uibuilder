@@ -17,7 +17,7 @@ export default class Circle extends Component {
 
   	renderControls(r){
   		
-  		const {cx,cy,onExpand} = this.props;
+  		const {cx,cy,onExpand,onRotate} = this.props;
   		
   		const style = {
 			stroke: "black",
@@ -25,7 +25,20 @@ export default class Circle extends Component {
 			fill: '#3f51b5',
 		}
 
+		const rotatestyle = {
+			stroke: "black",
+			strokeWidth: 1,
+			fill: 'red',
+		}
+
+		const linestyle = {
+			stroke: "#3f51b5",
+			strokeWidth: 2,
+		}
+  					
   		return 	<g>
+  					<circle style={rotatestyle}  cx={cx} cy={cy-r-40} r={6} onMouseDown={onRotate}/>
+  					<line style={linestyle} x1={cx} x2={cx} y1={cy-r-40+6} y2={cy-r}/>
   					<circle style={style} cx={cx-r} cy={cy-r} r={6} onMouseDown={onExpand}/> 
   					<circle style={style} cx={cx+r} cy={cy+r} r={6} onMouseDown={onExpand}/> 
   					<circle style={style} cx={cx+r} cy={cy-r} r={6} onMouseDown={onExpand}/> 

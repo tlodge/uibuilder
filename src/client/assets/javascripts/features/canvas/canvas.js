@@ -249,30 +249,51 @@ const _scaleTemplate = (template, sf)=>{
 }
 
 
+const _theta =(cx,cy,x,y)=>{
+  const a = cy - y ;
+  const b = x  - cx;
+  const theta = Math.atan(b/a);
+  return y <= cy ? theta * (180/Math.PI) : 180 + (theta * (180/Math.PI));
+} 
+
 const _rotateTemplate = (template, x, y)=>{
+    let cx,cy, angle;
+    
+
     switch (template.type){
         
-        case "rect":
-          
-            const dx = x - template.x; 
-            const r = 40 + template.height/2;
-
-            console.log("dx is " + dx);
-            console.log("r is " + r);
-            console.log(dx/r);
-
-            const theta = Math.asin(dx/r);
-            console.log("theta is  " + theta);
-
-            const angle = theta * (180/Math.PI)
-            console.log("amgle is " + angle);
+        case "group":
+            cy = template.y + template.height/2;
+            cx = template.x + template.width/2;
+            angle = _theta(cx,cy,x,y)
             return Object.assign({}, template, {
-                transform: `rotate(${angle}, ${template.x + template.width/2}, ${template.y + template.height/2})`
+                transform: `rotate(${angle}, ${template.width/2}, ${template.height/2})`
             });
+            break;
+        
+
+        case "rect":
+            cy = template.y + template.height/2;
+            cx = template.x + template.width/2;
+            angle = _theta(cx,cy,x,y)
+            break;
+
+        case "ellipse":
+        case "circle":
+            cx = template.cx;
+            cy = template.cy;
+            angle = _theta(cx,cy,x,y);
+            break;
 
         default:
-            return template;
+            angle = 0;
+            cx = 0;
+            cy = 0;
     }
+
+     return Object.assign({}, template, {
+                transform: `rotate(${angle}, ${cx}, ${cy})`
+            });
 }
 
 const _expandTemplate = (template, x, y)=>{
@@ -380,9 +401,7 @@ const _modifyTemplate = (state, action)=>{
         const [id,...rest] = state.selected.path;
         const _tmpl = state.templates[id];
 
-        if (state.dragging){
-          return Object.assign({}, state.templates, {[id] : _moveTemplate(_tmpl, action.x-state.dx, action.y-state.dy)});       
-        }
+       
 
         if (state.expanding){
           return Object.assign({}, state.templates, {[id] : _expandTemplate(_tmpl, action.x, action.y)});
@@ -390,6 +409,10 @@ const _modifyTemplate = (state, action)=>{
 
         if (state.rotating){
           return Object.assign({}, state.templates, {[id] : _rotateTemplate(_tmpl, action.x, action.y)});
+        }
+
+        if (state.dragging){
+          return Object.assign({}, state.templates, {[id] : _moveTemplate(_tmpl, action.x-state.dx, action.y-state.dy)});       
         }
     }
 
@@ -439,7 +462,7 @@ export default function reducer(state: State = initialState, action: any = {}): 
 
       return Object.assign({}, state,  {
                                             selected: action.path,
-                                            dragging: !state.expanding,
+                                            dragging: !state.expanding && !state.rotating,
                                             dx: state.x-x,
                                             dy: state.y-y,
                                         });
@@ -447,9 +470,10 @@ export default function reducer(state: State = initialState, action: any = {}): 
 
     case MOUSE_UP:
        return Object.assign({}, state,  {
-                                            selected: state.expanding? state.selected: null,
+                                            selected: state.expanding || state.rotating ? state.selected: null,
                                             dragging: false,
                                             expanding: false,
+                                            rotating: false,
                                         });
     
     case TEMPLATE_DROPPED:

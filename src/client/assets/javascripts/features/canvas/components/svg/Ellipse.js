@@ -9,7 +9,7 @@ export default class Ellipse extends Component {
 
   	renderControls(rx, ry){
   		
-  		const {cx,cy,onExpand} = this.props;
+  		const {cx,cy,onExpand,onRotate} = this.props;
   		
   		const style = {
 			stroke: "black",
@@ -17,7 +17,20 @@ export default class Ellipse extends Component {
 			fill: '#3f51b5',
 		}
 
+		const rotatestyle = {
+			stroke: "black",
+			strokeWidth: 1,
+			fill: 'red',
+		}
+
+		const linestyle = {
+			stroke: "#3f51b5",
+			strokeWidth: 2,
+		}
+  					
   		return 	<g>
+  					<circle style={rotatestyle}  cx={cx} cy={cy-ry-40} r={6} onMouseDown={onRotate}/>
+  					<line style={linestyle} x1={cx} x2={cx} y1={cy-ry-40+6} y2={cy-ry}/>
   					<circle style={style} cx={cx-rx} cy={cy-ry} r={6} onMouseDown={onExpand}/> 
   					<circle style={style} cx={cx+rx} cy={cy+ry} r={6} onMouseDown={onExpand}/> 
   					<circle style={style} cx={cx+rx} cy={cy-ry} r={6} onMouseDown={onExpand}/> 
