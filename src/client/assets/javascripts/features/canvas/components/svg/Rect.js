@@ -8,10 +8,11 @@ export default class Rect extends Component {
    		onSelect: ()=>{}
   	};
 
-  	renderControls(x,y, width, height){
+  	renderControls(width, height){
   		
   		const {onExpand, onRotate, r} = this.props;
-  		
+  		const  x =0, y=0;
+
   		const style = {
 			stroke: "black",
 			strokeWidth: 1,
@@ -55,15 +56,13 @@ export default class Rect extends Component {
 	
 		const sw = _style.strokeWidth ? Number(sw) ? Number(sw) : 0 : 0;
 
-		const selectedx = (Number(x)-2-sw/2);
-		const selectedy = (Number(y)-2-sw/2);
 		const selectedw = (Number(width)+4+sw/2);
 		const selectedh = (Number(height)+4+sw/2);
 
-		return 	<g transform={transform}>
-			 		<rect rx={rx} ry={ry} x={x} y={y} width={width} height={height} style={_style} onClick={onSelect} onMouseDown={onMouseDown}/>
-			 		{amSelected && <rect rx={rx} ry={ry} x={selectedx} y={selectedy} width={selectedw} height={selectedh} style={_selectedstyle} />}
-			 		{amSelected && this.renderControls(selectedx, selectedy, selectedw, selectedh)}
+		return 	<g transform={`translate(${x},${y}) ${transform}`}>
+			 		<rect rx={rx} ry={ry} x={0} y={0} width={width} height={height} style={_style} onClick={onSelect} onMouseDown={onMouseDown}/>
+			 		{amSelected && <rect rx={rx} ry={ry} x={-2} y={-2} width={selectedw} height={selectedh} style={_selectedstyle} />}
+			 		{amSelected && this.renderControls(selectedw, selectedh)}
 			 	</g>
 
 	}

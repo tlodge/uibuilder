@@ -1,7 +1,4 @@
-import _ from 'lodash';
 import {spring} from 'react-motion';
-
-
 
 function _group_schema(){
 	return {
@@ -649,12 +646,20 @@ export function scalePreservingOrigin(x,y,sf){
 	return `scale(${sf}),translate(${-(x - (x/sf))},${-(y - (y/sf))})`
 }
 
+
+export function camelCase(str){
+  return str.replace(/(?:^\w|[A-Z]|\b\w|\s+)/g, function(match, index) {
+    if (+match === 0) return ""; // or if (/\s+/.test(match)) for white spaces
+    return index == 0 ? match.toLowerCase() : match.toUpperCase();
+  }).replace(/[-_]+/g, "");
+}
+
 export function camelise(style){
 	
 	style = style || {};
 
 	return Object.keys(style).reduce((acc,key)=>{
-		acc[_.camelCase(key)] = style[key];
+		acc[camelCase(key)] = style[key];
 		return acc;
 	},{});
 
@@ -673,12 +678,14 @@ export function interpolatedStyles(styles, types, style){
 
 export function componentsFromTransform(a)
 {
+	a = a.replace(/\s+/g,"");
     var b={};
     for (var i in a = a.match(/(\w+\((\-?\d+\.?\d*e?\-?\d*,?)+\))+/g))
     {
         var c = a[i].match(/[\w\.\-]+/g);
         b[c.shift()] = c;
     }
+    
     return b;
 }
 

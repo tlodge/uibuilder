@@ -17,8 +17,8 @@ export default class Circle extends Component {
 
   	renderControls(r){
   		
-  		const {cx,cy,onExpand,onRotate} = this.props;
-  		
+  		const {onExpand,onRotate} = this.props;
+  		const cx=0, cy=0;
   		const style = {
 			stroke: "black",
 			strokeWidth: 1,
@@ -49,6 +49,7 @@ export default class Circle extends Component {
 	render(){
 
 		const {id,cx,cy,r,selected, style, transform, onSelect, onMouseDown} = this.props;
+
 		const _style = camelise(style);
 
 		const amSelected = selected.indexOf(id) !== -1 && selected.length == 1;
@@ -63,11 +64,13 @@ export default class Circle extends Component {
 	
 		const selectedr = Number(r)+2+sw/2;
 
-		return 	<g transform={transform}>
-			 		<circle cx={cx} cy={cy} r={r} style={_style} onClick={onSelect} onMouseDown={onMouseDown}></circle>
-			 		{amSelected && <circle cx={cx} cy={cy} r={selectedr} style={_selectedstyle}></circle>}
+
+		return 	<g transform={`translate(${cx},${cy}) ${transform}`}>
+			 		<circle cx={0} cy={0} r={r} style={_style} onClick={onSelect} onMouseDown={onMouseDown}></circle>
+			 		{amSelected && <circle cx={0} cy={0} r={selectedr} style={_selectedstyle}></circle>}
 			 		{amSelected && this.renderControls(selectedr)}
 			 	</g>
+			 	
 		
 		
 	}

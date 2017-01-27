@@ -41,6 +41,7 @@ class EditorCanvas extends Component {
 
     
     this.mouseMove = bindActionCreators(canvasActions.mouseMove, props.dispatch);
+    
     this.onMouseUp = bindActionCreators(canvasActions.onMouseUp, props.dispatch);
     this.onMouseDown = bindActionCreators(canvasActions.onMouseDown, props.dispatch);
     this.templateSelected = bindActionCreators(canvasActions.templateSelected, props.dispatch);
@@ -55,9 +56,40 @@ class EditorCanvas extends Component {
 
   _onMouseMove(e){
     const {clientX, clientY} = e;
+    //console.log(`${clientX},${clientY}`);
     this.mouseMove(clientX-PALETTE_WIDTH,clientY);
   }
 
+  /*shouldComponentUpdate(nextProps, nextState){
+      
+      return true;
+      const {canvas:{dragging, expanding, rotating, templates, selected}, view} = nextProps;
+      
+      if (view !== "editor")
+          return false;
+      
+      if (dragging || expanding || rotating)
+          return true;
+
+      if (!this.props.canvas.selected && selected){
+          return true;
+      }
+
+      if (this.props.canvas.selected && !selected){
+          return true;
+      }
+
+      //console.log("comparing ");
+      //console.log(this.props.canvas.selected);
+      //console.log(selected);
+
+      if (!this.props.canvas.selected  && !selected){
+          return false;
+      }
+
+      return true;
+     
+  }*/
 
   renderTemplate(template, path){
       const props = {
@@ -119,17 +151,19 @@ class EditorCanvas extends Component {
        return this.renderTemplate(templates[key], path);
     });
   }
-
+  /*
+ */
   render() {
+    console.log("******************** rendering canvas!!");
 
   	const {w,h,ow,oh, view, connectDropTarget} = this.props;
 
     return connectDropTarget(
       <div onMouseMove={this._onMouseMove} className="canvas">
-        <svg id="svgchart" viewBox={`0 0 ${ow} ${oh}`} width={w} height={h} onMouseUp={this.onMouseUp}>
-    		  {view==="editor" && this.renderTemplates()}	
-          {view==="live" && this.renderNodes()}	
-    		</svg>
+         <svg id="svgchart" viewBox={`0 0 ${ow} ${oh}`} width={w} height={h} onMouseUp={this.onMouseUp}>
+            {view==="editor" && this.renderTemplates()} 
+            {view==="live" && this.renderNodes()} 
+          </svg>
       </div>
     );
   }

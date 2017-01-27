@@ -5,7 +5,7 @@ let _count = 0;
 let _emitters = {};
 
 export function	init(registerCallback){
-	console.log("IN DATASOURcE MANAGEER init!!");
+	
 	var data1 = new EventEmitter();
 	var data2 = new EventEmitter();
 

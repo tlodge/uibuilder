@@ -3,7 +3,6 @@
 import { createStructuredSelector } from 'reselect';
 import { State } from 'models/canvas';
 import {createTemplate, createGroupTemplate, typeForProperty, generateId, componentsFromTransform, scalePreservingOrigin, originForNode, templateForPath, pathBounds} from 'utils';
-import _ from 'lodash';
 
 const commands = ['M','m','L','l', 'H', 'h', 'V', 'v', 'C', 'c','S', 's', 'Q', 'q', 'T', 't', 'A', 'a', 'Z', 'z'];
 
@@ -162,7 +161,15 @@ const _selectParent = (state, action)=>{
 }
 
 const _moveTemplate = (template, x, y)=>{
-
+   let angle=0;
+ 
+  if (template.transform){
+      const {rotate} = componentsFromTransform(template.transform);
+      if (rotate && rotate.length > 0){
+        angle = 180 - rotate[0];
+      }
+  }
+  
   switch (template.type){
       case "group":
       case "rect":
@@ -171,9 +178,13 @@ const _moveTemplate = (template, x, y)=>{
       
       case "ellipse":
       case "circle":
-        return Object.assign({}, template, {cx:x,cy:y});
 
+      
+       
+
+        return Object.assign({}, template, {cx:x,cy:y});
   }
+  
   
   return template;
 }
@@ -253,13 +264,14 @@ const _theta =(cx,cy,x,y)=>{
   const a = cy - y ;
   const b = x  - cx;
   const theta = Math.atan(b/a);
+
   return y <= cy ? theta * (180/Math.PI) : 180 + (theta * (180/Math.PI));
 } 
+
 
 const _rotateTemplate = (template, x, y)=>{
     let cx,cy, angle;
     
-
     switch (template.type){
         
         case "group":
@@ -276,13 +288,19 @@ const _rotateTemplate = (template, x, y)=>{
             cy = template.y + template.height/2;
             cx = template.x + template.width/2;
             angle = _theta(cx,cy,x,y)
+             return Object.assign({}, template, {
+                transform: `rotate(${angle}, ${template.width/2}, ${template.height/2})`
+            });
             break;
 
         case "ellipse":
         case "circle":
-            cx = template.cx;
-            cy = template.cy;
-            angle = _theta(cx,cy,x,y);
+            cx = 0;//template.cx;
+            cy = 0;//template.cy;
+            angle = _theta(template.cx,template.cy,x,y);
+            return Object.assign({}, template, {
+                transform: `rotate(${angle}, ${0}, ${0})`
+            });
             break;
 
         default:
@@ -407,12 +425,15 @@ const _modifyTemplate = (state, action)=>{
           return Object.assign({}, state.templates, {[id] : _expandTemplate(_tmpl, action.x, action.y)});
         }
 
-        if (state.rotating){
-          return Object.assign({}, state.templates, {[id] : _rotateTemplate(_tmpl, action.x, action.y)});
-        }
+       
+
 
         if (state.dragging){
           return Object.assign({}, state.templates, {[id] : _moveTemplate(_tmpl, action.x-state.dx, action.y-state.dy)});       
+        }
+
+         if (state.rotating){
+          return Object.assign({}, state.templates, {[id] : _rotateTemplate(_tmpl, action.x, action.y)});
         }
     }
 
@@ -484,7 +505,7 @@ export default function reducer(state: State = initialState, action: any = {}): 
 
       return Object.assign({}, state, {
                                           templates: Object.assign({}, state.templates,  {[template.id]:template}),
-                                          
+                                          selected: {path:[template.id], type:template.type},
                                        });
     
     case GROUP_TEMPLATE_DROPPED:
@@ -493,7 +514,7 @@ export default function reducer(state: State = initialState, action: any = {}): 
 
       return Object.assign({}, state, {
                                           templates: Object.assign({}, state.templates,  {[grouptemplate.id]:grouptemplate}),
-                                
+                                          selected: {path:[grouptemplate.id], type:'group'},
                                         });
     
     case TEMPLATE_SELECTED: 

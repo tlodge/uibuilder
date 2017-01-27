@@ -19,6 +19,7 @@ import Button from 'react-md/lib/Buttons';
 import {MAPPER_WIDTH} from '../../mapper/constants';
 import {PALETTE_WIDTH} from '../../palette/constants';
 
+
 @connect(selector, (dispatch) => {
   DatasourceManager.init(bindActionCreators(sourceActions.registerSource, dispatch));
   return{
@@ -36,7 +37,6 @@ export default class Editor extends Component {
     componentDidMount(){
 		  window.addEventListener('resize', this._handleResize);
   	}
-
 
   	render() {
   		

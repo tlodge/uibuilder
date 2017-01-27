@@ -60,8 +60,7 @@ export default class LiveCanvas extends Component {
   }
 
   renderNodes(){
-      console.log("props are.....");
-      console.log(this.props);
+      
 
       const {live:{nodes}} = this.props;
      

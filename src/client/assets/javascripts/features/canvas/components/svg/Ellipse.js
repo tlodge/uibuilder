@@ -9,8 +9,8 @@ export default class Ellipse extends Component {
 
   	renderControls(rx, ry){
   		
-  		const {cx,cy,onExpand,onRotate} = this.props;
-  		
+  		const {onExpand,onRotate} = this.props;
+  		const cx = 0, cy =0;
   		const style = {
 			stroke: "black",
 			strokeWidth: 1,
@@ -56,8 +56,8 @@ export default class Ellipse extends Component {
 		const selectedrx = Number(rx)+2+sw/2;
 		const selectedry = Number(ry)+2+sw/2;
 		
-		return 	<g transform={transform}>
-			 		<ellipse cx={cx} cy={cy} rx={rx} ry={ry} style={_style} onClick={onSelect} onMouseDown={onMouseDown}/>
+		return 	<g transform={`translate(${cx},${cy}) ${transform}`}>
+			 		<ellipse cx={0} cy={0} rx={rx} ry={ry} style={_style} onClick={onSelect} onMouseDown={onMouseDown}/>
 			 		{amSelected && this.renderControls(selectedrx, selectedry)}
 			 	</g>
 

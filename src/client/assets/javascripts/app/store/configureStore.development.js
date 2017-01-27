@@ -13,9 +13,9 @@ import DevTools from '../DevTools';
  * by logging actions/state to your console. Used in conjunction
  * with your standard DevTools monitor gives you great flexibility.
  */
-const logger = createLogger();
+//const logger = createLogger();
 
-const middlewares = [promiseMiddleware, logger, thunk, require('redux-immutable-state-invariant')()];
+const middlewares = [promiseMiddleware, /*logger,*/ thunk, require('redux-immutable-state-invariant')()];
 
 // By default we try to read the key from ?debug_session=<key> in the address bar
 const getDebugSessionKey = function () {

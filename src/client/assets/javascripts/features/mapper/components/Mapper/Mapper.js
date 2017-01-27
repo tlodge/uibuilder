@@ -171,12 +171,6 @@ export default class Mapper extends Component {
       const {canvas:{templates, selected:{path}}} = this.props; 
       const template = templateForPath(path, templates);
 
-      console.log("***************************");
-      console.log("getting template for path");
-      console.log(path);
-      console.log(template);
-       console.log("***************************");
-
       return  <Box>
                 <div style={{paddingBottom:7, fontWeight:"bold"}}>{template.label}</div>
                 <Flex>

@@ -77,13 +77,10 @@ export default class Properties extends Component {
   }
 
   _updateStyle(key, value){
-    console.log(`${key}:${value}`);
     this.props.updateStyle(key,value);
   }
 
   _updateAttribute(key, value){
-    console.log("in update attriuvbuted!!!")
-    console.log(`${key}:${value}`);
     this.props.updateAttribute(key,value);
 
   }

@@ -1,13 +1,12 @@
 import React, { Component } from 'react';
 import {Motion, spring} from 'react-motion';
-import {schemaLookup, camelise, interpolatedStyles} from 'utils';
-import _ from 'lodash';
+import {schemaLookup, camelise, camelCase, interpolatedStyles} from 'utils';
 
 const schema = {...schemaLookup("circle").attributes, ...schemaLookup("circle").style};
-const styles = Object.keys(schemaLookup("circle").style).map((c)=>_.camelCase(c));
+const styles = Object.keys(schemaLookup("circle").style).map((c)=>camelCase(c));
 
 const types = Object.keys(schema).reduce((acc,key)=>{
-	acc[_.camelCase(key)] = schema[key].type;
+	acc[camelCase(key)] = schema[key].type;
 	return acc;
 },{});
 

@@ -3,11 +3,8 @@
 import { createStructuredSelector } from 'reselect';
 import { State } from 'models/canvas';
 import {createTemplate, createGroupTemplate, typeForProperty, generateId, componentsFromTransform, scalePreservingOrigin, originForNode, templateForPath} from 'utils';
-import _ from 'lodash';
 
 // Action Types
-
-
 const UPDATE_NODE_ATTRIBUTE      = 'uibuilder/live/UPDATE_NODE_ATTRIBUTE';
 const UPDATE_NODE_STYLE          = 'uibuilder/live/UPDATE_NODE_STYLE';
 const UPDATE_NODE_TRANSFORM      = 'uibuilder/live/UPDATE_NODE_TRANSFORM';
