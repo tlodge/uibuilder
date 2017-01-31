@@ -612,9 +612,50 @@ export function createTemplate(type:string, x:number, y:number){
 	}
 }
 
-export function createGroupTemplate(children, x:number, y:number){
-	return _group(x,y,children);
 
+const _extracttemplates = (children)=>{
+	return [].concat.apply([], Object.keys(children).reduce((acc, key)=>{
+		const child = children[key];
+		acc.push(child);
+		if (child.children)
+			acc.push(_extracttemplates(child.children))
+		return acc;
+	},[]));
+}
+
+export function createGroupTemplate(children, x:number, y:number){
+		
+	const id =generateId();
+
+	const bounds = calculateBounds(children, Number.MAX_VALUE, -1, Number.MAX_VALUE, -1);
+	
+	const extracted = _extracttemplates(children).reduce((acc, template)=>{
+		if (template.children){
+			acc[template.id] = Object.assign({}, template, {children: Object.keys(template.children).map(k=>template.children[k].id)});
+		}else{
+			acc[template.id] = template;
+		}
+		return acc;
+	},{});
+
+	const template = {
+		id : id,
+		label: `group:${id}`,
+		type: "group",
+		x: x,
+		y: y,
+		width: bounds.width,
+		height: bounds.height,
+		children: Object.keys(extracted).map(k=>extracted[k].id),
+		style:{
+			fill: 'none',
+			stroke: 'none',
+			opacity: 1,
+			'stroke-width': 0,	
+		}
+	}
+
+	return {root: template, templates:extracted};
 }
 
 export function originForNode(node){
@@ -725,5 +766,21 @@ export function defaultCode(key, property){
 
 export function generateId(){
 	return (1+Math.random()*4294967295).toString(16);
+}
+
+export function generateIds(obj){
+	return Object.keys(obj || {}).reduce((acc, key)=>{
+		const id = generateId();
+		const item = obj[key];
+		if (item.children){
+			acc[id] = Object.assign({}, item, {
+													id,
+													children: generateIds(item.children),
+						});
+		}else{
+			acc[id] = Object.assign({}, item, {id});
+		}
+		return acc;
+	},{})
 }
 

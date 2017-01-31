@@ -5,7 +5,7 @@ import { actionCreators as canvasActions, selector } from '../../';
 import './Canvas.scss';
 import {Circle,Ellipse,Text,Rect,Line,Path,Group} from '../svg/';
 import { DropTarget } from 'react-dnd';
-import {DatasourceManager} from 'datasources';
+
 import {PALETTE_WIDTH} from 'features/palette/constants';
 
 
@@ -38,19 +38,10 @@ class EditorCanvas extends Component {
   constructor(props, context){
   	super(props, context);
   	this._onMouseMove = this._onMouseMove.bind(this);
-
-    
     this.mouseMove = bindActionCreators(canvasActions.mouseMove, props.dispatch);
-    
     this.onMouseUp = bindActionCreators(canvasActions.onMouseUp, props.dispatch);
-    this.onMouseDown = bindActionCreators(canvasActions.onMouseDown, props.dispatch);
-    this.templateSelected = bindActionCreators(canvasActions.templateSelected, props.dispatch);
-    this.onExpand = bindActionCreators(canvasActions.onExpand, props.dispatch);
-    this.onRotate =bindActionCreators(canvasActions.onRotate, props.dispatch);
     this.deletePressed = bindActionCreators(canvasActions.deletePressed, props.dispatch);
-
     this._handleKeyDown = this._handleKeyDown.bind(this);
-
     window.addEventListener('keydown', this._handleKeyDown);
   }	
 
@@ -91,49 +82,32 @@ class EditorCanvas extends Component {
      
   }*/
 
-  renderTemplate(template, path){
-      const props = {
-                       selected: path,
-                       onSelect: this.templateSelected.bind(null,{path:[template.id], type:template.type}),
-                       onMouseDown: this.onMouseDown.bind(null, {path:[template.id], type: template.type}),
-                       onExpand: this.onExpand.bind(null, template.id),
-                       onRotate: this.onRotate.bind(null, template.id),
-                       ...template, 
-                    };
+  renderTemplate(template){
+    
     
       switch(template.type){
           
           case "circle":
           
-            return <Circle key={template.id} {...props}/>
+            return <Circle key={template.id} id={template.id}/>
           
           case "ellipse":
-            return <Ellipse key={template.id} {...props}/>
+            return <Ellipse key={template.id} id={template.id}/>
 
           case "rect":
-            return <Rect key={template.id} {...props}/>
+            return <Rect key={template.id} id={template.id}/>
 
           case "path":
-            return <Path key={template.id} {...props}/>
+            return <Path key={template.id} id={template.id}/>
           
           case "text":
-            return <Text key={template.id} {...props}/>
+            return <Text key={template.id} id={template.id}/>
           
           case "line":
-            return <Line key={template.id}  {...props}/>
+            return <Line key={template.id} id={template.id}/>
 
           case "group":
-           
-            return <Group key={template.id} {
-                                              ...{
-                                                  selected: path,
-                                                  ...template,
-                                                  onSelect: this.templateSelected,
-                                                  onMouseDown: this.onMouseDown,
-                                                  onExpand: this.onExpand.bind(null, template.id),
-                                                  onRotate: this.onRotate.bind(null, template.id),
-                                              }
-                                            }/>
+            return <Group key={template.id} id={template.id} />
 
        }
       
@@ -144,18 +118,15 @@ class EditorCanvas extends Component {
 
   renderTemplates(){
   
-    const {canvas:{templates, selected}} = this.props;
+    const {canvas:{templates, templatesById, selected}} = this.props;
 
-    return Object.keys(templates).map((key)=>{
-       const path = selected ? selected.path : [];
-       return this.renderTemplate(templates[key], path);
+    return templates.map((key)=>{
+       return this.renderTemplate(templatesById[key]);
     });
   }
-  /*
- */
+  
   render() {
-    console.log("******************** rendering canvas!!");
-
+   
   	const {w,h,ow,oh, view, connectDropTarget} = this.props;
 
     return connectDropTarget(

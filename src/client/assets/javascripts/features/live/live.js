@@ -13,7 +13,9 @@ const INIT_NODES                 = 'uibuilder/live/INIT_NODES';
 export const NAME = 'live';
 
 const initialState: State = {
-  nodes: {},     
+  nodes: [],
+  nodesByKey: {},
+  nodesById: {},     
 };
 
 //create a deep copy of a template
@@ -26,11 +28,42 @@ const createNode = (template)=>{
     if (template.type !== "group"){
         return Object.assign({}, template, {nodeId, label:`${template.type}:${template.id}`, style: Object.assign({}, template.style)});
     }
-    return Object.assign({}, template, {nodeId, children: Object.keys(template.children).reduce((acc,key)=>{
+    return Object.assign({}, template, {nodeId, children: [...template.children]});
+
+    /* Object.keys(template.children).reduce((acc,key)=>{
         acc[key] = createNode(template.children[key]);
         return acc;
-    },{})});
+    },{})});*/
 } 
+
+
+/*
+    //more effient to hold the mapping of nodesByKey in seperate object as this then 
+    //means that changes to state of a node cloned from a template won't trigger a state change
+    //of ALL nodes that were cloned by that template.
+    
+    nodes = [n1,n2,n3,n4,n5], ///used by liveeditor to render
+
+    //should this not just be an internal thing - not exposed as state? 
+    
+    nodesByKey = {  //used to update attributes or clone new node based on data key
+
+        templateId1: {
+          data1: n1,
+          data2: n2,
+        },
+
+        templateId2:  {
+          root: n3,
+        }
+    }
+
+    nodesById = { //full list of nodes being rendered.
+      n1:{..},
+      n2:{..},
+      n3:{..},
+      n4:{..},
+    }
 
 /*
 
@@ -102,6 +135,7 @@ const _updateStyle = (node, path, property, value)=>{
     return Object.assign({}, node, { children : Object.assign(node.children, {}, {[id]: _updateStyle(node.children[id], rest, property, value)})});
 }
 
+/*
 const _updateAttribute = (node, path, property, value)=>{
     
     if (path.length == 0){
@@ -111,7 +145,7 @@ const _updateAttribute = (node, path, property, value)=>{
     const [id, ...rest] = path;
 
     return Object.assign({}, node, { children : Object.assign(node.children, {}, {[id]: _updateAttribute(node.children[id], rest, property, value)})});
-}
+}*/
 
 const _updateTransform = (node, path, transform)=>{
  
@@ -124,7 +158,7 @@ const _updateTransform = (node, path, transform)=>{
     return Object.assign({}, node, { children : Object.assign(node.children, {}, {[id]: _updateTransform(node.children[id], rest, transform)})});
 }
 
-const _updateNodeAttributes = (templates, nodes, action)=>{
+/*const _updateNodeAttributes = (templates, nodes, action)=>{
  
 
   const [id, ...rest] = action.path;
@@ -138,12 +172,75 @@ const _updateNodeAttributes = (templates, nodes, action)=>{
   //now update the node with the new value;
   const updated = _updateAttribute(node, rest, action.property, action.value); 
   return Object.assign({}, nodes, {[id] : Object.assign({}, parent, {[key] : updated})});
+}*/
+
+const _clone = (obj)=>{
+    return Object.assign({}, obj, {id:generateId()});
 }
+
+const _cloneChildren = (children, blueprints)=>{
+  return children.reduce((acc, key)=>{
+      const cloned = _clone(blueprints[key]);
+      acc[cloned.id] = cloned;
+      return acc;
+  },{})
+}
+
+const _createNodeFrom = (template, blueprints)=>{
+ 
+    const nodeId = template.nodeId || generateId();
+
+    if (template.type !== "group"){
+        return {
+          node: Object.assign({}, template, {nodeId, style: Object.assign({}, template.style)}),
+          children: {}
+        }
+    }
+
+    const children = _cloneChildren(template.children, blueprints);
+    
+    return {
+              node: Object.assign({}, template, {nodeId, style: Object.assign({}, template.style), children: Object.keys(children)}),
+              children
+           }
+}
+
+/*
+const _updateNodeAttributes = (state, action)=>{
+ 
+  const [id, ...rest] = action.path;
+  const parent        = state.nodesById[id]  || {};
+  const key           = action.enterKey  || "root";
+  const template      = parent[key] || action.templatesById[id];
+
+  //create a deep copy to prevent mutation
+  const {node, children}  = _createNodeFrom(template, action.blueprints);
+
+  //now update the node with the new value;
+  const updated = _updateAttribute(node, rest, action.property, action.value); 
+  return Object.assign({}, nodes, {[id] : Object.assign({}, parent, {[key] : updated})});
+}*/
+
+
+const _updateNodeAttributes = (state, action)=>{
+ 
+  const parent        = state.nodesById[action.id] || {};
+  const key           = action.enterKey  || "root";
+  const template      = parent[key] || action.templatesById[id];
+
+  //create a deep copy to prevent mutation
+  const {node, children}  = _createNodeFrom(template, action.blueprints);
+
+  //now update the node with the new value;
+  const updated = _updateAttribute(node, rest, action.property, action.value); 
+  return Object.assign({}, nodes, {[id] : Object.assign({}, parent, {[key] : updated})});
+}
+
 
 const _createNewNode = (nodes,template)=>{
   const node = createNode(template);
   const key  = "root";
-  return Object.assign({}, nodes, {[template.id] : Object.assign({[key]:node})});
+  return Object.assign({}, nodesById, {[template.id] : Object.assign({[key]:node})});
 }
 
 const _updateNodeStyles = (templates, nodes, action)=>{
@@ -242,7 +339,10 @@ export default function reducer(state: State = initialState, action: any = {}): 
     
     case UPDATE_NODE_ATTRIBUTE: 
       //llokup the action.enterKey, and create new node from template if doesn't already exist!
-     return Object.assign({}, state, {nodes:_updateNodeAttributes(action.templates, state.nodes, action)})
+     return Object.assign({}, state, _updateNodeAttributes(state, action));
+
+
+    //{nodesById:_updateNodeAttributes(action.templatesById, state.nodes, action)})
 
     case UPDATE_NODE_STYLE: 
       //llokup the action.enterKey, and create new node from template if doesn't already exist!
@@ -252,8 +352,9 @@ export default function reducer(state: State = initialState, action: any = {}): 
        return Object.assign({}, state, {nodes: _updateNodeTransforms(action.templates, state.nodes, action)})
 
     case INIT_NODES:
-      
-      return Object.assign({}, state, {nodes: _cloneStaticTemplates(action.templates)})
+      return Object.assign({}, state, {   nodes: [...action.templates],
+                                          nodesById: _cloneStaticTemplates(action.templatesById),
+                                      });
 
     default:
       return state;
@@ -270,7 +371,7 @@ function updateNodeAttribute(path:Array, property:string, value, enterKey:string
         property,
         value,
         enterKey,
-        templates: getState().canvas.templates,
+        blueprints: getState().canvas.templatesById,
     });
   };
 }
@@ -307,6 +408,7 @@ function initNodes(){
     dispatch({
       type: INIT_NODES,
       templates: getState().canvas.templates,
+      templatesById: getState().canvas.templatesById,
     })
   }
 }

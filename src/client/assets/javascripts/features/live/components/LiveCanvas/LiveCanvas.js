@@ -7,10 +7,6 @@ import {Circle,Ellipse,Text,Rect,Line,Path,Group} from '../svg/';
 import {PALETTE_WIDTH} from 'features/palette/constants';
 
 
-/*
-  TODO:   MAKE THIS A NEW FEATURE SET and SPLIT OUT SVG COMPONENTS!!
-*/
-
 @connect(selector, (dispatch) => {
   return{
      actions: bindActionCreators(liveActions, dispatch)
@@ -61,14 +57,14 @@ export default class LiveCanvas extends Component {
 
   renderNodes(){
       
+      //eventually can just pass in the id, and nodes will do the rest themselves.
 
-      const {live:{nodes}} = this.props;
+      const {live:{nodes, nodesById}} = this.props;
      
       const n = [];
-      Object.keys(nodes).map((templatekey)=>{
-          Object.keys(nodes[templatekey]).map((nodekey)=>{
-              
-              n.push(this.renderNode(nodes[templatekey][nodekey]));
+      nodes.map((templatekey)=>{
+          Object.keys(nodesById[templatekey]).map((nodekey)=>{
+              n.push(this.renderNode(nodesById[templatekey][nodekey]));
           })
       });
       return n;

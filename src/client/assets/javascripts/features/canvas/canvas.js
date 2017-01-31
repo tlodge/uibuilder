@@ -29,7 +29,8 @@ export const NAME = 'canvas';
 // Define the initial state for `shapes` module
 
 const initialState: State = {
-  templates: {},     //templates
+  templates: [],
+  templatesById: {},     //templates
   selected:null,
   x: 0,
   y: 0,
@@ -43,40 +44,31 @@ const initialState: State = {
 
 
 /*
-example template
+example templates : ["xyza"],
 
+example templatesforID
 {
-    id: xyz,
-    type: "group",
-    children : {
-        xyza: {
-            id: "xyza",
-            type: "group",
-            children: {
-                xyzab: {
-                  id: xyzab,
-                  type: "circle",
-                  cx: 32,
-                  ...
-                },
-                xyzac:{
-                  id: xyzac,
-                  type: "rect",
-                  x: 12,
-                  y: 12,
-                  ...
-                }
-            }
-        },
-        xyzb : {
-          id: "xyzb",
-          type: "circle",
-          cx: 67,
-          ...
-        }
-    }
-}
-*/
+  xyza: {
+      id: xyz,
+      type: "group",
+      children : ["xyzab", "xyzb"],
+  },
+
+  xyzab: {
+      id: "xyzab",
+      type: "circle",
+      cx: 69,
+      ...
+  },
+
+  xyzb: {
+      id: "xyzb",
+      type: "circle",
+      cx: 67,
+      ...
+  },
+
+}*/
 
 
 //create a deep copy of a template
@@ -96,7 +88,7 @@ const createNode = (template)=>{
 } 
 
 
-const _updateTemplateStyle = (templates, action)=>{
+const _updateTemplateStyle = (state, action)=>{
   const path = action.path;
 
   if (path.length == 0){
@@ -106,14 +98,14 @@ const _updateTemplateStyle = (templates, action)=>{
   const [id, ...rest] = action.path;
 
   if (path.length == 1){
-    const template = Object.assign({},templates[id]);
+    const template = Object.assign({},state.templatesById[id]);
     template.style = Object.assign({}, template.style, {[action.property]:action.value});
-    return Object.assign({}, templates, {[template.id]: template});
+    return Object.assign({}, state.templatesById, {[template.id]: template});
   }
   
-  return Object.assign({}, templates, {
-                                          [id] :  Object.assign({}, templates[id], {
-                                              children: _updateTemplateStyle(templates[id].children, {
+  return Object.assign({}, state.templatesById, {
+                                          [id] :  Object.assign({}, state.templatesById[id], {
+                                                children: _updateTemplateStyle(state.templatesById[id].children, {
                                                 path: rest,
                                                 property: action.property,
                                                 value: action.value,
@@ -124,25 +116,25 @@ const _updateTemplateStyle = (templates, action)=>{
 }
 
 
-const _updateTemplateAttribute = (templates, action)=>{
+const _updateTemplateAttribute = (state, action)=>{
 
   const path = action.path;
 
 
   if (path.length == 0){
-    return templates;
+    return state.templatesById;
   }
 
   const [id, ...rest] = action.path;
 
   if (path.length == 1){
-    const template = Object.assign({},templates[id], {[action.property]:action.value});
-    return Object.assign({}, templates, {[template.id]: template});
+    const template = Object.assign({},state.templatesById[id], {[action.property]:action.value});
+    return Object.assign({}, state.templatesById, {[template.id]: template});
   }
 
-  return Object.assign({}, templates, {
-                                          [id] :  Object.assign({}, templates[id], {
-                                              children: _updateTemplateAttribute(templates[id].children, {
+  return Object.assign({}, state.templatesById, {
+                                          [id] :  Object.assign({}, state.templatesById[id], {
+                                              children: _updateTemplateAttribute(state.templatesById[id].children, {
                                                 path: rest,
                                                 property: action.property,
                                                 value: action.value,
@@ -214,7 +206,7 @@ export function _expandPath(x,y, template){
   const b = pathBounds(template);
   const nw = x-b.x;
   const sf = nw/b.width; 
-  return _scalePath(sf,template.path);
+  return _scalePath(sf,template.d);
 }
 
 
@@ -251,10 +243,10 @@ const _scaleTemplate = (template, sf)=>{
         return Object.assign({}, template, {
                                                 width: template.width * sf,
                                                 height: template.height * sf,
-                                                children: Object.keys(template.children).reduce((acc,key)=>{
-                                                      acc[key] = _scaleTemplate(template.children[key],sf)
-                                                      return acc;
-                                                },{})
+                                                //children: Object.keys(template.children).reduce((acc,key)=>{
+                                                //      acc[key] = _scaleTemplate(template.children[key],sf)
+                                                //      return acc;
+                                                //},{})
                                             })
     }
 }
@@ -362,31 +354,23 @@ const _expandTemplate = (template, x, y)=>{
         }
 
       case "path":
-
+       
         return Object.assign({}, template, {
                                                 d: _expandPath(x,y,template)
 
                                             });
 
-      //recursively alter size of all!
-
       case "group":
          const nw = x-template.x;
          const nh = y-template.y;
          const sf = Math.max(nw/template.width, nh/template.height);
+         
          if (sf > 0){
             const attrs = {
               width: sf * template.width,
               height: sf * template.height,
             }
-         
-            return Object.assign({}, template, {
-                                                ...attrs,
-                                                children: Object.keys(template.children).reduce((acc,key)=>{
-                                                      acc[key] = _scaleTemplate(template.children[key],sf);
-                                                      return acc;
-                                                },{})
-                                            })
+            return Object.assign({}, template, {...attrs})
         }
 
         return template;
@@ -413,31 +397,50 @@ const _deleteTemplate = (state)=>{
     return state.templates;
 }
 
+const _expandChildren = (state, children, sf)=>{
+  return (children || []).reduce((acc,id)=>{
+      acc[id] = _scaleTemplate(state.templatesById[id],sf);
+      return acc;
+  },{})
+}
+
+const _expandTemplates = (state, action)=>{
+    const [id,...rest] = state.selected.path;
+    const _tmpl = state.templatesById[id];
+
+    const  _t = _expandTemplate(_tmpl, action.x, action.y);
+
+    if (_tmpl.type != "group"){
+      return Object.assign({}, state.templatesById, {[_t.id]:_t})
+    } 
+    else{
+      const nw = action.x-_tmpl.x;
+      const nh = action.y-_tmpl.y;
+      const sf = Math.max(nw/_tmpl.width, nh/_tmpl.height);
+      return Object.assign({}, state.templatesById, {[_t.id]:_t, ..._expandChildren(state, _tmpl.children, sf)});
+    } 
+} 
+
 const _modifyTemplate = (state, action)=>{
 
     if (state.selected){
         const [id,...rest] = state.selected.path;
-        const _tmpl = state.templates[id];
-
-       
+        const _tmpl = state.templatesById[id];
 
         if (state.expanding){
-          return Object.assign({}, state.templates, {[id] : _expandTemplate(_tmpl, action.x, action.y)});
+          return Object.assign({}, state.templatesById, _expandTemplates(state, action));
         }
 
-       
-
-
         if (state.dragging){
-          return Object.assign({}, state.templates, {[id] : _moveTemplate(_tmpl, action.x-state.dx, action.y-state.dy)});       
+          return Object.assign({}, state.templatesById, {[id] : _moveTemplate(_tmpl, action.x-state.dx, action.y-state.dy)});       
         }
 
          if (state.rotating){
-          return Object.assign({}, state.templates, {[id] : _rotateTemplate(_tmpl, action.x, action.y)});
+          return Object.assign({}, state.templatesById, {[id] : _rotateTemplate(_tmpl, action.x, action.y)});
         }
     }
 
-    return state.templates;
+    return state.templatesById;
 
 }
 
@@ -470,7 +473,7 @@ export default function reducer(state: State = initialState, action: any = {}): 
         ...state,
         x: action.x,
         y: action.y,
-        templates: _modifyTemplate(state, action),
+        templatesById: _modifyTemplate(state, action),
       }
 
     case MOUSE_DOWN:
@@ -478,7 +481,7 @@ export default function reducer(state: State = initialState, action: any = {}): 
 
       const {path} = action.path;
       const [id,...rest] = path;
-      const _tmpl = state.templates[id];
+      const _tmpl = state.templatesById[id];
       const {x,y} = _templatecoords(_tmpl);
 
       return Object.assign({}, state,  {
@@ -501,20 +504,22 @@ export default function reducer(state: State = initialState, action: any = {}): 
       const template = createTemplate(action.template, action.x, action.y);
       template.enterKey = null;//"id";
 
-      //originally created a new node here but reasoned mych more efficient to clone templates when switch to live screen
-
       return Object.assign({}, state, {
-                                          templates: Object.assign({}, state.templates,  {[template.id]:template}),
+                                          templates: [...state.templates, template.id],
+                                          templatesById: {...state.templatesById, ...{[template.id]:template}},
                                           selected: {path:[template.id], type:template.type},
                                        });
     
     case GROUP_TEMPLATE_DROPPED:
-      const grouptemplate = createGroupTemplate(action.children, action.x, action.y);
-      grouptemplate.enterKey = null;
+      const {root, templates} = createGroupTemplate(action.children, action.x, action.y);
+    
+      console.log("ok created new group template children:");
+      console.log(templates);
 
       return Object.assign({}, state, {
-                                          templates: Object.assign({}, state.templates,  {[grouptemplate.id]:grouptemplate}),
-                                          selected: {path:[grouptemplate.id], type:'group'},
+                                          templates: [...state.templates, root.id],
+                                          templatesById: {...state.templatesById, ...{[root.id]:root, ...templates}},//{[grouptemplate.id]:grouptemplate}),
+                                          selected: {path:[root.id], type:'group'},
                                         });
     
     case TEMPLATE_SELECTED: 
@@ -525,10 +530,10 @@ export default function reducer(state: State = initialState, action: any = {}): 
 
    
     case UPDATE_TEMPLATE_STYLE: 
-      return Object.assign({}, state, {templates:_updateTemplateStyle(state.templates,action)});
+      return Object.assign({}, state, {templatesById:_updateTemplateStyle(state,action)});
 
     case UPDATE_TEMPLATE_ATTRIBUTE:
-      return Object.assign({}, state, {templates:_updateTemplateAttribute(state.templates,action)});
+      return Object.assign({}, state, {templatesById:_updateTemplateAttribute(state,action)});
 
     case EXPAND:
       return Object.assign({}, state, {expanding:true, dragging:false, rotating:false});
@@ -644,7 +649,16 @@ function updateTemplateStyle(path:Array, property:string, value){
 const canvas = (state) => state[NAME];
 
 export const selector = createStructuredSelector({
-  canvas
+  canvas,
+  template : (state, ownProps)=>{
+    return state[NAME].templatesById[ownProps.id]
+  },
+  selected : (state, ownProps)=>{
+    return state[NAME].selected ? state[NAME].selected.path ? state[NAME].selected.path.indexOf(ownProps.id) !== -1 : false : false;
+  },
+  typefor: (state)=>{
+    return (id)=>state[NAME].templatesById[id].type
+  }
 });
 
 export const actionCreators = {

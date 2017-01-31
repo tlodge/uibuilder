@@ -1,16 +1,27 @@
 import React, { Component } from 'react';
 import {camelise} from 'utils';
+import { bindActionCreators } from 'redux';
+import { actionCreators as canvasActions, selector } from '../..';
+import { connect } from 'react-redux';
+
+@connect(selector, (dispatch) => {
+  return{
+     actions: bindActionCreators(canvasActions, dispatch)
+  }
+})
 
 export default class Ellipse extends Component {
-	
-	static defaultProps = {
-   		transform: "translate(0,0)"
-  	};
+
+  	constructor(props){
+  		super(props);	
+  		this._onRotate = this._onRotate.bind(this);
+  		this._onExpand = this._onExpand.bind(this);
+  		this._onMouseDown = this._onMouseDown.bind(this);
+  		this._templateSelected = this._templateSelected.bind(this);
+  	}
 
   	renderControls(rx, ry){
   		
-  		const {onExpand,onRotate} = this.props;
-  		const cx = 0, cy =0;
   		const style = {
 			stroke: "black",
 			strokeWidth: 1,
@@ -29,20 +40,19 @@ export default class Ellipse extends Component {
 		}
   					
   		return 	<g>
-  					<circle style={rotatestyle}  cx={cx} cy={cy-ry-40} r={6} onMouseDown={onRotate}/>
-  					<line style={linestyle} x1={cx} x2={cx} y1={cy-ry-40+6} y2={cy-ry}/>
-  					<circle style={style} cx={cx-rx} cy={cy-ry} r={6} onMouseDown={onExpand}/> 
-  					<circle style={style} cx={cx+rx} cy={cy+ry} r={6} onMouseDown={onExpand}/> 
-  					<circle style={style} cx={cx+rx} cy={cy-ry} r={6} onMouseDown={onExpand}/> 
-  					<circle style={style} cx={cx-rx} cy={cy+ry} r={6} onMouseDown={onExpand}/>
+  					<circle style={rotatestyle}  cx={0} cy={-ry-40} r={6} onMouseDown={this._onRotate}/>
+  					<line style={linestyle} x1={0} x2={0} y1={-ry-40+6} y2={-ry}/>
+  					<circle style={style} cx={-rx} cy={-ry} r={6} onMouseDown={this._onExpand}/> 
+  					<circle style={style} cx={rx} cy={+ry} r={6} onMouseDown={this._onExpand}/> 
+  					<circle style={style} cx={rx} cy={-ry} r={6} onMouseDown={this._onExpand}/> 
+  					<circle style={style} cx={-rx} cy={ry} r={6} onMouseDown={this._onExpand}/>
   				</g>
   	}
 
 	render(){
 	
-		const {id,cx,cy,rx,ry,selected, style,transform, onSelect, onMouseDown} = this.props;
-		const amSelected = selected.indexOf(id) !== -1 && selected.length == 1;
-
+		const {id, template, selected}  = this.props;
+		const {cx,cy,rx,ry,r,style,transform="translate(0,0)"} = template;
 		const _style = camelise(style);
 		
 		const _selectedstyle = {
@@ -57,9 +67,28 @@ export default class Ellipse extends Component {
 		const selectedry = Number(ry)+2+sw/2;
 		
 		return 	<g transform={`translate(${cx},${cy}) ${transform}`}>
-			 		<ellipse cx={0} cy={0} rx={rx} ry={ry} style={_style} onClick={onSelect} onMouseDown={onMouseDown}/>
-			 		{amSelected && this.renderControls(selectedrx, selectedry)}
+			 		<ellipse cx={0} cy={0} rx={rx} ry={ry} style={_style} onClick={this._templateSelected} onMouseDown={this._onMouseDown}/>
+			 		{selected && this.renderControls(selectedrx, selectedry)}
 			 	</g>
 
 	}
+
+	_templateSelected(){
+		const {id, template} = this.props;
+		this.props.actions.templateSelected({path:[id], type:template.type});
+	}
+
+	_onMouseDown(){
+		const {id, template} = this.props;
+		this.props.actions.onMouseDown({path:[id], type:template.type});
+	}
+
+	_onRotate(){
+		this.props.actions.onRotate(this.props.id);
+	}
+
+	_onExpand(){
+		this.props.actions.onExpand(this.props.id);
+	}
+
 }

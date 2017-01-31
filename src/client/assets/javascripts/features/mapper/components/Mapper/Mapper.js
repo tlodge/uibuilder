@@ -128,11 +128,11 @@ export default class Mapper extends Component {
 
   renderComponents() {
     
-    const {canvas:{templates, selected}} = this.props;
+    const {canvas:{templatesById, selected}} = this.props;
 
     const {path=null} = selected || {};
 
-    const template = path != null ? templateForPath(path, templates) : null;
+    const template = path != null ? templateForPath(path, templatesById) : null;
    
 
     const attrs = path != null ? <Attributes {
@@ -168,8 +168,8 @@ export default class Mapper extends Component {
 
 
   renderMapper(){
-      const {canvas:{templates, selected:{path}}} = this.props; 
-      const template = templateForPath(path, templates);
+      const {canvas:{templatesById, selected:{path}}} = this.props; 
+      const template = templateForPath(path, templatesById);
 
       return  <Box>
                 <div style={{paddingBottom:7, fontWeight:"bold"}}>{template.label}</div>
@@ -201,8 +201,8 @@ export default class Mapper extends Component {
   renderProperties(){
 
       const { activeTabIndex } = this.state;
-      const {canvas:{templates, selected:{path}}} = this.props; 
-      const template = templateForPath(path, templates);
+      const {canvas:{templatesById, selected:{path}}} = this.props; 
+      const template = templateForPath(path, templatesById);
       return <Properties template={template} updateAttribute={this.props.actions.updateTemplateAttribute.bind(null,path)} updateStyle={this.props.actions.updateTemplateStyle.bind(null,path)}/>
   }
 

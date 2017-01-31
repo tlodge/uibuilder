@@ -1,24 +1,27 @@
 import React, { Component } from 'react';
-import '../EditorCanvas/Canvas.scss';
+import { bindActionCreators } from 'redux';
 import {camelise} from 'utils';
+import { actionCreators as canvasActions, selector } from '../..';
+import { connect } from 'react-redux';
 
+@connect(selector, (dispatch) => {
+  return{
+     actions: bindActionCreators(canvasActions, dispatch)
+  }
+})
 
 export default class Circle extends Component {
-	
-	static defaultProps = {
-   		transform: "translate(0,0)",
-   		onSelect: ()=>{}
-  	};
 
   	constructor(props){
-  		super(props);
-  		
+  		super(props);	
+  		this._onRotate = this._onRotate.bind(this);
+  		this._onExpand = this._onExpand.bind(this);
+  		this._onMouseDown = this._onMouseDown.bind(this);
+  		this._templateSelected = this._templateSelected.bind(this);
   	}
 
   	renderControls(r){
-  		
-  		const {onExpand,onRotate} = this.props;
-  		const cx=0, cy=0;
+  			
   		const style = {
 			stroke: "black",
 			strokeWidth: 1,
@@ -37,41 +40,58 @@ export default class Circle extends Component {
 		}
   					
   		return 	<g>
-  					<circle style={rotatestyle}  cx={cx} cy={cy-r-40} r={6} onMouseDown={onRotate}/>
-  					<line style={linestyle} x1={cx} x2={cx} y1={cy-r-40+6} y2={cy-r}/>
-  					<circle style={style} cx={cx-r} cy={cy-r} r={6} onMouseDown={onExpand}/> 
-  					<circle style={style} cx={cx+r} cy={cy+r} r={6} onMouseDown={onExpand}/> 
-  					<circle style={style} cx={cx+r} cy={cy-r} r={6} onMouseDown={onExpand}/> 
-  					<circle style={style} cx={cx-r} cy={cy+r} r={6} onMouseDown={onExpand}/>
+  					<circle style={rotatestyle}  cx={0} cy={-r-40} r={6} onMouseDown={this._onRotate}/>
+  					<line style={linestyle} x1={0} x2={0} y1={-r-40+6} y2={-r}/>
+  					<circle style={style} cx={-r} cy={-r} r={6} onMouseDown={this._onExpand}/> 
+  					<circle style={style} cx={r} cy={r} r={6} onMouseDown={this._onExpand}/> 
+  					<circle style={style} cx={r} cy={-r} r={6} onMouseDown={this._onExpand}/> 
+  					<circle style={style} cx={-r} cy={r} r={6} onMouseDown={this._onExpand}/>
   				</g>
   	}
 
 	render(){
 
-		const {id,cx,cy,r,selected, style, transform, onSelect, onMouseDown} = this.props;
+		const {id, template, selected}  = this.props;
+		const {cx,cy,r,style,transform="translate(0,0)"} = template;
 
 		const _style = camelise(style);
-
-		const amSelected = selected.indexOf(id) !== -1 && selected.length == 1;
-
 
 		const _selectedstyle = {
 			stroke: "#3f51b5",
 			strokeWidth: 2,
 			fill: 'none',
 		}
+
 		const sw = _style.strokeWidth ? Number(sw) ? Number(sw) : 0 : 0;
 	
 		const selectedr = Number(r)+2+sw/2;
 
 
 		return 	<g transform={`translate(${cx},${cy}) ${transform}`}>
-			 		<circle cx={0} cy={0} r={r} style={_style} onClick={onSelect} onMouseDown={onMouseDown}></circle>
-			 		{amSelected && <circle cx={0} cy={0} r={selectedr} style={_selectedstyle}></circle>}
-			 		{amSelected && this.renderControls(selectedr)}
+			 		<circle cx={0} cy={0} r={r} style={_style} onClick={this._templateSelected} onMouseDown={this._onMouseDown}></circle>
+			 		{selected && <circle cx={0} cy={0} r={selectedr} style={_selectedstyle}></circle>}
+			 		{selected && this.renderControls(selectedr)}
 			 	</g>
-			 	
-		
-		
 	}
+
+	_templateSelected(){
+		const {id, template} = this.props;
+		this.props.actions.templateSelected({path:[id], type:template.type});
+	}
+
+	_onMouseDown(){
+		const {id, template} = this.props;
+		this.props.actions.onMouseDown({path:[id], type:template.type});
+	}
+
+	_onRotate(){
+		this.props.actions.onRotate(this.props.id);
+	}
+
+	_onExpand(){
+
+		this.props.actions.onExpand(this.props.id);
+	}
+
 }
+

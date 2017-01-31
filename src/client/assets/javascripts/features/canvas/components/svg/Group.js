@@ -1,106 +1,54 @@
 import React, { Component } from 'react';
+import { bindActionCreators } from 'redux';
+import {camelise,componentsFromTransform} from 'utils';
+import { actionCreators as canvasActions, selector } from '../..';
+import { connect } from 'react-redux';
 import {Circle, Text, Line, Rect, Ellipse,Path} from "./"
-import {camelise, componentsFromTransform} from 'utils';
+
+@connect(selector, (dispatch) => {
+  return{
+     actions: bindActionCreators(canvasActions, dispatch)
+  }
+})
 
 export default class Group extends Component {
 	
-	static defaultProps = {
-   		onSelect: ()=>{},
-   		transform: "translate(0,0)",
-   		onMouseUp: ()=>{},
-   		onMouseDown: ()=>{},
-  	};
-
   	constructor(props){
-  		super(props);
+  		super(props);	
+  		this._onRotate = this._onRotate.bind(this);
+  		this._onExpand = this._onExpand.bind(this);
+  		this._onMouseDown = this._onMouseDown.bind(this);
+  		this._templateSelected = this._templateSelected.bind(this);
   	}
 
-	renderChildren(children, path, selected){
+	renderChildren(children){
 
-		const {onSelect} = this.props;
+		const {typefor} = this.props;
 		
-		return Object.keys(children).map((key, i)=>{
-			
-			const item = children[key];
+		return children.map((id)=>{
 
-			switch(item.type){
+			switch(typefor(id)){
 				
 				case "circle":
-
-					return <Circle key={item.id} {...{
-			 				id: item.id,
-			 				cx: item.cx,
-			 				cy: item.cy,
-			 				r: item.r,
-			 				style:item.style,
-							selected,
-							onSelect: onSelect.bind(null,{path:[...path,item.id], type:item.type}),
-			 		}}/>
+					return <Circle key={id} id={id}/>
 			 	
 			 	case "ellipse":
-					return <Ellipse key={item.id} {...{
-			 				id: item.id,
-			 				cx: item.cx,
-			 				cy: item.cy,
-			 				rx: item.rx,
-			 				ry: item.ry,
-			 				style:item.style,
-							selected,
-							onSelect: onSelect.bind(null,{path:[...path,item.id], type:item.type}),
-					}}/>
+					return <Ellipse key={id} id={id}/>
 
 				case "rect":
-					return <Rect key={item.id} {...{
-			 				id: item.id,
-			 				x: item.x,
-			 				y: item.y,
-			 				width: item.width,
-			 				height: item.height,
-			 				style:item.style,
-							selected,
-							onSelect: onSelect.bind(null,{path:[...path,item.id], type:item.type}),
-			 		}}/>
+					return <Rect key={id}  id={id}/>
 
 				case "text":
-					return <Text key={item.id} {...{
-			 				id: item.id,
-			 				x: item.x,
-			 				y: item.y,
-			 				text: item.text,
-			 				style:item.style,
-							selected,
-							onSelect: onSelect.bind(null,{path:[...path,item.id], type:item.type}),
-
-			 		}}/>
+					return <Text key={id} id={id}/>
 
 				case "line":
-					return <Line key={item.id} {...{
-			 				id: item.id,
-			 				x1: item.x1,
-			 				y1: item.y1,
-			 				x2: item.x2,
-			 				y2: item.y2,
-			 				style:item.style,
-							selected,
-							onSelect: onSelect.bind(null,{path:[...path,item.id], type:item.type}),
-
-			 		}}/>
+					return <Line key={id} id={id}/>
 
 			 	case "path":
-					return <Path key={item.id} {...{
-			 				id: item.id,
-			 				d: item.d,
-			 				style:item.style,
-							selected,
-							onSelect: onSelect.bind(null,{path:[...path,item.id], type:item.type}),
-
-			 		}}/>
+					return <Path key={id} id={id}/>
 
 				case "group":
-					return <Group key={i} {...{
-							...item,
-							selected,
-						}}/>
+					<Group key={id} id={id}/>
 							
 				default:
 					return null;
@@ -110,14 +58,12 @@ export default class Group extends Component {
 
 	renderControls(x,y, width, height){
   		
-  		const {onExpand, onRotate} = this.props;
-  		
   		const style = {
 			stroke: "black",
 			strokeWidth: 1,
 			fill: '#3f51b5',
 		}
-		
+
   		const rotatestyle = {
 			stroke: "black",
 			strokeWidth: 1,
@@ -130,19 +76,16 @@ export default class Group extends Component {
 		}
 
   		return 	<g>
-  					<circle style={rotatestyle}  cx={x+width/2} cy={y-40} r={6} onMouseDown={onRotate}/>
+  					<circle style={rotatestyle}  cx={x+width/2} cy={y-40} r={6} onMouseDown={this._onRotate}/>
   					<line style={linestyle} x1={x+width/2} x2={x+width/2} y1={y-40+6} y2={y}/>
-  					<circle style={style} cx={x+width+10} cy={y+height+10} r={10} onMouseDown={onExpand}/>
+  					<circle style={style} cx={x+width+10} cy={y+height+10} r={10} onMouseDown={this._onExpand}/>
   				</g>
   	}
 
 	render(){
 
-		const {id,x, y, width, height,  style, transform, children, nodeId, selected=[], onSelect, onMouseDown, onMouseUp} = this.props;
-		
-		const amSelected = selected.indexOf(id) !== -1 && selected.length == 1;
-		const [tid, ...rest] = selected;
-
+		const {id, template, selected} = this.props;
+		const {x,y,width,height,style,transform="translate(0,0)"} = template;
 		const _style = camelise(style);
 		
 		const {scale=1,rotate,translate} = componentsFromTransform(transform.replace(/\s+/g,""));
@@ -160,13 +103,31 @@ export default class Group extends Component {
 
 		const _transform = `scale(${scale}),translate(${dtx},${dty}),rotate(${degrees},${Number(rx)},${Number(ry)})`; 
 		
-		return <g style={_style} transform={_transform} onMouseDown={onMouseDown.bind(null,{path:[id]})} onClick={onSelect.bind(null,{path:[id],type:"group"})}>
-				    {amSelected && this.renderControls(0, 0, width, height)}
-					{this.renderChildren(children, [id], rest)}
-				    {amSelected && <rect x={0} y={0} width={width} height={height} style={_selectedstyle} />}
+		return <g style={_style} transform={_transform} onMouseDown={this._onMouseDown} onClick={this._templateSelected}>
+				    {selected && this.renderControls(0, 0, width, height)}
+					{this.renderChildren(template.children)}
+				    {selected && <rect x={0} y={0} width={width} height={height} style={_selectedstyle} />}
 			 	</g>
 
 
+	}
+
+	_templateSelected(){
+		const {id, template} = this.props;
+		this.props.actions.templateSelected({path:[id], type:template.type});
+	}
+
+	_onMouseDown(){
+		const {id, template} = this.props;
+		this.props.actions.onMouseDown({path:[id], type:template.type});
+	}
+
+	_onRotate(){
+		this.props.actions.onRotate(this.props.id);
+	}
+
+	_onExpand(){
+		this.props.actions.onExpand(this.props.id);
 	}
 
 

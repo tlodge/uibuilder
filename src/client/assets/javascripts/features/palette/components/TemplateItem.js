@@ -3,6 +3,7 @@ import classnames from 'classnames';
 import { Flex, Box } from 'reflexbox'
 import { DragSource } from 'react-dnd';
 import FontIcon from 'react-md/lib/FontIcons';
+import {generateIds} from 'utils';
 
 function connect(connect, monitor){
     
@@ -21,7 +22,7 @@ const templateSource = {
   beginDrag(props) {
     return {
       template: props.type,
-      children: props.children,
+      children: generateIds(props.children),
     };
   },
 

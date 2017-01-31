@@ -1,22 +1,25 @@
 import React, { Component } from 'react';
-import { camelise } from 'utils';
+import { bindActionCreators } from 'redux';
+import {camelise} from 'utils';
+import { actionCreators as canvasActions, selector } from '../..';
+import { connect } from 'react-redux';
+
+@connect(selector, (dispatch) => {
+  return{
+     actions: bindActionCreators(canvasActions, dispatch)
+  }
+})
 
 export default class Path extends Component {
-
 	render(){
-		const {id,d,selected, style, transform, onSelect} = this.props;
+		const {id,template,selected} = this.props;
+		const {d,style} = template;
 		const _style = camelise(style);
 
-		const amSelected = selected.indexOf(id) !== -1 && selected.length == 1;
-
-
-		if (amSelected){
+		if (selected){
 			_style.stroke = "#3f51b5";
 			_style.strokeWidth = 2;
 		}
-
-
 		return <path d={d} style={_style} />
 	}
-
 }
