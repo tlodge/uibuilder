@@ -14,9 +14,11 @@ export default class Path extends Component {
 	render(){
 		const {id,template,selected} = this.props;
 		const {d,style} = template;
+		const amSelected = selected.indexOf(id) != -1;
+
 		const _style = camelise(style);
 
-		if (selected){
+		if (amSelected){
 			_style.stroke = "#3f51b5";
 			_style.strokeWidth = 2;
 		}

@@ -29,25 +29,25 @@ export default class LiveCanvas extends Component {
       switch(node.type){
           
           case "circle":
-            return <Circle key={node.nodeId} {...node}/>
+            return <Circle key={node.id} {...node}/>
 
           case "ellipse":
-            return <Ellipse key={node.nodeId} {...node}/>
+            return <Ellipse key={node.id} {...node}/>
 
           case "rect":
-            return <Rect key={node.nodeId} {...node}/>
+            return <Rect key={node.id} {...node}/>
           
           case "text":
-            return <Text key={node.nodeId} {...node}/>
+            return <Text key={node.id} {...node}/>
 
           case "path":
-            return <Path key={node.nodeId} {...node}/>
+            return <Path key={node.id} {...node}/>
           
           case "line":
-            return <Line key={node.nodeId} {...node}/>
+            return <Line key={node.id} {...node}/>
 
           case "group":
-            return <Group key={node.nodeId} {...node}/>
+            return <Group key={node.id} {...node}/>
 
        }
       
@@ -61,13 +61,9 @@ export default class LiveCanvas extends Component {
 
       const {live:{nodes, nodesById}} = this.props;
      
-      const n = [];
-      nodes.map((templatekey)=>{
-          Object.keys(nodesById[templatekey]).map((nodekey)=>{
-              n.push(this.renderNode(nodesById[templatekey][nodekey]));
-          })
+      return nodes.map((id)=>{
+        return this.renderNode(nodesById[id]);
       });
-      return n;
   }
 
   render() {

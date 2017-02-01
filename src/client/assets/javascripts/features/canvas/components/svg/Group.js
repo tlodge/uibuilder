@@ -23,10 +23,10 @@ export default class Group extends Component {
 
 	renderChildren(children){
 
-		const {typefor} = this.props;
-		
-		return children.map((id)=>{
+		const {typefor} = this.props;	
 
+		return children.map((id)=>{
+	
 			switch(typefor(id)){
 				
 				case "circle":
@@ -48,7 +48,7 @@ export default class Group extends Component {
 					return <Path key={id} id={id}/>
 
 				case "group":
-					<Group key={id} id={id}/>
+					return <Group key={id} {...{...this.props, ...{id}}}/>
 							
 				default:
 					return null;
@@ -84,7 +84,9 @@ export default class Group extends Component {
 
 	render(){
 
-		const {id, template, selected} = this.props;
+		const {id, selected, canvas:{templatesById}} = this.props;
+		const template = templatesById[id];
+		const amSelected = selected.indexOf(id) != -1;
 		const {x,y,width,height,style,transform="translate(0,0)"} = template;
 		const _style = camelise(style);
 		
@@ -104,9 +106,9 @@ export default class Group extends Component {
 		const _transform = `scale(${scale}),translate(${dtx},${dty}),rotate(${degrees},${Number(rx)},${Number(ry)})`; 
 		
 		return <g style={_style} transform={_transform} onMouseDown={this._onMouseDown} onClick={this._templateSelected}>
-				    {selected && this.renderControls(0, 0, width, height)}
+				    {amSelected && this.renderControls(0, 0, width, height)}
 					{this.renderChildren(template.children)}
-				    {selected && <rect x={0} y={0} width={width} height={height} style={_selectedstyle} />}
+				    {amSelected && <rect x={0} y={0} width={width} height={height} style={_selectedstyle} />}
 			 	</g>
 
 
@@ -123,10 +125,14 @@ export default class Group extends Component {
 	}
 
 	_onRotate(){
+		console.log("calling rotate with ");
+		console.log(this.props.id);
 		this.props.actions.onRotate(this.props.id);
 	}
 
 	_onExpand(){
+		console.log("calling expand with ");
+		console.log(this.props.id);
 		this.props.actions.onExpand(this.props.id);
 	}
 

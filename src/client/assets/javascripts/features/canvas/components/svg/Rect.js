@@ -53,7 +53,7 @@ export default class Rect extends Component {
 		const {id, template, selected} = this.props;
 		const {x,y,rx,ry,width,height,style,transform="translate(0,0)"} = template;
 		const _style = camelise(style);
-	
+		const amSelected = selected.indexOf(id) != -1;
 		const _selectedstyle = {
 			stroke: "#3f51b5",
 			strokeWidth: 2,
@@ -67,8 +67,8 @@ export default class Rect extends Component {
 
 		return 	<g transform={`translate(${x},${y}) ${transform}`}>
 			 		<rect rx={rx} ry={ry} x={0} y={0} width={width} height={height} style={_style} onClick={this._templateSelected} onMouseDown={this._onMouseDown}/>
-			 		{selected && <rect rx={rx} ry={ry} x={-2} y={-2} width={selectedw} height={selectedh} style={_selectedstyle} />}
-			 		{selected && this.renderControls(selectedw, selectedh)}
+			 		{amSelected && <rect rx={rx} ry={ry} x={-2} y={-2} width={selectedw} height={selectedh} style={_selectedstyle} />}
+			 		{amSelected && this.renderControls(selectedw, selectedh)}
 			 	</g>
 
 	}

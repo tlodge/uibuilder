@@ -646,7 +646,7 @@ export function createGroupTemplate(children, x:number, y:number){
 		y: y,
 		width: bounds.width,
 		height: bounds.height,
-		children: Object.keys(extracted).map(k=>extracted[k].id),
+		children: Object.keys(children).map(k=>children[k].id),
 		style:{
 			fill: 'none',
 			stroke: 'none',

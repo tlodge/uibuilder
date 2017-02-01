@@ -53,7 +53,8 @@ export default class Circle extends Component {
 
 		const {id, template, selected}  = this.props;
 		const {cx,cy,r,style,transform="translate(0,0)"} = template;
-
+		const amSelected = selected.indexOf(id) != -1;
+		
 		const _style = camelise(style);
 
 		const _selectedstyle = {
@@ -69,8 +70,8 @@ export default class Circle extends Component {
 
 		return 	<g transform={`translate(${cx},${cy}) ${transform}`}>
 			 		<circle cx={0} cy={0} r={r} style={_style} onClick={this._templateSelected} onMouseDown={this._onMouseDown}></circle>
-			 		{selected && <circle cx={0} cy={0} r={selectedr} style={_selectedstyle}></circle>}
-			 		{selected && this.renderControls(selectedr)}
+			 		{amSelected && <circle cx={0} cy={0} r={selectedr} style={_selectedstyle}></circle>}
+			 		{amSelected && this.renderControls(selectedr)}
 			 	</g>
 	}
 

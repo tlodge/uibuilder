@@ -18,17 +18,51 @@ const initialState: State = {
   nodesById: {},     
 };
 
-//create a deep copy of a template
-//nodeIDs are assigned so that they can be used as keys when rendering.  We only generate new ones if they don't exist so that
-//react can determine if a change  is to a current object or is a new one being added to the DOM
 
-const createNode = (template)=>{
-    const nodeId = template.nodeId || generateId();
+//nce we have all child ids we can then create a lookuo table to map old ids to new, then return all new.
+const _getAllChildIds = (template, blueprints)=>{
+    return template.children.map((child)=>{
+        if (blueprints[child].children){
+          console.log(child + " has children");
+
+          return [child, ..._getAllChildIds(blueprints[child], blueprints)]
+        }
+        return child; 
+    })
+}
+
+const createNode = (template, blueprints)=>{
+
+    const id = generateId();
 
     if (template.type !== "group"){
-        return Object.assign({}, template, {nodeId, label:`${template.type}:${template.id}`, style: Object.assign({}, template.style)});
+        return {
+                  node:  Object.assign({}, template, {id, label:`${template.type}:${template.id}`, style: Object.assign({}, template.style)}),
+                  children: {}
+              }
     }
-    return Object.assign({}, template, {nodeId, children: [...template.children]});
+
+    
+
+    console.log("template is");
+    console.log(template);
+
+    const childIds = _getAllChildIds(template, blueprints)
+    console.log("all the child IDs are");
+    console.log(childIds);
+
+    /*return {
+        node:  Object.assign({}, template, {
+                                                id, 
+                                                children: Object.keys(children).map(k=>children[k].id),
+                                                label:`${template.type}:${template.id}`, 
+                                                style: Object.assign({}, template.style)
+
+                                            }),
+        children,
+    }*/
+
+    //return Object.assign({}, template, {id, children: [...template.children]});
 
     /* Object.keys(template.children).reduce((acc,key)=>{
         acc[key] = createNode(template.children[key]);
@@ -45,7 +79,7 @@ const createNode = (template)=>{
     nodes = [n1,n2,n3,n4,n5], ///used by liveeditor to render
 
     //should this not just be an internal thing - not exposed as state? 
-    
+
     nodesByKey = {  //used to update attributes or clone new node based on data key
 
         templateId1: {
@@ -174,14 +208,31 @@ const _updateTransform = (node, path, transform)=>{
   return Object.assign({}, nodes, {[id] : Object.assign({}, parent, {[key] : updated})});
 }*/
 
-const _clone = (obj)=>{
-    return Object.assign({}, obj, {id:generateId()});
+const _clone = (obj, blueprints)=>{
+  
+  if (obj.children){
+      const children = _cloneChildren(obj.children, blueprints);
+  
+      return {  
+                node: Object.assign({}, obj, {id:generateId(), children: Object.keys(children).map(k=>children[k].id)}),
+                children,
+      }
+  }
+  else{
+    return {  
+              node: Object.assign({}, obj, {id:generateId()}),
+              children: {},
+           }
+  }
 }
 
 const _cloneChildren = (children, blueprints)=>{
+  console.log("ok starting to clone");
+  console.log(children);
+
   return children.reduce((acc, key)=>{
-      const cloned = _clone(blueprints[key]);
-      acc[cloned.id] = cloned;
+      const {node, children} = _clone(blueprints[key], blueprints);
+      acc = {...acc, ...node, ...children};
       return acc;
   },{})
 }
@@ -259,14 +310,23 @@ const _updateNodeStyles = (templates, nodes, action)=>{
   return Object.assign({}, nodes, {[id] : Object.assign({}, parent, {[key] : updated})});
 }
 
-const _cloneStaticTemplates = (templates)=>{
-  
-    return Object.keys(templates).filter((key)=>{
-       return templates[key].enterKey === null;
+//needs to return a 
+//{
+//  nodesById:
+//  nodesbyKey:
+//}
+
+const _cloneStaticTemplates = (templates, blueprints)=>{
+
+    return templates.filter((key)=>{
+       return !blueprints[key].enterKey;
     }).reduce((acc, key)=>{
-        acc[key] = {root: createNode(templates[key])}
+        const {node, children} = createNode(blueprints[key], blueprints);
+        acc.nodes.push(node.id);
+        acc.nodesById[node.id] = {...node, ...children};
+        acc.nodesByKey[key] = {root:node.id};
         return acc;
-    },{});
+    },{nodes:[], nodesByKey: {}, nodesById:{}});
 }
 
 const _combine = (newtransform="", oldtransform="")=>{
@@ -352,9 +412,7 @@ export default function reducer(state: State = initialState, action: any = {}): 
        return Object.assign({}, state, {nodes: _updateNodeTransforms(action.templates, state.nodes, action)})
 
     case INIT_NODES:
-      return Object.assign({}, state, {   nodes: [...action.templates],
-                                          nodesById: _cloneStaticTemplates(action.templatesById),
-                                      });
+      return Object.assign({}, state, {..._cloneStaticTemplates(action.templates, action.templatesById)});
 
     default:
       return state;

@@ -54,6 +54,7 @@ export default class Ellipse extends Component {
 		const {id, template, selected}  = this.props;
 		const {cx,cy,rx,ry,r,style,transform="translate(0,0)"} = template;
 		const _style = camelise(style);
+		const amSelected = selected.indexOf(id) != -1;
 		
 		const _selectedstyle = {
 			stroke: "#3f51b5",
@@ -68,7 +69,7 @@ export default class Ellipse extends Component {
 		
 		return 	<g transform={`translate(${cx},${cy}) ${transform}`}>
 			 		<ellipse cx={0} cy={0} rx={rx} ry={ry} style={_style} onClick={this._templateSelected} onMouseDown={this._onMouseDown}/>
-			 		{selected && this.renderControls(selectedrx, selectedry)}
+			 		{amSelected && this.renderControls(selectedrx, selectedry)}
 			 	</g>
 
 	}

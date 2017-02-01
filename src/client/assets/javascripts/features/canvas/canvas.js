@@ -210,7 +210,10 @@ export function _expandPath(x,y, template){
 }
 
 
-const _scaleTemplate = (template, sf)=>{
+const _scaleTemplate = (templates, id, sf)=>{
+    
+    const template = templates[id];
+
     switch (template.type){
       
       case "circle":
@@ -240,13 +243,11 @@ const _scaleTemplate = (template, sf)=>{
         return Object.assign({}, template, {d: _scalePath(sf,template.d)});
 
       case "group":
+      
         return Object.assign({}, template, {
                                                 width: template.width * sf,
                                                 height: template.height * sf,
-                                                //children: Object.keys(template.children).reduce((acc,key)=>{
-                                                //      acc[key] = _scaleTemplate(template.children[key],sf)
-                                                //      return acc;
-                                                //},{})
+                                               
                                             })
     }
 }
@@ -397,15 +398,22 @@ const _deleteTemplate = (state)=>{
     return state.templates;
 }
 
-const _expandChildren = (state, children, sf)=>{
+const _expandChildren = (templates, children, sf)=>{
+  
   return (children || []).reduce((acc,id)=>{
-      acc[id] = _scaleTemplate(state.templatesById[id],sf);
+      acc = {
+          ...acc, 
+          ...{[id]:_scaleTemplate(templates, id, sf)}, 
+          ..._expandChildren(templates, templates[id].children || [],  sf)
+      }
       return acc;
   },{})
 }
 
 const _expandTemplates = (state, action)=>{
+    
     const [id,...rest] = state.selected.path;
+
     const _tmpl = state.templatesById[id];
 
     const  _t = _expandTemplate(_tmpl, action.x, action.y);
@@ -417,7 +425,7 @@ const _expandTemplates = (state, action)=>{
       const nw = action.x-_tmpl.x;
       const nh = action.y-_tmpl.y;
       const sf = Math.max(nw/_tmpl.width, nh/_tmpl.height);
-      return Object.assign({}, state.templatesById, {[_t.id]:_t, ..._expandChildren(state, _tmpl.children, sf)});
+      return Object.assign({}, state.templatesById, {[_t.id]:_t, ..._expandChildren(state.templatesById, _tmpl.children, sf)});
     } 
 } 
 
@@ -513,7 +521,10 @@ export default function reducer(state: State = initialState, action: any = {}): 
     case GROUP_TEMPLATE_DROPPED:
       const {root, templates} = createGroupTemplate(action.children, action.x, action.y);
     
-      console.log("ok created new group template children:");
+      console.log("AFTER CREATING A GROUP TENOLATE WE HAVE:");
+      console.log("root template")
+      console.log(root);
+      console.log("child templates");
       console.log(templates);
 
       return Object.assign({}, state, {
@@ -653,8 +664,8 @@ export const selector = createStructuredSelector({
   template : (state, ownProps)=>{
     return state[NAME].templatesById[ownProps.id]
   },
-  selected : (state, ownProps)=>{
-    return state[NAME].selected ? state[NAME].selected.path ? state[NAME].selected.path.indexOf(ownProps.id) !== -1 : false : false;
+  selected : (state)=>{
+    return state[NAME].selected ? state[NAME].selected.path : [];
   },
   typefor: (state)=>{
     return (id)=>state[NAME].templatesById[id].type
