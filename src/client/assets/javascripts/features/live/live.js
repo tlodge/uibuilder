@@ -68,6 +68,69 @@ const _createNode = (template, blueprints)=>{
 } 
 
 
+//needs to return a 
+//{
+//  nodes: []
+//  nodesById: {}
+//  nodesbyKey: {}
+//}
+
+const _cloneStaticTemplates = (templates, blueprints)=>{
+
+    return templates.filter((key)=>{
+       return !blueprints[key].enterKey;
+    }).reduce((acc, key)=>{
+        const {node, children} = _createNode(blueprints[key], blueprints);
+        acc.nodes.push(node.id);
+        acc.nodesById = {...acc.nodesById, ...{[node.id]:node}, ...children};
+        acc.nodesByKey[key] = {root:node.id};
+        return acc;
+    },{nodes:[], nodesByKey: {}, nodesById:{}});
+}
+
+const _combine = (newtransform="", oldtransform="")=>{
+  
+    const {scale, rotate, translate} = Object.assign({}, componentsFromTransform(oldtransform), componentsFromTransform(newtransform));
+    const transforms = [];
+
+    if (scale)
+      transforms.push(`scale(${scale})`);
+
+    if (translate)
+      transforms.push(`translate(${translate})`);
+
+    if (rotate)
+      transforms.push(`rotate(${rotate})`);
+
+    return transforms.join();
+}
+
+const _createTransform = (node, type, transform)=>{
+
+   const {x,y}   =  originForNode(node);
+
+   switch(type){
+      
+      case "scale":
+
+          const {scale} = componentsFromTransform(transform);
+          return _combine(scalePreservingOrigin(x, y, scale || 1), node.transform || "");
+
+      case "translate":
+          const {translate} = componentsFromTransform(transform);
+          return _combine(`translate(${translate})`,  node.transform || "");
+
+      case "rotate":
+          const {rotate} = componentsFromTransform(transform);
+          return _combine(`rotate(${rotate},${x},${y})`, node.transform || "")
+
+      default:
+
+   }
+}
+
+
+
 /*
     //more effient to hold the mapping of nodesByKey in seperate object as this then 
     //means that changes to state of a node cloned from a template won't trigger a state change
@@ -155,28 +218,6 @@ nodes == {
 }
 */
 
-const _updateStyle = (node, path, property, value)=>{
-    
-    if (path.length == 0){
-        return Object.assign({}, node, {style : Object.assign({}, node.style, {[property]:value})});
-    }
-
-    const [id, ...rest] = path;
-
-    return Object.assign({}, node, { children : Object.assign(node.children, {}, {[id]: _updateStyle(node.children[id], rest, property, value)})});
-}
-
-const _updateTransform = (node, path, transform)=>{
- 
-    if (path.length == 0){
-       return Object.assign({}, node, {transform});
-    }
-
-    const [id, ...rest] = path;
-
-    return Object.assign({}, node, { children : Object.assign(node.children, {}, {[id]: _updateTransform(node.children[id], rest, transform)})});
-}
-
 const _updateNodeAttributes = (state, action)=>{
  
   if (!state.nodesById)
@@ -193,6 +234,7 @@ const _updateNodeAttributes = (state, action)=>{
   }
   //otherwise clone the template and update it
   else{
+
       const {node, children} = _createNode(action.blueprints[templateId], action.blueprints);
       const n = Object.assign({}, node, {[action.property]:action.value});
       const k = Object.assign({}, state.nodesByKey[templateId] || {}, {[subkey]:n.id})
@@ -204,124 +246,83 @@ const _updateNodeAttributes = (state, action)=>{
   }
 }
 
-const _updateNodeStyles = (templates, nodes, action)=>{
-  const key = action.enterKey || "root";
-  const [id, ...rest] = action.path;
-  const parent = nodes[id] || {};
-  const template = parent[key] || templates[id];
 
-  //create a deep copy to prevent mutation
-  const node = _createNode(template);
+const _updateNodeStyles = (state, action)=>{
   
-  const updated = _updateStyle(node, rest, action.property, action.value); 
-  
-  //const newNode = Object.assign({}, node, {style: Object.assign({}, node.style, {[action.property] : action.value})});
-  
-  return Object.assign({}, nodes, {[id] : Object.assign({}, parent, {[key] : updated})});
+  if (!state.nodesById)
+    return state;
+
+  const [templateId, ...rest] = action.path;
+  const subkey     = action.enterKey ? action.enterKey : "root";
+  const nodeId     = state.nodesByKey[templateId] ? state.nodesByKey[templateId][subkey] : null;
+
+  //if we already have an entry for this node and its subkey, then just update it
+  if (nodeId){
+     const node = state.nodesById[nodeId];
+     const style = node.style || {};
+     const n = Object.assign({}, state.nodesById[nodeId], {
+                                                              style: Object.assign({}, style, {[action.property]:action.value})
+                                                           });
+
+     return Object.assign({}, state, {nodesById: Object.assign({}, state.nodesById, {[nodeId] : n})});
+  }
+  else{
+     
+      const {node, children} = _createNode(action.blueprints[templateId], action.blueprints);
+      const style = node.style || {};
+      const n = Object.assign({}, node, {style: Object.assign({}, style, {[action.property]:action.value})});
+      const k = Object.assign({}, state.nodesByKey[templateId] || {}, {[subkey]:n.id})
+      return Object.assign({}, state, {
+                                          nodes: [...state.nodes, n.id],
+                                          nodesById:  {...state.nodesById, ...{[n.id]:n}, ...children},
+                                          nodesByKey: Object.assign({}, state.nodesByKey, {[templateId]: k }),
+                                      });
+  }
 }
 
-//needs to return a 
-//{
-//  nodesById:
-//  nodesbyKey:
-//}
+const _updateNodeTransforms = (state, action)=>{
+  if (!state.nodesById)
+    return state;
 
-const _cloneStaticTemplates = (templates, blueprints)=>{
+  const [templateId, ...rest] = action.path;
+  const subkey     = action.enterKey ? action.enterKey : "root";
+  const nodeId     = state.nodesByKey[templateId] ? state.nodesByKey[templateId][subkey] : null;
 
-    return templates.filter((key)=>{
-       return !blueprints[key].enterKey;
-    }).reduce((acc, key)=>{
-        const {node, children} = _createNode(blueprints[key], blueprints);
-        acc.nodes.push(node.id);
-        acc.nodesById = {...acc.nodesById, ...{[node.id]:node}, ...children};
-        acc.nodesByKey[key] = {root:node.id};
-        return acc;
-    },{nodes:[], nodesByKey: {}, nodesById:{}});
-}
-
-const _combine = (newtransform="", oldtransform="")=>{
   
-    const {scale, rotate, translate} = Object.assign({}, componentsFromTransform(oldtransform), componentsFromTransform(newtransform));
-    const transforms = [];
-
-    if (scale)
-      transforms.push(`scale(${scale})`);
-
-    if (translate)
-      transforms.push(`translate(${translate})`);
-
-    if (rotate)
-      transforms.push(`rotate(${rotate})`);
-
-    return transforms.join();
+  //if we already have an entry for this node and its subkey, then just update it
+  if (nodeId){
+     const transform = _createTransform(state.nodesById[nodeId], action.property, action.transform);
+     const n = Object.assign({}, state.nodesById[nodeId], {transform});
+     return Object.assign({}, state, {nodesById: Object.assign({}, state.nodesById, {[nodeId] : n})});
+  }
+  else{
+      const {node, children} = _createNode(action.blueprints[templateId], action.blueprints);
+      const transform = _createTransform(state.nodesById[nodeId], action.property, action.transform);
+      const n = Object.assign({}, node, {transform});
+      const k = Object.assign({}, state.nodesByKey[templateId] || {}, {[subkey]:n.id})
+      return Object.assign({}, state, {
+                                          nodes: [...state.nodes, n.id],
+                                          nodesById:  {...state.nodesById, ...{[n.id]:n}, ...children},
+                                          nodesByKey: Object.assign({}, state.nodesByKey, {[templateId]: k }),
+                                      });
+  }
 }
-
-const _createTransform = (node, type, transform)=>{
-
-   const {x,y}   =  originForNode(node);
-
-   switch(type){
-      
-      case "scale":
-
-          const {scale} = componentsFromTransform(transform);
-          return _combine(scalePreservingOrigin(x, y, scale || 1), node.transform || "");
-
-      case "translate":
-          const {translate} = componentsFromTransform(transform);
-          return _combine(`translate(${translate})`,  node.transform || "");
-
-      case "rotate":
-          const {rotate} = componentsFromTransform(transform);
-          return _combine(`rotate(${rotate},${x},${y})`, node.transform || "")
-
-      default:
-
-   }
-}
-
-
-const _updateNodeTransforms = (templates, nodes, action)=>{
-  
-  const key = action.enterKey || "root";
-
-  const [id, ...rest] = action.path;
-  const parent = nodes[id] || {};
-  const template = parent[key] || templates[id];
-
-  //create a deep copy to prevent mutation
-  const node    = _createNode(template);
- 
-  const transform = _createTransform(node, action.property, action.transform);
-
-  //const transform = `${scalePreservingOrigin(x, y, sf)} rotate(${degcount}, ${x}, ${y})`; 
-
-
-  const updated = _updateTransform(node, rest, transform); 
-
-  return Object.assign({}, nodes, {[id] : Object.assign({}, parent, {[key] : updated})});
-}
-
 
 export default function reducer(state: State = initialState, action: any = {}): State {
   
   switch (action.type) {
     
     case UPDATE_NODE_ATTRIBUTE: 
-      //llokup the action.enterKey, and create new node from template if doesn't already exist!
      return Object.assign({}, state, _updateNodeAttributes(state, action));
 
-    //{nodesById:_updateNodeAttributes(action.templatesById, state.nodes, action)})
-
     case UPDATE_NODE_STYLE: 
-      //llokup the action.enterKey, and create new node from template if doesn't already exist!
-      return Object.assign({}, state, {nodes:_updateNodeStyles(action.templates, state.nodes, action)})
+      return Object.assign({}, state, _updateNodeStyles(state, action));
 
     case UPDATE_NODE_TRANSFORM:
-       return Object.assign({}, state, {nodes: _updateNodeTransforms(action.templates, state.nodes, action)})
+       return Object.assign({}, state, _updateNodeTransforms(state, action));
 
     case INIT_NODES:
-      return Object.assign({}, state, {..._cloneStaticTemplates(action.templates, action.templatesById)});
+      return Object.assign({}, state, {..._cloneStaticTemplates(action.templates, action.blueprints)});
 
     default:
       return state;
@@ -351,7 +352,7 @@ function updateNodeStyle(path:Array, property:string, value, enterKey:string){
       property,
       value,
       enterKey,
-      templates: getState().canvas.templates,
+      blueprints: getState().canvas.templatesById,
     });
   }
 }
@@ -365,7 +366,7 @@ function updateNodeTransform(path:Array, property:string, transform:string, ente
         property,
         transform,
         enterKey,
-        templates: getState().canvas.templates,
+        blueprints: getState().canvas.templatesById,
     });
   }
 }
@@ -375,7 +376,7 @@ function initNodes(){
     dispatch({
       type: INIT_NODES,
       templates: getState().canvas.templates,
-      templatesById: getState().canvas.templatesById,
+      blueprints: getState().canvas.templatesById,
     })
   }
 }
