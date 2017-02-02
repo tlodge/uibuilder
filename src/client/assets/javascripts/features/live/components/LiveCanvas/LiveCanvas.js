@@ -25,7 +25,8 @@ export default class LiveCanvas extends Component {
 
   renderNode(node){
      
-      
+      const {live:{nodesById}} = this.props;
+
       switch(node.type){
           
           case "circle":
@@ -47,7 +48,10 @@ export default class LiveCanvas extends Component {
             return <Line key={node.id} {...node}/>
 
           case "group":
-            return <Group key={node.id} {...node}/>
+            return <Group key={node.id} {...{
+                id: node.id,
+                nodesById,
+            }}/>
 
        }
       

@@ -23,11 +23,13 @@ export default class Group extends Component {
 
 	renderChildren(children){
 
-		const {typefor} = this.props;	
+		const {canvas:{templatesById}} = this.props;
 
 		return children.map((id)=>{
-	
-			switch(typefor(id)){
+
+			const type = templatesById[id].type;
+			
+			switch(type){
 				
 				case "circle":
 					return <Circle key={id} id={id}/>

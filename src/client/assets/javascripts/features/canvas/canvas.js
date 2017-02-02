@@ -71,23 +71,6 @@ example templatesforID
 }*/
 
 
-//create a deep copy of a template
-//nodeIDs are assigned so that they can be used as keys when rendering.  We only generate new ones if they don't exist so that
-//react can determine if a change  is to a current object or is a new one being added to the DOM
-
-const createNode = (template)=>{
-    const nodeId = template.nodeId || generateId();
-
-    if (template.type !== "group"){
-        return Object.assign({}, template, {nodeId, label:`${template.type}:${template.id}`, style: Object.assign({}, template.style)});
-    }
-    return Object.assign({}, template, {nodeId, children: Object.keys(template.children).reduce((acc,key)=>{
-        acc[key] = createNode(template.children[key]);
-        return acc;
-    },{})});
-} 
-
-
 const _updateTemplateStyle = (state, action)=>{
   const path = action.path;
 
@@ -510,7 +493,7 @@ export default function reducer(state: State = initialState, action: any = {}): 
     
     case TEMPLATE_DROPPED:
       const template = createTemplate(action.template, action.x, action.y);
-      template.enterKey = null;//"id";
+      template.enterKey = "id";
 
       return Object.assign({}, state, {
                                           templates: [...state.templates, template.id],
@@ -520,13 +503,7 @@ export default function reducer(state: State = initialState, action: any = {}): 
     
     case GROUP_TEMPLATE_DROPPED:
       const {root, templates} = createGroupTemplate(action.children, action.x, action.y);
-    
-      console.log("AFTER CREATING A GROUP TENOLATE WE HAVE:");
-      console.log("root template")
-      console.log(root);
-      console.log("child templates");
-      console.log(templates);
-
+      root.enterKey = "id";
       return Object.assign({}, state, {
                                           templates: [...state.templates, root.id],
                                           templatesById: {...state.templatesById, ...{[root.id]:root, ...templates}},//{[grouptemplate.id]:grouptemplate}),
@@ -653,23 +630,20 @@ function updateTemplateStyle(path:Array, property:string, value){
   };
 }
 
-
-
 // Selectors
 
 const canvas = (state) => state[NAME];
 
 export const selector = createStructuredSelector({
   canvas,
+  
   template : (state, ownProps)=>{
     return state[NAME].templatesById[ownProps.id]
   },
+  
   selected : (state)=>{
     return state[NAME].selected ? state[NAME].selected.path : [];
   },
-  typefor: (state)=>{
-    return (id)=>state[NAME].templatesById[id].type
-  }
 });
 
 export const actionCreators = {

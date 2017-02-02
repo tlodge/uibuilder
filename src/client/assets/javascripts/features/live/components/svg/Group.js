@@ -26,11 +26,12 @@ export default class Group extends Component {
 
 	renderChildren(children, path){
 
-		const {onSelect} = this.props;
-		
-		return Object.keys(children).map((key, i)=>{
+		//const {onSelect} = this.props;
+		const {nodesById} = this.props;
+
+		return children.map((key)=>{
 			
-			const item = children[key];
+			const item = nodesById[key];
 
 			switch(item.type){
 				
@@ -42,8 +43,6 @@ export default class Group extends Component {
 			 				cy: item.cy,
 			 				r: item.r,
 			 				style:item.style,
-							selected: false,
-							onSelect: onSelect.bind(null,{path:[...path,item.id], type:item.type}),
 			 		}}/>
 			 	
 			 	case "ellipse":
@@ -54,8 +53,6 @@ export default class Group extends Component {
 			 				rx: item.rx,
 			 				ry: item.ry,
 			 				style:item.style,
-							selected: false,
-							onSelect: onSelect.bind(null,{path:[...path,item.id], type:item.type}),
 					}}/>
 
 				case "rect":
@@ -66,8 +63,6 @@ export default class Group extends Component {
 			 				width: item.width,
 			 				height: item.height,
 			 				style:item.style,
-							selected: false,
-							onSelect: onSelect.bind(null,{path:[...path,item.id], type:item.type}),
 			 		}}/>
 
 				case "text":
@@ -77,9 +72,6 @@ export default class Group extends Component {
 			 				y: item.y,
 			 				text: item.text,
 			 				style:item.style,
-							selected: false,
-							onSelect: onSelect.bind(null,{path:[...path,item.id], type:item.type}),
-
 			 		}}/>
 
 				case "line":
@@ -90,9 +82,6 @@ export default class Group extends Component {
 			 				x2: item.x2,
 			 				y2: item.y2,
 			 				style:item.style,
-							selected: false,
-							onSelect: onSelect.bind(null,{path:[...path,item.id], type:item.type}),
-
 			 		}}/>
 
 			 	case "path":
@@ -100,36 +89,26 @@ export default class Group extends Component {
 			 				id: item.id,
 			 				d: item.d,
 			 				style:item.style,
-							selected: false,
-							onSelect: onSelect.bind(null,{path:[...path,item.id], type:item.type}),
-
 			 		}}/>
 
 				case "group":
-					return <Group key={i} {...{
-							id: item.id, 
-							x:  item.x,
-							y:  item.y,
-							style: item.style,
-							children: item.children
-						}}/>
-
-					/*<g key={i} x={item.x} y={item.y} style={camelise(item.style)}>
-								{this.renderChildren(item.children, [...path, item.id])}
-							</g>*/
-							
+					return <Group key={item.id} {...{...this.props, ...{id:item.id}}}/>
+					
 				default:
 					return null;
 			}
 		});
 	}
 
-    //TODO: check why this continuously called by editor when viewing nodes.
+    
 
 	render(){
 		
+		const {id, nodesById} = this.props;
+		
+		const node = nodesById[id];
 
-		const {id, x, y, style, transform, children, nodeId, onSelect, onMouseDown, onMouseUp} = this.props;
+		const {x, y, style, transform="translate(0,0)", children} = node;
 
 		const _style = camelise(style);
 		const is = _interpolatedStyles(_style);
@@ -141,13 +120,11 @@ export default class Group extends Component {
 		const [tx=0,ty=0] = translate || [0,0];
 
 
-
 		const motionstyle = {
 			scale: spring(Number(scale)),
 			degrees: spring(Number(degrees) || 0),
 			x: spring((Number(x)/Number(scale))+Number(tx)),
 			y: spring((Number(y)/Number(scale))+Number(ty)),
-
 			...is,
 		}
 
@@ -164,8 +141,8 @@ export default class Group extends Component {
 						}else{
 						  _transform = `scale(${scale}),translate(${dtx},${dty}),rotate(${item.degrees},${Number(rx)},${Number(ry)})`; 
 						}
-			 			return <g style={_style} transform={_transform} onMouseDown={onMouseDown.bind(null,{path:[id]})} onClick={onSelect.bind(null,{path:[id],type:"group"})}>
-							{this.renderChildren(children, [id])}
+			 			return <g style={_style} transform={_transform}>
+							{this.renderChildren(children)}
 			 			</g>
 			 		}}
 			   </Motion>

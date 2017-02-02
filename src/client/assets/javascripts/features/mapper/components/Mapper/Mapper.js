@@ -180,7 +180,7 @@ export default class Mapper extends Component {
             </Box>
   }
   renderMappings(){
-    const {canvas:{templates}, sources:{sources}, mapper:{mappings}} = this.props;
+    const {canvas:{templatesById}, sources:{sources}, mapper:{mappings}} = this.props;
   
     return mappings.map((item,i)=>{
         
@@ -191,7 +191,7 @@ export default class Mapper extends Component {
         },item.from.sourceId);
 
         const [id, ...rest] = item.to.path; 
-        const templateName = templates[id].label;
+        const templateName = templatesById[id].label;
 
         return <div onClick={this.props.actions.selectMapping.bind(null,item)} key={i}>{`${sourceName}:${item.from.key}`}->{`${templateName}:${item.to.property}`}</div>
     })
