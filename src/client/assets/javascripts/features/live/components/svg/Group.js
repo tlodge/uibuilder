@@ -2,7 +2,8 @@ import React, { Component } from 'react';
 import {Motion, spring} from 'react-motion';
 import {Circle, Text, Line, Rect, Ellipse,Path} from "./"
 import {camelise, camelCase, componentsFromTransform, interpolatedStyles, schemaLookup} from 'utils';
-
+import { selector } from '../..';
+import { connect } from 'react-redux';
 
 const styles = Object.keys(schemaLookup("group").style).map((c)=>camelCase(c));
 
@@ -15,14 +16,8 @@ const types = Object.keys(schema).reduce((acc,key)=>{
 
 const _interpolatedStyles = interpolatedStyles.bind(null,styles,types);
 
+@connect(selector)
 export default class Group extends Component {
-	
-	static defaultProps = {
-   		onSelect: ()=>{},
-   		transform: "translate(0,0)",
-   		onMouseUp: ()=>{},
-   		onMouseDown: ()=>{},
-  	};
 
 	renderChildren(children, path){
 
@@ -36,60 +31,22 @@ export default class Group extends Component {
 			switch(item.type){
 				
 				case "circle":
-
-					return <Circle key={item.id} {...{
-			 				id: item.id,
-			 				cx: item.cx,
-			 				cy: item.cy,
-			 				r: item.r,
-			 				style:item.style,
-			 		}}/>
+					return <Circle key={item.id} id={item.id}/>
 			 	
 			 	case "ellipse":
-					return <Ellipse key={item.id} {...{
-			 				id: item.id,
-			 				cx: item.cx,
-			 				cy: item.cy,
-			 				rx: item.rx,
-			 				ry: item.ry,
-			 				style:item.style,
-					}}/>
+					return <Ellipse key={item.id} id={item.id}/>
 
 				case "rect":
-					return <Rect key={item.id} {...{
-			 				id: item.id,
-			 				x: item.x,
-			 				y: item.y,
-			 				width: item.width,
-			 				height: item.height,
-			 				style:item.style,
-			 		}}/>
+					return <Rect key={item.id} id={item.id}/>
 
 				case "text":
-					return <Text key={item.id} {...{
-			 				id: item.id,
-			 				x: item.x,
-			 				y: item.y,
-			 				text: item.text,
-			 				style:item.style,
-			 		}}/>
+					return <Text key={item.id} id={item.id}/>
 
 				case "line":
-					return <Line key={item.id} {...{
-			 				id: item.id,
-			 				x1: item.x1,
-			 				y1: item.y1,
-			 				x2: item.x2,
-			 				y2: item.y2,
-			 				style:item.style,
-			 		}}/>
+					return <Line key={item.id} id={item.id}/>
 
 			 	case "path":
-					return <Path key={item.id} {...{
-			 				id: item.id,
-			 				d: item.d,
-			 				style:item.style,
-			 		}}/>
+					return <Path key={item.id} id={item.id}/>
 
 				case "group":
 					return <Group key={item.id} {...{...this.props, ...{id:item.id}}}/>
@@ -100,10 +57,8 @@ export default class Group extends Component {
 		});
 	}
 
-    
 
 	render(){
-		
 		const {id, nodesById} = this.props;
 		
 		const node = nodesById[id];
@@ -112,39 +67,29 @@ export default class Group extends Component {
 
 		const _style = camelise(style);
 		const is = _interpolatedStyles(_style);
+
+		const {scale=1,rotate,translate} = componentsFromTransform(transform);
+		//const [tx,ty]= translate || [0,0];
 		
-		const {scale=1,rotate,translate} = componentsFromTransform(transform.replace(/\s+/g,""));
-		const [degrees,rx,ry] = rotate || [0,0,0];
-	
-
-		const [tx=0,ty=0] = translate || [0,0];
-
 
 		const motionstyle = {
-			scale: spring(Number(scale)),
-			degrees: spring(Number(degrees) || 0),
-			x: spring((Number(x)/Number(scale))+Number(tx)),
-			y: spring((Number(y)/Number(scale))+Number(ty)),
-			...is,
+			x: spring(Number(x ? x : 0) || 0),
+			y: spring(Number(y ? y : 0) || 0),
+			scale: spring(Number(scale ? scale : 0) || 0),
+			rotate: spring(Number(rotate ? rotate[0] : 0) || 0),
+			interolatedStyles: is,
 		}
 
-		const dtx = (Number(x)/Number(scale))+Number(tx);
-		const dty = (Number(y)/Number(scale))+Number(ty);
+		return (<Motion style={motionstyle}>
+	 				{({x,y,scale,rotate,interpolatedStyles}) => {
+	 					const _s = Object.assign({},_style,interpolatedStyles);
+	 					const _transform = `translate(${x}, ${y}) scale(${scale}) rotate(${rotate})`;
+	 					return <g transform={`${_transform}`} style={_s}>
+	 						{this.renderChildren(children)}
+	 					</g>								
+	 					
+				 	}}	 
+				</Motion>)
 
-		return <Motion style={motionstyle}>
-			 		{(item) => {
-
-			 			let _transform;
-			 			
-			 			if (scale == 1){
-			 			  _transform = `scale(${scale}),translate(${item.x},${item.y}),rotate(${item.degrees},${Number(rx)},${Number(ry)})`; 
-						}else{
-						  _transform = `scale(${scale}),translate(${dtx},${dty}),rotate(${item.degrees},${Number(rx)},${Number(ry)})`; 
-						}
-			 			return <g style={_style} transform={_transform}>
-							{this.renderChildren(children)}
-			 			</g>
-			 		}}
-			   </Motion>
 	}
 }

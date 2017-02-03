@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import {Motion, spring} from 'react-motion';
 import {schemaLookup, camelise, camelCase, interpolatedStyles,componentsFromTransform } from 'utils';
+import { selector } from '../..';
+import { connect } from 'react-redux';
 
 const styles = Object.keys(schemaLookup("circle").style).map((c)=>camelCase(c));
 
@@ -13,16 +15,14 @@ const types = Object.keys(schema).reduce((acc,key)=>{
 
 const _interpolatedStyles = interpolatedStyles.bind(null,styles,types);
 
+@connect(selector)
 export default class Circle extends Component {
-	
-	static defaultProps = {
-   		transform: "translate(0,0)",
-   		onSelect: ()=>{}
-  	};
 
 	render(){
 	
-		const {id,cx,cy,r, style, transform} = this.props;
+		const {node} = this.props;
+		const {cx,cy,r,style, transform="translate(0,0)"} = node;
+		
 		const _style = camelise(style);
 		const is = _interpolatedStyles(_style);
 		const {scale=1,rotate,translate} = componentsFromTransform(transform);
@@ -33,26 +33,20 @@ export default class Circle extends Component {
 			cy: spring(Number(cy) || 0),
 			r:spring(Number(r) || 0),
 			scale: spring(Number(scale)),
-			tx: spring(Number(x) || 0),
-			ty: spring(Number(y) || 0),
 			rotate: spring(Number(rotate) || 0),
-			...is,
+			interpolatedStyles: is,
 		}
 
-		return (	
-						<Motion style={motionstyle}>
-			 				{(item) => {
-			 					const _s = Object.assign({},_style,item);
-			 					
-			 					const _transform = `scale(${item.scale}),translate(${x},${y}),rotate(${item.rotate})`; 
-			 														
-			 					return 	<g transform={transform}>
-			 								<circle cx={cx} cy={cy} r={item.r} style={_s}/>
-			 							</g>
-						 	}}	 
-						</Motion>
-					
-				)
+		return (<Motion style={motionstyle}>
+	 				{({cx,cy,scale,r,rotate,interpolatedStyles}) => {
+	 					const _s = Object.assign({},_style,interpolatedStyles);
+	 					const _transform = `translate(${cx}, ${cy}) scale(${scale}) rotate(${rotate})`;
+	 					return <g transform={`${_transform}`}>
+	 						<circle cx={0} cy={0} r={r} style={_s} />
+	 					</g>								
+	 					
+				 	}}	 
+				</Motion>)
 		
 	}
 }

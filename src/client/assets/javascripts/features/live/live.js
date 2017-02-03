@@ -107,6 +107,7 @@ const _combine = (newtransform="", oldtransform="")=>{
 
 const _createTransform = (node, type, transform)=>{
 
+    
    const {x,y}   =  originForNode(node);
 
    switch(type){
@@ -122,6 +123,7 @@ const _createTransform = (node, type, transform)=>{
 
       case "rotate":
           const {rotate} = componentsFromTransform(transform);
+
           return _combine(`rotate(${rotate},${x},${y})`, node.transform || "")
 
       default:
@@ -297,7 +299,7 @@ const _updateNodeTransforms = (state, action)=>{
   }
   else{
       const {node, children} = _createNode(action.blueprints[templateId], action.blueprints);
-      const transform = _createTransform(state.nodesById[nodeId], action.property, action.transform);
+      const transform = _createTransform(node, action.property, action.transform);
       const n = Object.assign({}, node, {transform});
       const k = Object.assign({}, state.nodesByKey[templateId] || {}, {[subkey]:n.id})
       return Object.assign({}, state, {
@@ -386,7 +388,10 @@ function initNodes(){
 const live = (state) => state[NAME];
 
 export const selector = createStructuredSelector({
-  live
+  live,
+  node : (state, ownProps)=>{
+    return state[NAME].nodesById[ownProps.id]
+  },
 });
 
 export const actionCreators = {

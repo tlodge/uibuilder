@@ -666,10 +666,10 @@ export function originForNode(node){
 			return {x:node.x1, y:node.y1}
 
 		case "text":
-		case "rect":
 		case "path":
 			return {x:0, y:0}
-
+		
+		case "rect":
 		case "group":
 			return {x:node.width/2, y:node.height/2}
 

@@ -24,7 +24,7 @@ const DELETE                     = 'uibuilder/canvas/DELETE';
 // This will be used in our root reducer and selectors
 export const NAME = 'canvas';
 
-
+let _x =0, _y=0;
 
 // Define the initial state for `shapes` module
 
@@ -32,8 +32,8 @@ const initialState: State = {
   templates: [],
   templatesById: {},     //templates
   selected:null,
-  x: 0,
-  y: 0,
+  //x: 0,
+  //y: 0,
   dragging: false,
   expanding: false,
   rotating: false,
@@ -460,10 +460,14 @@ export default function reducer(state: State = initialState, action: any = {}): 
     
     case MOUSE_MOVE: 
       
+      _x = action.x;
+      _y = action.y;
+
+      if (!state.selected)
+        return state;
+
       return {
         ...state,
-        x: action.x,
-        y: action.y,
         templatesById: _modifyTemplate(state, action),
       }
 
@@ -478,8 +482,8 @@ export default function reducer(state: State = initialState, action: any = {}): 
       return Object.assign({}, state,  {
                                             selected: action.path,
                                             dragging: !state.expanding && !state.rotating,
-                                            dx: state.x-x,
-                                            dy: state.y-y,
+                                            dx: _x-x,
+                                            dy: _y-y,
                                         });
       return state;
 

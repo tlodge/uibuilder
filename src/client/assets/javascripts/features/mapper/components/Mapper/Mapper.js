@@ -14,7 +14,7 @@ import Properties  from "../Properties";
 import "./Mapper.scss";
 import { Flex, Box } from 'reflexbox'
 import '../../../../../styles/index.scss';
-import {schemaLookup, templateForPath} from '../../../../utils';
+import {schemaLookup} from 'utils';
 import Paper from 'react-md/lib/Papers';
 
 
@@ -43,7 +43,7 @@ const templateName = (templates, templateId)=>{
 }
 
 const _shouldExpand = (path, selectedPath)=>{
-   
+    
     if (!selectedPath){
       return false;
     }
@@ -98,9 +98,12 @@ export default class Mapper extends Component {
             </Flex>
   }
 
-  renderTemplate(template, path, selectedPath){
-     
-      return <div key={template.id}>
+  renderTemplate(templateId, path, selectedPath){
+      
+      const {canvas:{templatesById}} = this.props;
+      const template = templatesById[templateId];
+
+      return <div key={templateId}>
                   <li onClick={this._toggleSelected.bind(null, [...path, template.id], template.type, selectedPath)}>
                       {`${template.label} (${template.type})`}
                   </li>
@@ -109,15 +112,14 @@ export default class Mapper extends Component {
   }
 
   renderTree(templates, path, selectedPath){
-
-      return Object.keys(templates).map((key,i)=>{
-          return <ul key={i}>{this.renderTemplate(templates[key], [...path], selectedPath)}</ul>;
+      return templates.map((id)=>{
+          return <ul key={id}>{this.renderTemplate(id, [...path], selectedPath)}</ul>;
       });
   }
 
   renderObjects(){
-      const {canvas:{templates, selected}} = this.props;
-      const {path=null} = selected || {};
+      const {canvas:{selected, templates}} = this.props;
+      const {path=null} = selected || [];
       const tree = this.renderTree(templates, [], path);
       return <Flex flexColumn={true}>
               <Box> 
@@ -129,13 +131,15 @@ export default class Mapper extends Component {
   renderComponents() {
     
     const {canvas:{templatesById, selected}} = this.props;
+    
+    const {path=null} = selected || [];
+    const [id, ...rest] = path;
 
-    const {path=null} = selected || {};
 
-    const template = path != null ? templateForPath(path, templatesById) : null;
+    const template = id ? templatesById[id] : null;
    
 
-    const attrs = path != null ? <Attributes {
+    const attrs = id != null ? <Attributes {
                                                       ...{
                                                             attributes: Object.keys(schemaLookup(template.type).attributes), 
                                                             onSelect: this.props.actions.mapToAttribute.bind(null, {path: path, type:template.type, enterKey:template.enterKey})
@@ -143,7 +147,7 @@ export default class Mapper extends Component {
                                                   }
                                       /> : null;
     
-    const style = path != null ? <Attributes {
+    const style = id != null ? <Attributes {
                                                       ...{
                                                             attributes:  Object.keys(schemaLookup(template.type).style), 
                                                             onSelect: this.props.actions.mapToStyle.bind(null, {path: path, type:template.type, enterKey:template.enterKey})
@@ -151,7 +155,7 @@ export default class Mapper extends Component {
                                                   }
                                       /> : null;
 
-    const transforms = path != null ? <Attributes {
+    const transforms = id != null ? <Attributes {
                                                           ...{
                                                               attributes: ["rotate", "scale", "translate"],
                                                               onSelect: this.props.actions.mapToTransform.bind(null, {path: path, type:template.type, enterKey:template.enterKey})
@@ -168,8 +172,12 @@ export default class Mapper extends Component {
 
 
   renderMapper(){
-      const {canvas:{templatesById, selected:{path}}} = this.props; 
-      const template = templateForPath(path, templatesById);
+      const {canvas:{templatesById, selected:{path=null}}} = this.props; 
+      
+      if (!path || path.lnegth <= 0)
+        return null;
+
+      const template = templatesById[path[path.length-1]]
 
       return  <Box>
                 <div style={{paddingBottom:7, fontWeight:"bold"}}>{template.label}</div>
@@ -179,6 +187,7 @@ export default class Mapper extends Component {
                 </Flex>
             </Box>
   }
+
   renderMappings(){
     const {canvas:{templatesById}, sources:{sources}, mapper:{mappings}} = this.props;
   
@@ -202,7 +211,7 @@ export default class Mapper extends Component {
 
       const { activeTabIndex } = this.state;
       const {canvas:{templatesById, selected:{path}}} = this.props; 
-      const template = templateForPath(path, templatesById);
+      const template = templatesById[path[path.length-1]]
       return <Properties template={template} updateAttribute={this.props.actions.updateTemplateAttribute.bind(null,path)} updateStyle={this.props.actions.updateTemplateStyle.bind(null,path)}/>
   }
 
@@ -259,6 +268,7 @@ export default class Mapper extends Component {
    }
 
    _toggleSelected(path,type,selectedPath){
+
       //toogle here by checking laste elements of each path;
       if (selectedPath != null && path.length > 0 && type==="group"){
           const id1 = selectedPath[selectedPath.length-1];

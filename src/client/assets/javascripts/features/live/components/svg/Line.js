@@ -1,9 +1,14 @@
 import React, { Component } from 'react';
+import { selector } from '../..';
+import { connect } from 'react-redux';
 
+@connect(selector)
 export default class Line extends Component {
 
 	render(){
-		const {x1,x2,y1,y2} = this.props;
+		const {node} = this.props;
+		const {x1,x2,y1,y2,transform="translate(0,0)"} = node;
+
 		const style ={
 			stroke: "#000",
 			strokeWidth: 2

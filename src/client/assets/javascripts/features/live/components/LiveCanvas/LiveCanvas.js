@@ -30,22 +30,22 @@ export default class LiveCanvas extends Component {
       switch(node.type){
           
           case "circle":
-            return <Circle key={node.id} {...node}/>
+            return <Circle key={node.id} id={node.id}/>
 
           case "ellipse":
-            return <Ellipse key={node.id} {...node}/>
+            return <Ellipse key={node.id} id={node.id}/>
 
           case "rect":
-            return <Rect key={node.id} {...node}/>
+            return <Rect key={node.id} id={node.id}/>
           
           case "text":
-            return <Text key={node.id} {...node}/>
+            return <Text key={node.id} id={node.id}/>
 
           case "path":
-            return <Path key={node.id} {...node}/>
+            return <Path key={node.id} id={node.id}/>
           
           case "line":
-            return <Line key={node.id} {...node}/>
+            return <Line key={node.id} id={node.id}/>
 
           case "group":
             return <Group key={node.id} {...{
