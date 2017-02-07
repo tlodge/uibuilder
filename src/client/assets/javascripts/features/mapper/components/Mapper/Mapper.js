@@ -3,13 +3,15 @@ import CSSTransitionGroup from 'react-addons-css-transition-group';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { actionCreators as mapperActions, viewConstants, selector } from '../..';
-import { actionCreators as shapeActions } from '../../../canvas/';
-import { actionCreators as sourceActions } from '../../../sources';
+import { actionCreators as shapeActions } from 'features/canvas/';
+import { actionCreators as sourceActions } from 'features/sources';
 
 import Schema from "../Schema";
 import Attributes from "../Attributes";
 import Transformer from "../Transformer";
 import Properties  from "../Properties";
+import Birth from "../Birth";
+import Death from "../Death";
 
 import "./Mapper.scss";
 import { Flex, Box } from 'reflexbox'
@@ -65,7 +67,7 @@ export default class Mapper extends Component {
   
   constructor(props){
       super(props);
-      this.state = { activeTabIndex: 0, propertiesExpanded:false, objectsExpanded:false, mapperExpanded:false, mappingsExpanded:false};
+      this.state = { activeTabIndex: 0, propertiesExpanded:false, objectsExpanded:false, mapperExpanded:false, mappingsExpanded:false, birthExpanded:false, deathExpanded:false};
       this._handleTabChange = this._handleTabChange.bind(this);
       this._toggleSelected = this._toggleSelected.bind(this);
   }
@@ -204,8 +206,19 @@ export default class Mapper extends Component {
 
         return <div onClick={this.props.actions.selectMapping.bind(null,item)} key={i}>{`${sourceName}:${item.from.key}`}->{`${templateName}:${item.to.property}`}</div>
     })
-    return null;
+   
   }
+
+  renderBirthOptions(){
+    const {canvas:{selected:{path}}} = this.props;
+    return <Birth path={path}/>
+  }
+
+  renderDeathOptions(){
+     return <Death />
+  }
+
+
 
   renderProperties(){
 
@@ -219,7 +232,7 @@ export default class Mapper extends Component {
 
 
     const {mapper:{open, selectedMapping, transformers}, canvas:{selected}, height} = this.props;
-    const {propertiesExpanded, objectsExpanded, mappingsExpanded, mapperExpanded} = this.state;
+    const {propertiesExpanded, objectsExpanded, mappingsExpanded, mapperExpanded, birthExpanded, deathExpanded} = this.state;
 
     return (
               <div id="mapper" style={{width:viewConstants.MAPPER_WIDTH, boxSizing:'border-box', height: height, overflow:'auto'}}>
@@ -240,28 +253,37 @@ export default class Mapper extends Component {
                           {this.renderProperties()}
                         </CardText>
                     </Card>}
+                    {selected &&  <Card className="md-block-centered" expanded={birthExpanded} onExpanderClick={()=>{this.setState({birthExpanded:!birthExpanded})}}>
+                        <CardActions expander onClick={()=>{this.setState({birthExpanded:!birthExpanded})}}>
+                            birth
+                        </CardActions>
+                        <CardText expandable>
+                          {this.renderBirthOptions()}
+                        </CardText>
+                    </Card>}
+                    {selected && <Card className="md-block-centered" expanded={deathExpanded} onExpanderClick={()=>{this.setState({deathExpanded:!deathExpanded})}}>
+                        <CardActions expander onClick={()=>{this.setState({deathExpanded:!deathExpanded})}}>
+                          death
+                        </CardActions>
+                        <CardText expandable>
+                           {this.renderDeathOptions()}
+                        </CardText>
+                    </Card>}
                     {selected && <Card className="md-block-centered" expanded={mapperExpanded} onExpanderClick={()=>{this.setState({mapperExpanded:!mapperExpanded})}}>
                         <CardActions expander onClick={()=>{this.setState({mapperExpanded:!mapperExpanded})}}>
-                          mapper
+                          behaviour
                         </CardActions>
                         <CardText expandable>
                           {this.renderMapper()}
+                          {this.renderMappings()}
+                          {selectedMapping && <Transformer selectedMapping={selectedMapping} transformer={transformers[selectedMapping.mappingId]} saveDialog={this.props.actions.saveTransformer.bind(null, selectedMapping.mappingId)} closeDialog={this.props.actions.selectMapping.bind(null,null)}/>}
                         </CardText>
                     </Card>}
-                    <Card className="md-block-centered" expanded={mappingsExpanded} onExpanderClick={()=>{this.setState({mappingsExpanded:!mappingsExpanded})}}>
-                        <CardActions expander onClick={()=>{this.setState({mappingsExpanded:!mappingsExpanded})}}>
-                          mappings
-                        </CardActions>
-                        <CardText expandable>
-                          {this.renderMappings()}
-                          <div>[show sources to select key]</div>
-                          <div> [x] hide prior to data </div>
-                        </CardText>
-                    </Card>
                   </Paper>
               </div>
            );
   }
+
 
    _handleTabChange(activeTabIndex) {
       this.setState({ activeTabIndex });
@@ -280,6 +302,5 @@ export default class Mapper extends Component {
       }
       this.props.actions.templateSelected({path:path, type:type});
       
-     //this.props.actions.templateSelected.bind(null, _path)
    }
 }

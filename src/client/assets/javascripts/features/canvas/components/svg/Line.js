@@ -11,6 +11,7 @@ import { connect } from 'react-redux';
 })
 export default class Line extends Component {
 
+
 	render(){
 		const {id, template} = this.props;
 		const {x1,x2,y1,y2,style} = template;

@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import {Motion, spring} from 'react-motion';
 import {schemaLookup, camelise, camelCase, interpolatedStyles} from 'utils';
 import { selector } from '../..';
@@ -15,8 +15,11 @@ const types = Object.keys(schema).reduce((acc,key)=>{
 const _interpolatedStyles = interpolatedStyles.bind(null,styles,types);
 
 @connect(selector)
-export default class Rect extends Component {
+export default class Rect extends PureComponent {
 
+	shouldComponentUpdate(nextProps, nextState){
+		return this.props.node != nextProps.node;
+	}
 
 	render(){
 		

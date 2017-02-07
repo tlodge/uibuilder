@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import {Motion, spring} from 'react-motion';
 import {Circle, Text, Line, Rect, Ellipse,Path} from "./"
 import {camelise, camelCase, componentsFromTransform, interpolatedStyles, schemaLookup} from 'utils';
@@ -17,7 +17,7 @@ const types = Object.keys(schema).reduce((acc,key)=>{
 const _interpolatedStyles = interpolatedStyles.bind(null,styles,types);
 
 @connect(selector)
-export default class Group extends Component {
+export default class Group extends PureComponent {
 
 	renderChildren(children, path){
 
@@ -57,10 +57,16 @@ export default class Group extends Component {
 		});
 	}
 
+	shouldComponentUpdate(nextProps, nextState){
+		return nextProps.nodesById[nextProps.id] != this.props.nodesById[this.props.id];
+	}
 
 	render(){
-		const {id, nodesById} = this.props;
+
 		
+
+		const {id, nodesById} = this.props;
+		console.log("rendering " + id);
 		const node = nodesById[id];
 
 		const {x, y, style, transform="translate(0,0)", children} = node;

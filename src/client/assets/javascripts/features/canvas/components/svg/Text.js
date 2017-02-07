@@ -16,6 +16,7 @@ export default class Text extends Component {
    		transform: "translate(0,0)"
   	};
 
+  	
   	constructor(props){
   		super(props);	
   		this._onRotate = this._onRotate.bind(this);

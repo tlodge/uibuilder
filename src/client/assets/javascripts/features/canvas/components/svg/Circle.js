@@ -20,6 +20,7 @@ export default class Circle extends Component {
   		this._templateSelected = this._templateSelected.bind(this);
   	}
 
+ 
   	renderControls(r){
   			
   		const style = {

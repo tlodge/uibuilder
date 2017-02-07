@@ -77,23 +77,24 @@ const _updateTemplateStyle = (state, action)=>{
   if (path.length == 0){
     return templates;
   }
-
-  const [id, ...rest] = action.path;
-
-  if (path.length == 1){
-    const template = Object.assign({},state.templatesById[id]);
-    template.style = Object.assign({}, template.style, {[action.property]:action.value});
-    return Object.assign({}, state.templatesById, {[template.id]: template});
-  }
   
-  return Object.assign({}, state.templatesById, {
+  const id = path[path.length-1];
+  //const [id, ...rest] = action.path;
+
+
+  const template = Object.assign({},state.templatesById[id]);
+  template.style = Object.assign({}, template.style, {[action.property]:action.value});
+  return Object.assign({}, state.templatesById, {[template.id]: template});
+  
+  
+  /*return Object.assign({}, state.templatesById, {
                                           [id] :  Object.assign({}, state.templatesById[id], {
                                                 children: _updateTemplateStyle(state.templatesById[id].children, {
                                                 path: rest,
                                                 property: action.property,
                                                 value: action.value,
                                               })
-                                          })});
+                                          })});*/
 
   // _updateTemplateStyle(templates.children[id], )});
 }
@@ -103,26 +104,25 @@ const _updateTemplateAttribute = (state, action)=>{
 
   const path = action.path;
 
-
   if (path.length == 0){
     return state.templatesById;
   }
 
-  const [id, ...rest] = action.path;
+  const id = path[path.length-1];
 
-  if (path.length == 1){
+  //if (path.length == 1){
     const template = Object.assign({},state.templatesById[id], {[action.property]:action.value});
     return Object.assign({}, state.templatesById, {[template.id]: template});
-  }
+  //}
 
-  return Object.assign({}, state.templatesById, {
+  /*return Object.assign({}, state.templatesById, {
                                           [id] :  Object.assign({}, state.templatesById[id], {
                                               children: _updateTemplateAttribute(state.templatesById[id].children, {
                                                 path: rest,
                                                 property: action.property,
                                                 value: action.value,
                                               })
-                                        })});
+                                        })});*/
  
 }
 
@@ -497,8 +497,6 @@ export default function reducer(state: State = initialState, action: any = {}): 
     
     case TEMPLATE_DROPPED:
       const template = createTemplate(action.template, action.x, action.y);
-      template.enterKey = "id";
-
       return Object.assign({}, state, {
                                           templates: [...state.templates, template.id],
                                           templatesById: {...state.templatesById, ...{[template.id]:template}},
@@ -507,7 +505,6 @@ export default function reducer(state: State = initialState, action: any = {}): 
     
     case GROUP_TEMPLATE_DROPPED:
       const {root, templates} = createGroupTemplate(action.children, action.x, action.y);
-      root.enterKey = "id";
       return Object.assign({}, state, {
                                           templates: [...state.templates, root.id],
                                           templatesById: {...state.templatesById, ...{[root.id]:root, ...templates}},//{[grouptemplate.id]:grouptemplate}),
@@ -527,6 +524,7 @@ export default function reducer(state: State = initialState, action: any = {}): 
     case UPDATE_TEMPLATE_ATTRIBUTE:
       return Object.assign({}, state, {templatesById:_updateTemplateAttribute(state,action)});
 
+    
     case EXPAND:
       return Object.assign({}, state, {expanding:true, dragging:false, rotating:false});
 

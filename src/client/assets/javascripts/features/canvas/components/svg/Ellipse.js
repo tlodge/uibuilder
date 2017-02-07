@@ -20,6 +20,7 @@ export default class Ellipse extends Component {
   		this._templateSelected = this._templateSelected.bind(this);
   	}
 
+
   	renderControls(rx, ry){
   		
   		const style = {
@@ -55,7 +56,7 @@ export default class Ellipse extends Component {
 		const {cx,cy,rx,ry,r,style,transform="translate(0,0)"} = template;
 		const _style = camelise(style);
 		const amSelected = selected.indexOf(id) != -1;
-		
+
 		const _selectedstyle = {
 			stroke: "#3f51b5",
 			strokeWidth: 2,

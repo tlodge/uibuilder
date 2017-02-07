@@ -26,8 +26,8 @@ export function	init(registerCallback){
 	const keys = ["data2","data3","data4"];
 
 	const t2 = setInterval(()=>{
-		data2.emit("data", {id:keys[Math.round(2 * Math.random())], x:Math.random()*500, y:Math.random()*500})
-	}, 3500);
+		data2.emit("data", {id:keys[Math.round(2 * Math.random())], x:Math.random()*1000, y:Math.random()*1000})
+	}, 500);
 
 	this.register(data1, t1,  {
 								name: "source1", 

@@ -1,11 +1,11 @@
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import {Motion, spring} from 'react-motion';
 import {schemaLookup, camelise, camelCase, interpolatedStyles, componentsFromTransform} from 'utils';
 import { selector } from '../..';
 import { connect } from 'react-redux';
 
-const schema = {...schemaLookup("circle").attributes, ...schemaLookup("circle").style};
-const styles = Object.keys(schemaLookup("circle").style).map((c)=>camelCase(c));
+const schema = {...schemaLookup("ellipse").attributes, ...schemaLookup("ellipse").style};
+const styles = Object.keys(schemaLookup("ellipse").style).map((c)=>camelCase(c));
 
 const types = Object.keys(schema).reduce((acc,key)=>{
 	acc[camelCase(key)] = schema[key].type;
@@ -15,7 +15,11 @@ const types = Object.keys(schema).reduce((acc,key)=>{
 const _interpolatedStyles = interpolatedStyles.bind(null,styles,types);
 
 @connect(selector)
-export default class Ellipse extends Component {	
+export default class Ellipse extends PureComponent {	
+
+	shouldComponentUpdate(nextProps, nextState){
+		return this.props.node != nextProps.node;
+	}
 
 	render(){
 		const {node} = this.props;
@@ -26,10 +30,6 @@ export default class Ellipse extends Component {
 		const {scale=1,rotate,translate} = componentsFromTransform(transform);
 		const [x,y]= translate || [0,0];
 		
-		console.log(transform);
-
-		console.log("got rotate");
-		console.log(rotate);
 
 		const motionstyle = {
 			cx: spring(Number(cx) || 0),

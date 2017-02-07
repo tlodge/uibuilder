@@ -1,9 +1,13 @@
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import { selector } from '../..';
 import { connect } from 'react-redux';
 
 @connect(selector)
-export default class Line extends Component {
+export default class Line extends PureComponent {
+
+	shouldComponentUpdate(nextProps, nextState){
+		return this.props.node != nextProps.node;
+	}
 
 	render(){
 		const {node} = this.props;

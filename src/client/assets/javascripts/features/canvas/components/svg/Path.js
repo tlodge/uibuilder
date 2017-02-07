@@ -11,6 +11,8 @@ import { connect } from 'react-redux';
 })
 
 export default class Path extends Component {
+
+
 	render(){
 		const {id,template,selected} = this.props;
 		const {d,style} = template;

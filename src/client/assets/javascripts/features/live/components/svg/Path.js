@@ -1,10 +1,14 @@
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import { camelise } from 'utils';
 import { selector } from '../..';
 import { connect } from 'react-redux';
 
 @connect(selector)
-export default class Path extends Component {
+export default class Path extends PureComponent {
+
+	shouldComponentUpdate(nextProps, nextState){
+		return this.props.node != nextProps.node;
+	}
 
 	render(){
 

@@ -19,6 +19,7 @@ export default class Rect extends Component {
   		this._templateSelected = this._templateSelected.bind(this);
   	}
 
+
   	renderControls(width, height){
 
   		const style = {

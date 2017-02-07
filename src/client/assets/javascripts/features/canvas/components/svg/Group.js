@@ -21,6 +21,7 @@ export default class Group extends Component {
   		this._templateSelected = this._templateSelected.bind(this);
   	}
 
+
 	renderChildren(children){
 
 		const {canvas:{templatesById}} = this.props;

@@ -776,9 +776,10 @@ export function generateIds(obj){
 			acc[id] = Object.assign({}, item, {
 													id,
 													children: generateIds(item.children),
+													label: `${item.type}:${id}`,
 						});
 		}else{
-			acc[id] = Object.assign({}, item, {id});
+			acc[id] = Object.assign({}, item, {id,label: `${item.type}:${id}`});
 		}
 		return acc;
 	},{})
