@@ -41,12 +41,13 @@ const createTo = (action)=>{
 const subscribe = (source, template, onData)=>{
 	
 	var ds = DatasourceManager.get(source.sourceId);
-	
+	const propertyFor = resolvePath.bind(null, source.key, source.path);
+
 	if (ds){
 		let count = 0;
     	ds.emitter.addListener('data', (data)=>{
     		const enterKey = template.enterFn ? template.enterFn(data,count) : null;
-    		onData(source,template,resolvePath(source.key, source.path, data),count,enterKey);
+    		onData(source,template,propertyFor(data),count,enterKey);
     		count+=1;
     	});
     } 
