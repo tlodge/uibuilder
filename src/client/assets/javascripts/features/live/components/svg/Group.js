@@ -66,7 +66,7 @@ export default class Group extends PureComponent {
 		
 
 		const {id, nodesById} = this.props;
-		console.log("rendering " + id);
+		
 		const node = nodesById[id];
 
 		const {x, y, style, transform="translate(0,0)", children} = node;

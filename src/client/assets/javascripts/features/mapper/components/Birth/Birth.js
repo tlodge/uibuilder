@@ -5,6 +5,7 @@ import { actionCreators as templateActions } from 'features/canvas/';
 import { selector } from '../..';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
+import {resolvePath} from 'utils';
 
 @connect(selector, (dispatch) => {
   return {
@@ -35,8 +36,9 @@ export default class Birth extends PureComponent {
                                                     return (source.id === this.state.sourceId) ? source.schema : acc
                                                   },{});
 
-    const schema =   <Schema schema={schemas} onSelect={(item)=>{
-        this.props.actions.updateTemplateAttribute(path, "enterKey", item);
+    const schema =   <Schema schema={schemas} onSelect={(key,sourcepath)=>{
+        const valueFor = resolvePath.bind(null,key,sourcepath); 
+        this.props.actions.updateTemplateAttribute(path, "enterFn", (data)=>valueFor(data));
     }}/>
           
                               
@@ -46,10 +48,10 @@ export default class Birth extends PureComponent {
             </Flex>
  }
 
- renderValues() {
+ renderFunction() {
    
 
-    const {sources:{sources}} = this.props;
+    const {sources:{sources},path} = this.props;
    
     const srcs = sources.map((source) =>{
         return <Box key={source.id} onClick={this._selectSource.bind(null, source.id)}>{source.name}</Box>
@@ -59,8 +61,13 @@ export default class Birth extends PureComponent {
                                                     return (source.id === this.state.sourceId) ? source.schema : acc
                                                   },{});
 
-    const schema =   <Schema schema={schemas} onSelect={()=>{}}/>
-          
+    const schema =   <Schema schema={schemas} onSelect={(key,sourcepath)=>{
+        const valueFor = resolvePath.bind(null,key,sourcepath); 
+        this.props.actions.updateTemplateAttribute(path, "enterFn", (data)=>{
+            return Math.abs(Math.floor(valueFor(data)))%100;
+        });
+    }}/>
+                  
                               
     return <Flex flexColumn={true}>
                   {srcs}
@@ -81,12 +88,9 @@ export default class Birth extends PureComponent {
             <strong> bind to data key </strong>
             {type==="key" && this.renderKeys()}
           </li>
-          <li onClick={this._selectType.bind(null, "value")}>
-            <strong> bind to data value </strong>
-             {type==="value" && this.renderValues()}
-          </li>
-          <li onClick={this._selectType.bind(null, "step")}>
-            <strong> step </strong>
+          <li onClick={this._selectType.bind(null, "function")}>
+            <strong> bind to data function </strong>
+             {type==="function" && this.renderFunction()}
           </li>
         </ul>
       </div>

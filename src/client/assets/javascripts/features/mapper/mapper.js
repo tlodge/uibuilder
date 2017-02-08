@@ -6,7 +6,7 @@ import {NAME as CANVASNAME, actionCreators as templateActions} from '../canvas/'
 import {NAME as LIVENAME, actionCreators as liveActions} from '../live'
 import {NAME as SOURCENAME} from '../sources'
 import {DatasourceManager} from '../../datasources';
-import {generateId, defaultCode} from '../../utils';
+import {generateId, defaultCode, resolvePath} from 'utils';
 // Action Types
 
 // Define types in the form of 'npm-module-or-myapp/feature-name/ACTION_TYPE_NAME'
@@ -30,31 +30,24 @@ const initialState: State = {
 	transformers:{},
 }
 
-
-const resolvePath = (obj, path, key)=>{
-	const parent = path.reduce((acc,item)=>{
-		return acc[item];
-	},obj)
-
-	return parent[key];
-}
-
 const createFrom = (action)=>{
 	return {sourceId:action.sourceId, key: action.key, path: action.path, type:action.typedef}
 }
 
 const createTo = (action)=>{
-	return {path:action.path, type:action.shape, property:action.property, enterKey: action.enterkey}
+	return {path:action.path, type:action.shape, property:action.property, enterFn: action.enterFn}
 }
 
-const subscribe = (source, template, onData, enterKey)=>{
+const subscribe = (source, template, onData)=>{
 	
 	var ds = DatasourceManager.get(source.sourceId);
 	
 	if (ds){
+		let count = 0;
     	ds.emitter.addListener('data', (data)=>{
-    		const enterKey = template.enterKey ? data[template.enterKey] : null;
-    		onData(source,template,resolvePath(data, source.path, source.key),enterKey);
+    		const enterKey = template.enterFn ? template.enterFn(data,count) : null;
+    		onData(source,template,resolvePath(source.key, source.path, data),count,enterKey);
+    		count+=1;
     	});
     } 
 }
@@ -76,22 +69,31 @@ const _defaultTransform = (type)=>{
 	}
 }
 
-const createSubscription = (state, action, onData)=>{
+const _getNode = (nodesByKey, nodesById, enterKey, path)=>{
+	if (path && path.length >= 1){
+		const id 	  = path[path.length-1];
+		const key 	  = enterKey || "root";
+		const nodeId  = nodesByKey[id] ? nodesByKey[id][key] : null;
+		return nodeId ? nodesById[nodeId] : {};
+	}
+	return {};
+}
+
+const createSubscription = (from, action, onData)=>{
 
 	switch(action.type){
 		case MAP_TO:
-			if (state.from){
+			if (from){
 				subscribe(	{
-								sourceId: state.from.sourceId, 
-								path: state.from.path, 
-								key: state.from.key,
-								type: state.from.type,
+								sourceId: from.sourceId, 
+								path: from.path, 
+								key: from.key,
+								type: from.type,
 							},
 							{
 								path: action.path,
-								type: action.shape,
-								property: action.property,
-								enterKey: action.enterKey,
+							    property: action.property,
+								enterFn: action.enterFn,
 							}, 
 							onData.bind(null, action.mappingId),
 						);
@@ -114,7 +116,7 @@ export default function reducer(state: State = initialState, action: any = {}): 
 		case MAP_TO:
 			if (state.from){
 				return Object.assign({}, state, {
-													mappings: [...state.mappings, {mappingId: action.mappingId, from:state.from, to:createTo(action), /*nodes:[]*/}],
+													mappings: [...state.mappings, {mappingId: action.mappingId, from:state.from, to:createTo(action) /*nodes:[]*/}],
 													from: null,
 													to: null,
 												})
@@ -149,87 +151,45 @@ function mapFrom(sourceId, key, path, type){
 	};
 }
 
-function mapToAttribute(template, property){
+function mapTo(path, property, fn){
+	return (dispatch,getState)=>{
 	
-	const {path, type, enterKey} = template;
-
-	return (dispatch,getState)=>{
-		
-		//dispatch(templateActions.templateSelected(path)); //should be {path} - if needed which don't think is!
-
+		const template = getState().canvas.templatesById[path[path.length-1]];
+	
 		const action = {
 			type: MAP_TO,
 			path,
-			shape:type,
-			enterKey,
 			property,
+			enterFn:template.enterFn,
+			shape: template.type,
 			mappingId: generateId(),
 		}
-		
+
 		//TODO: what other things can, should we pass into the mapper transform to make use of?
-		const onData = (mappingId, source, template, value, enterKey)=>{
-			const transformer = getState().mapper.transformers[mappingId] || `return ${source.key}`;
-			const transform = Function(source.key, transformer);
-			dispatch(liveActions.updateNodeAttribute(template.path,property,transform(value), enterKey));
-		}
-
-		createSubscription(getState().mapper, action, onData);
-		dispatch(action);
-	}
-}
-
-function mapToStyle(template, property){
-	const {path, type, enterKey} = template;
-	return (dispatch,getState)=>{
-
-		//dispatch(templateActions.templateSelected(template));
-
-		const action = {
-			type: MAP_TO,
-			path,
-			shape:type,
-			enterKey,
-			property,
-			mappingId: generateId(),
-		}
-
-		const onData = (mappingId, source, template, value, enterKey)=>{
-			const transformer = getState().mapper.transformers[mappingId] || `return ${source.key}`;
-			const transform = Function(source.key, transformer);
-			dispatch(liveActions.updateNodeStyle(template.path,property,transform(value), enterKey));
-		}
-		createSubscription(getState().mapper, action, onData);
-		dispatch(action);
-	}
-}
-
-
-function mapToTransform(template, property){
-
-	const {path, type, enterKey} = template;
-
-	return (dispatch, getState)=>{
-		//dispatch(templateActions.templateSelected(template));
-
-		const action = {
-			type: MAP_TO,
-			path,
-			shape: type,
-			enterKey,
-			property,
-			mappingId: generateId(),
-		}
-
-		const onData = (mappingId, source, template, value, enterKey)=>{
-
+		const onData = (mappingId, source, template, value, count, enterKey)=>{
 			const transformer = getState().mapper.transformers[mappingId] || defaultCode(source.key,property);
-			const transform = Function(source.key, transformer);
-			dispatch(liveActions.updateNodeTransform(template.path,property,transform(value), enterKey));
+			const transform = Function(source.key, "node", "i", transformer);	
+			const {nodesByKey, nodesById} = getState().live;
+			const node = _getNode(nodesByKey, nodesById, enterKey, template.path);
+			dispatch(fn(template.path,property,transform(value, node, count), enterKey));
 		}
 
-		createSubscription(getState().mapper, action, onData);
+		createSubscription(getState().mapper.from, action, onData);
 		dispatch(action);
 	}
+}
+
+
+function mapToAttribute(path, property){
+	return mapTo(path,property, liveActions.updateNodeAttribute);
+}
+
+function mapToStyle(path, property){
+	return mapTo(path,property, liveActions.updateNodeStyle);
+}
+
+function mapToTransform(path, property){
+	return mapTo(path,property, liveActions.updateNodeTransform);
 }
 
 function selectMapping(mapping){

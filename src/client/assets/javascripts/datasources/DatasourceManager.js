@@ -10,12 +10,13 @@ export function	init(registerCallback){
 	var data2 = new EventEmitter();
 
 	const t1 = setInterval(()=>{
+		const multiplier =  Math.floor(Math.random()*2) == 1 ? 1 : -1;
 		data1.emit("data", 
 							{
 									id:"data1", 
 									value: {
-										x:	Math.random() *100,
-										y: Math.random()  * 300,
+										x: (Math.random() * 500) * multiplier,
+										y: (Math.random()  * 300) * multiplier,
 										z: Math.random()  * 20,
 										name: "dskldjs",
 									}

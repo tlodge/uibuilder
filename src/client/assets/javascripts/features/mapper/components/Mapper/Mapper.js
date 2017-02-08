@@ -144,7 +144,7 @@ export default class Mapper extends Component {
     const attrs = id != null ? <Attributes {
                                                       ...{
                                                             attributes: Object.keys(schemaLookup(template.type).attributes), 
-                                                            onSelect: this.props.actions.mapToAttribute.bind(null, {path: path, type:template.type, enterKey:template.enterKey})
+                                                            onSelect: this.props.actions.mapToAttribute.bind(null, path)
                                                           }
                                                   }
                                       /> : null;
@@ -152,7 +152,7 @@ export default class Mapper extends Component {
     const style = id != null ? <Attributes {
                                                       ...{
                                                             attributes:  Object.keys(schemaLookup(template.type).style), 
-                                                            onSelect: this.props.actions.mapToStyle.bind(null, {path: path, type:template.type, enterKey:template.enterKey})
+                                                            onSelect: this.props.actions.mapToStyle.bind(null,path)
                                                           }
                                                   }
                                       /> : null;
@@ -160,7 +160,7 @@ export default class Mapper extends Component {
     const transforms = id != null ? <Attributes {
                                                           ...{
                                                               attributes: ["rotate", "scale", "translate"],
-                                                              onSelect: this.props.actions.mapToTransform.bind(null, {path: path, type:template.type, enterKey:template.enterKey})
+                                                              onSelect: this.props.actions.mapToTransform.bind(null, path)
                                                           }
                                                       }
                                       /> : null;

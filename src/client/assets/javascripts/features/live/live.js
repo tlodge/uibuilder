@@ -5,6 +5,7 @@ import { State } from 'models/canvas';
 import {createTemplate, createGroupTemplate, typeForProperty, generateId, componentsFromTransform, scalePreservingOrigin, originForNode, templateForPath} from 'utils';
 
 // Action Types
+const CLONE_NODE                 = 'uibuilder/live/CLONE_NODE';
 const UPDATE_NODE_ATTRIBUTE      = 'uibuilder/live/UPDATE_NODE_ATTRIBUTE';
 const UPDATE_NODE_STYLE          = 'uibuilder/live/UPDATE_NODE_STYLE';
 const UPDATE_NODE_TRANSFORM      = 'uibuilder/live/UPDATE_NODE_TRANSFORM';
@@ -78,7 +79,7 @@ const _createNode = (template, blueprints)=>{
 const _cloneStaticTemplates = (templates, blueprints)=>{
 
     return templates.filter((key)=>{
-       return !blueprints[key].enterKey;
+       return !blueprints[key].enterFn;
     }).reduce((acc, key)=>{
         const {node, children} = _createNode(blueprints[key], blueprints);
         acc.nodes.push(node.id);
@@ -229,23 +230,13 @@ const _updateNodeAttributes = (state, action)=>{
   const subkey     = action.enterKey ? action.enterKey : "root";
   const nodeId     = state.nodesByKey[templateId] ? state.nodesByKey[templateId][subkey] : null;
 
-  //if we already have an entry for this node and its subkey, then just update it
+  //should always have a nodeId, as clone node was dispatched first
   if (nodeId){
      const n = Object.assign({}, state.nodesById[nodeId], {[action.property]:action.value});
      return Object.assign({}, state, {nodesById: Object.assign({}, state.nodesById, {[nodeId] : n})});
   }
-  //otherwise clone the template and update it
-  else{
 
-      const {node, children} = _createNode(action.blueprints[templateId], action.blueprints);
-      const n = Object.assign({}, node, {[action.property]:action.value});
-      const k = Object.assign({}, state.nodesByKey[templateId] || {}, {[subkey]:n.id})
-      return Object.assign({}, state, {
-                                          nodes: [...state.nodes, n.id],
-                                          nodesById:  {...state.nodesById, ...{[n.id]:n}, ...children},
-                                          nodesByKey: Object.assign({}, state.nodesByKey, {[templateId]: k }),
-                                      });
-  }
+  return state;
 }
 
 
@@ -268,18 +259,8 @@ const _updateNodeStyles = (state, action)=>{
 
      return Object.assign({}, state, {nodesById: Object.assign({}, state.nodesById, {[nodeId] : n})});
   }
-  else{
-     
-      const {node, children} = _createNode(action.blueprints[templateId], action.blueprints);
-      const style = node.style || {};
-      const n = Object.assign({}, node, {style: Object.assign({}, style, {[action.property]:action.value})});
-      const k = Object.assign({}, state.nodesByKey[templateId] || {}, {[subkey]:n.id})
-      return Object.assign({}, state, {
-                                          nodes: [...state.nodes, n.id],
-                                          nodesById:  {...state.nodesById, ...{[n.id]:n}, ...children},
-                                          nodesByKey: Object.assign({}, state.nodesByKey, {[templateId]: k }),
-                                      });
-  }
+
+  return state;
 }
 
 const _updateNodeTransforms = (state, action)=>{
@@ -297,24 +278,30 @@ const _updateNodeTransforms = (state, action)=>{
      const n = Object.assign({}, state.nodesById[nodeId], {transform});
      return Object.assign({}, state, {nodesById: Object.assign({}, state.nodesById, {[nodeId] : n})});
   }
-  else{
-      const {node, children} = _createNode(action.blueprints[templateId], action.blueprints);
-      const transform = _createTransform(node, action.property, action.transform);
-      const n = Object.assign({}, node, {transform});
-      const k = Object.assign({}, state.nodesByKey[templateId] || {}, {[subkey]:n.id})
-      return Object.assign({}, state, {
-                                          nodes: [...state.nodes, n.id],
-                                          nodesById:  {...state.nodesById, ...{[n.id]:n}, ...children},
+  return state;
+}
+
+const _cloneNode = (state, action)=>{
+    const [templateId, ...rest] = action.path;
+    const subkey     = action.enterKey ? action.enterKey : "root";
+    const {node, children} = _createNode(action.blueprints[templateId], action.blueprints);
+    const k = Object.assign({}, state.nodesByKey[templateId] || {}, {[subkey]:node.id});
+    return Object.assign({}, state, {
+                                          nodes: [...state.nodes, node.id],
+                                          nodesById:  {...state.nodesById, ...{[node.id]:node}, ...children},
                                           nodesByKey: Object.assign({}, state.nodesByKey, {[templateId]: k }),
                                       });
-  }
+
 }
 
 export default function reducer(state: State = initialState, action: any = {}): State {
   
   switch (action.type) {
     
-    case UPDATE_NODE_ATTRIBUTE: 
+    case CLONE_NODE:
+      return Object.assign({}, state, _cloneNode(state, action));
+
+    case UPDATE_NODE_ATTRIBUTE:   
      return Object.assign({}, state, _updateNodeAttributes(state, action));
 
     case UPDATE_NODE_STYLE: 
@@ -332,29 +319,60 @@ export default function reducer(state: State = initialState, action: any = {}): 
 }
 
 
+const _shouldClone = (path, enterKey, nodesByKey)=>{
+  const [templateId, ...rest] = path;
+  const subkey     = enterKey ? enterKey : "root";
+  if (nodesByKey[templateId]){
+    if (nodesByKey[templateId][subkey]){
+      return false;
+    }
+  }
+  return true;
+}
+
 function updateNodeAttribute(path:Array, property:string, value, enterKey:string) {
  
   return (dispatch, getState)=>{
+    
+    //clone this node if we need to
+    if (_shouldClone(path, enterKey, getState().live.nodesByKey)){
+      dispatch({
+          type: CLONE_NODE,
+          enterKey,
+          path,
+          blueprints: getState().canvas.templatesById,
+      });
+    }
+
+    //update the node
     dispatch({
         type: UPDATE_NODE_ATTRIBUTE,
         path,
         property,
         value,
         enterKey,
-        blueprints: getState().canvas.templatesById,
     });
   };
 }
 
 function updateNodeStyle(path:Array, property:string, value, enterKey:string){
   return (dispatch, getState)=>{
+
+    if (_shouldClone(path, enterKey, getState().live.nodesByKey)){
+      dispatch({
+          type: CLONE_NODE,
+          enterKey,
+          path,
+          blueprints: getState().canvas.templatesById,
+      });
+    }
+
     dispatch({
       type: UPDATE_NODE_STYLE,
       path,
       property,
       value,
       enterKey,
-      blueprints: getState().canvas.templatesById,
     });
   }
 }
@@ -362,13 +380,22 @@ function updateNodeStyle(path:Array, property:string, value, enterKey:string){
 function updateNodeTransform(path:Array, property:string, transform:string, enterKey:string){
 
    return (dispatch, getState)=>{
-     dispatch({
+
+    if (_shouldClone(path, enterKey, getState().live.nodesByKey)){
+      dispatch({
+          type: CLONE_NODE,
+          enterKey,
+          path,
+          blueprints: getState().canvas.templatesById,
+      });
+    }
+
+    dispatch({
         type: UPDATE_NODE_TRANSFORM,
         path,
         property,
         transform,
         enterKey,
-        blueprints: getState().canvas.templatesById,
     });
   }
 }

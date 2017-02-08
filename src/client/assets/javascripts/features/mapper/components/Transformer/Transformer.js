@@ -88,7 +88,7 @@ export default class Transformer extends PureComponent {
           }]}
         >
           <div>
-            <strong>{from.key}:{ftype}->{ttype}</strong>
+            <strong>({from.key}:{ftype},node:Node, i:number)->{ttype}</strong>
             {this.renderTransformer(from.key, to.property)}   
           </div>
         </Dialog>

@@ -764,6 +764,12 @@ export function defaultCode(key, property){
    return `return ${key}`
 }
 
+export function resolvePath(key,path,obj){
+	return path.reduce((acc,item)=>{
+		return acc[item];
+	},obj)[key];
+}
+
 export function generateId(){
 	return (1+Math.random()*4294967295).toString(16);
 }
