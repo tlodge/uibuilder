@@ -99,6 +99,9 @@ const _updateTemplateStyle = (state, action)=>{
   // _updateTemplateStyle(templates.children[id], )});
 }
 
+const _validNumber = (value)=>{
+    return !(isNaN(Number(value)) || value <= 0 || value.trim() === "")
+}
 
 const _updateTemplateAttribute = (state, action)=>{
 
@@ -109,21 +112,28 @@ const _updateTemplateAttribute = (state, action)=>{
   }
 
   const id = path[path.length-1];
+  
 
-  //if (path.length == 1){
-    const template = Object.assign({},state.templatesById[id], {[action.property]:action.value});
-    return Object.assign({}, state.templatesById, {[template.id]: template});
-  //}
+  /* special case when attribute is width or height and type is group as we need to adjust children too*/
+  if (state.templatesById[id].type === "group" && ["width", "height"].indexOf(action.property) != -1){
+      
+      if (!_validNumber(action.value))
+          return state.templatesById;
 
-  /*return Object.assign({}, state.templatesById, {
-                                          [id] :  Object.assign({}, state.templatesById[id], {
-                                              children: _updateTemplateAttribute(state.templatesById[id].children, {
-                                                path: rest,
-                                                property: action.property,
-                                                value: action.value,
-                                              })
-                                        })});*/
- 
+      const sf = action.value / state.templatesById[id][action.property];
+     
+      if (sf == 0){
+        return state.templatesById;
+      }
+
+      const height = state.templatesById[id]["height"] * sf;
+      const width  = state.templatesById[id]["width"] * sf;
+      const template = Object.assign({}, state.templatesById[id], {height, width});
+      return Object.assign({}, state.templatesById, {[template.id]:template, ..._expandChildren(state.templatesById, template.children, sf)});
+  }else{
+      const template = Object.assign({}, state.templatesById[id], {[action.property]:action.value});
+      return Object.assign({}, state.templatesById, {[template.id]: template});
+  }
 }
 
 const _selectParent = (state, action)=>{
@@ -407,9 +417,13 @@ const _expandTemplates = (state, action)=>{
     else{
       const nw = action.x-_tmpl.x;
       const nh = action.y-_tmpl.y;
-      const sf = Math.max(nw/_tmpl.width, nh/_tmpl.height);
-      return Object.assign({}, state.templatesById, {[_t.id]:_t, ..._expandChildren(state.templatesById, _tmpl.children, sf)});
+      if (nw > 0 && nh > 0){
+        const sf = Math.max(nw/_tmpl.width, nh/_tmpl.height);
+        return Object.assign({}, state.templatesById, {[_t.id]:_t, ..._expandChildren(state.templatesById, _tmpl.children, sf)});
+      } 
     } 
+
+    return state.templatesById;
 } 
 
 const _modifyTemplate = (state, action)=>{

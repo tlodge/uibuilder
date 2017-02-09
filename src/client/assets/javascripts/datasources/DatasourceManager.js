@@ -22,7 +22,7 @@ export function	init(registerCallback){
 									}
 							}
 				  );
-	}, 2000);
+	}, 1000);
 
 	const keys = ["data2","data3","data4"];
 

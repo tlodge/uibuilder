@@ -32,7 +32,7 @@ export default class Rect extends PureComponent {
 			 		{(item) => {
 			 			return 	<g transform={`translate(${x},${y})`}>
 			 						<g transform={`${transform}`}>
-			 							<rect rx={rx} ry={ry} x={0} y={0} width={width} height={height} style={_style}/>
+			 							<rect rx={rx} ry={ry} x={0} y={0} width={item.width} height={item.height} style={_style}/>
 			 						</g>
 			 					</g>
 					}}	 

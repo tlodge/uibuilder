@@ -14,12 +14,18 @@ const TOGGLE_MAPPER  = 'uibuilder/mapper/TOGGLE_MAPPER';
 const MAP_FROM  = 'uibuilder/mapper/MAP_FROM';
 const MAP_TO = 'uibuilder/mapper/MAP_TO';
 const SELECT_MAPPING = 'uibuilder/mapper/SELECT_MAPPING';
+const SUBSCRIBE_MAPPINGS = 'uibuilder/mapper/SUBSCRIBE_MAPPINGS';
+const UNSUBSCRIBE_MAPPINGS = 'uibuilder/mapper/UNSUBSCRIBE_MAPPINGS';
 const SAVE_TRANSFORMER = 'uibuilder/mapper/SAVE_TRANSFORMER';
+const SUBSCRIBED = 'uibuilder/mapper/SUBSCRIBED';
+const UNSUBSCRIBED = 'uibuilder/mapper/UNSUBSCRIBED';
 
 // This will be used in our root reducer and selectors
 export const NAME = 'mapper';
 
 // Define the initial state for `shapes` module
+
+let _listeners = [];
 
 const initialState: State = {
 	open:true,
@@ -38,19 +44,38 @@ const createTo = (action)=>{
 	return {path:action.path, type:action.shape, property:action.property, enterFn: action.enterFn}
 }
 
-const subscribe = (source, template, onData)=>{
-	
-	var ds = DatasourceManager.get(source.sourceId);
-	const propertyFor = resolvePath.bind(null, source.key, source.path);
+const _function_for = (ttype)=>{
+	switch (ttype){
 
+		case "attribute":
+			return liveActions.updateNodeAttribute;
+
+		case "transform":
+			return liveActions.updateNodeTransform;
+
+		case "style":
+ 			return liveActions.updateNodeStyle;
+
+		default: 
+			return null;
+
+	}
+}
+
+const _subscribe = (mapping, onData)=>{
+	var ds = DatasourceManager.get(mapping.from.sourceId);
 	if (ds){
+		
+		const propertyFor = resolvePath.bind(null, mapping.from.key, mapping.from.path);
 		let count = 0;
-    	ds.emitter.addListener('data', (data)=>{
-    		const enterKey = template.enterFn ? template.enterFn(data,count) : null;
-    		onData(source,template,propertyFor(data),count,enterKey);
+
+		return  ds.emitter.addListener('data', (data)=>{
+			console.log(data);
+    		const enterKey = mapping.to.enterFn ? mapping.to.enterFn(data,count) : null;
+    		onData(mapping.mappingId, mapping.from.key, mapping.to.path, mapping.to.property, propertyFor(data), count, enterKey);
     		count+=1;
     	});
-    } 
+	}
 }
 
 const _defaultTransform = (type)=>{
@@ -80,29 +105,14 @@ const _getNode = (nodesByKey, nodesById, enterKey, path)=>{
 	return {};
 }
 
-const createSubscription = (from, action, onData)=>{
 
-	switch(action.type){
-		case MAP_TO:
-			if (from){
-				subscribe(	{
-								sourceId: from.sourceId, 
-								path: from.path, 
-								key: from.key,
-								type: from.type,
-							},
-							{
-								path: action.path,
-							    property: action.property,
-								enterFn: action.enterFn,
-							}, 
-							onData.bind(null, action.mappingId),
-						);
-			}
-			break;
+const _removeSubscriptions = ()=>{
+
+	for (let i = 0; i < _listeners.length; i++){
+		_listeners[i].remove();
 	}
+	_listeners = [];
 }
-
 	
 
 export default function reducer(state: State = initialState, action: any = {}): State {
@@ -117,7 +127,7 @@ export default function reducer(state: State = initialState, action: any = {}): 
 		case MAP_TO:
 			if (state.from){
 				return Object.assign({}, state, {
-													mappings: [...state.mappings, {mappingId: action.mappingId, from:state.from, to:createTo(action) /*nodes:[]*/}],
+													mappings: [...state.mappings, {mappingId: action.mappingId, ttype:action.ttype, from:state.from, to:createTo(action) /*nodes:[]*/}],
 													from: null,
 													to: null,
 												})
@@ -126,6 +136,14 @@ export default function reducer(state: State = initialState, action: any = {}): 
 
 		case SELECT_MAPPING:
 			return Object.assign({},state,{selectedMapping:action.mapping});
+
+		case SUBSCRIBE_MAPPINGS:
+			_createSubscriptions(state);
+			return state;
+
+		case UNSUBSCRIBE_MAPPINGS:
+			_removeSubscriptions(state);
+			return state;
 
 		case SAVE_TRANSFORMER:
 			return Object.assign({},state,{transformers:Object.assign({}, state.transformers, {[action.mappingId]:action.transformer})});
@@ -152,45 +170,67 @@ function mapFrom(sourceId, key, path, type){
 	};
 }
 
-function mapTo(path, property, fn){
+function mapTo(ttype, path, property){
+
 	return (dispatch,getState)=>{
 	
 		const template = getState().canvas.templatesById[path[path.length-1]];
-	
+		
 		const action = {
 			type: MAP_TO,
 			path,
+			ttype,
 			property,
 			enterFn:template.enterFn,
 			shape: template.type,
 			mappingId: generateId(),
+			
 		}
-
-		//TODO: what other things can, should we pass into the mapper transform to make use of?
-		const onData = (mappingId, source, template, value, count, enterKey)=>{
-			const transformer = getState().mapper.transformers[mappingId] || defaultCode(source.key,property);
-			const transform = Function(source.key, "node", "i", transformer);	
-			const {nodesByKey, nodesById} = getState().live;
-			const node = _getNode(nodesByKey, nodesById, enterKey, template.path);
-			dispatch(fn(template.path,property,transform(value, node, count), enterKey));
-		}
-
-		createSubscription(getState().mapper.from, action, onData);
 		dispatch(action);
 	}
 }
 
+function subscribeMappings(){
+
+	return (dispatch, getState)=>{
+		const {mapper:{mappings}} = getState();
+
+		for (let i = 0; i < mappings.length; i++){
+			
+			const fn = _function_for(mappings[i].ttype);
+			if (fn){
+				const onData = (mappingId, key, path, property, value, count, enterKey)=>{
+					const transformer = getState().mapper.transformers[mappingId] || defaultCode(key,property);
+					const transform = Function(key, "node", "i", transformer);	
+					const {nodesByKey, nodesById} = getState().live;
+					const node = _getNode(nodesByKey, nodesById, enterKey, path);
+					dispatch(fn(path,property,transform(value, node, count), enterKey));
+				}
+				_listeners.push(_subscribe(mappings[i], onData));
+			}
+		}
+		dispatch({type: SUBSCRIBED});
+	}
+}
+
+function unsubscribeMappings(){
+	_removeSubscriptions();
+	
+	return {
+		type: UNSUBSCRIBED
+	}
+}
 
 function mapToAttribute(path, property){
-	return mapTo(path,property, liveActions.updateNodeAttribute);
+	return mapTo("attribute", path, property);
 }
 
 function mapToStyle(path, property){
-	return mapTo(path,property, liveActions.updateNodeStyle);
+	return mapTo("style", path, property);
 }
 
 function mapToTransform(path, property){
-	return mapTo(path,property, liveActions.updateNodeTransform);
+	return mapTo("transform", path, property);
 }
 
 function selectMapping(mapping){
@@ -231,4 +271,6 @@ export const actionCreators = {
   mapToTransform,
   selectMapping,
   saveTransformer,
+  subscribeMappings,
+  unsubscribeMappings,
 };

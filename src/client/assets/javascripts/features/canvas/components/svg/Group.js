@@ -128,14 +128,10 @@ export default class Group extends Component {
 	}
 
 	_onRotate(){
-		console.log("calling rotate with ");
-		console.log(this.props.id);
 		this.props.actions.onRotate(this.props.id);
 	}
 
 	_onExpand(){
-		console.log("calling expand with ");
-		console.log(this.props.id);
 		this.props.actions.onExpand(this.props.id);
 	}
 

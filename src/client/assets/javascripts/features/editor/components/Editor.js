@@ -3,8 +3,8 @@ import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 
 import { actionCreators as editorActions, selector } from '../';
-import { actionCreators as sourceActions} from '../../sources';
-
+import { actionCreators as sourceActions} from 'features/sources';
+import { actionCreators as mapperActions} from 'features/mapper';
 import EditorCanvas from '../../canvas/components/EditorCanvas';
 import LiveCanvas from '../../live/components/LiveCanvas';
 
@@ -23,7 +23,7 @@ import {PALETTE_WIDTH} from '../../palette/constants';
 @connect(selector, (dispatch) => {
   DatasourceManager.init(bindActionCreators(sourceActions.registerSource, dispatch));
   return{
-     actions: bindActionCreators(editorActions, dispatch)
+     actions: {...bindActionCreators(editorActions, dispatch), ...bindActionCreators(mapperActions, dispatch)}
   }
 })
 
@@ -32,6 +32,8 @@ export default class Editor extends Component {
 	 constructor(props,context){
 		  super(props,context);
 		  this._handleResize = this._handleResize.bind(this);
+      this._handleLive = this._handleLive.bind(this);
+      this._handleEdit = this._handleEdit.bind(this);
    }		
   	
     componentDidMount(){
@@ -50,9 +52,9 @@ export default class Editor extends Component {
       const actions = [];
 
       if (view === "editor"){
-        actions.push(<Button flat key="toggle" label="live" onClick={setView.bind(null,"live")}>tap_and_play</Button>);
+        actions.push(<Button flat key="toggle" label="live" onClick={this._handleLive}>tap_and_play</Button>);
       }else{
-        actions.push(<Button flat key="toggle" label="editor" onClick={setView.bind(null,"editor")}>mode_edit</Button>);
+        actions.push(<Button flat key="toggle" label="editor" onClick={this._handleEdit}>mode_edit</Button>);
       }
 
     	return (
@@ -75,4 +77,14 @@ export default class Editor extends Component {
       	const h = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
       	this.props.actions.screenResize(w,h);
   	}
+
+   _handleEdit(){
+      this.props.actions.unsubscribeMappings();
+      this.props.actions.setView("editor")
+    }
+
+    _handleLive(){
+      this.props.actions.subscribeMappings();
+      this.props.actions.setView("live")
+    }
 }

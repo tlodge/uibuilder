@@ -63,8 +63,10 @@ export default class Birth extends PureComponent {
 
     const schema =   <Schema schema={schemas} onSelect={(key,sourcepath)=>{
         const valueFor = resolvePath.bind(null,key,sourcepath); 
+        let count = 0;
         this.props.actions.updateTemplateAttribute(path, "enterFn", (data)=>{
-            return Math.abs(Math.floor(valueFor(data)))%100;
+            return (count++)%15
+            //return Math.abs(Math.floor(valueFor(data)))%100;
         });
     }}/>
                   
