@@ -10,6 +10,7 @@ const UPDATE_NODE_ATTRIBUTE      = 'uibuilder/live/UPDATE_NODE_ATTRIBUTE';
 const UPDATE_NODE_STYLE          = 'uibuilder/live/UPDATE_NODE_STYLE';
 const UPDATE_NODE_TRANSFORM      = 'uibuilder/live/UPDATE_NODE_TRANSFORM';
 const INIT_NODES                 = 'uibuilder/live/INIT_NODES';
+const REMOVE_NODE                = 'uibuilder/live/REMOVE_NODE';
 
 export const NAME = 'live';
 
@@ -30,13 +31,15 @@ const _getAllChildIds = (template, blueprints)=>{
     }));
 }
 
-const _createNode = (template, blueprints)=>{
+
+
+const _createNode = (template, blueprints, ts, index)=>{
 
     const id = generateId();
 
     if (template.type !== "group"){
         return {
-                  node:  Object.assign({}, template, {id, label:`${template.type}:${template.id}`, style: Object.assign({}, template.style)}),
+                  node:  Object.assign({}, template, {id, ts, index, label:`${template.type}:${template.id}`, style: Object.assign({}, template.style)}),
                   children: {}
               }
     }
@@ -50,7 +53,7 @@ const _createNode = (template, blueprints)=>{
 
     const children = childIds.reduce((acc, id)=>{
         const newId = lookup[id];
-        acc[newId] = Object.assign({}, blueprints[id], {id:newId});
+        acc[newId] = Object.assign({}, blueprints[id], {id:newId, ts, index});
         if(acc[newId].children){
             acc[newId].children = acc[newId].children.map((id)=>lookup[id]);
         } 
@@ -60,6 +63,8 @@ const _createNode = (template, blueprints)=>{
     return  {
         node:  Object.assign({}, template, {
                                                 id, 
+                                                ts,
+                                                index,
                                                 children: template.children.map(k=>lookup[k]),
                                                 label:`${template.type}:${template.id}`, 
                                                 style: Object.assign({}, template.style)
@@ -81,7 +86,7 @@ const _cloneStaticTemplates = (templates, blueprints)=>{
     return templates.filter((key)=>{
        return !blueprints[key].enterFn;
     }).reduce((acc, key)=>{
-        const {node, children} = _createNode(blueprints[key], blueprints);
+        const {node, children} = _createNode(blueprints[key], blueprints, Date.now(), 0);
         acc.nodes.push(node.id);
         acc.nodesById = {...acc.nodesById, ...{[node.id]:node}, ...children};
         acc.nodesByKey[key] = {root:node.id};
@@ -135,7 +140,7 @@ const _createTransform = (node, type, transform)=>{
 
 
 /*
-    //more effient to hold the mapping of nodesByKey in seperate object as this then 
+    //more effient to hold the mapping of nodesByKey in separate object as this then 
     //means that changes to state of a node cloned from a template won't trigger a state change
     //of ALL nodes that were cloned by that template.
     
@@ -284,7 +289,7 @@ const _updateNodeTransforms = (state, action)=>{
 const _cloneNode = (state, action)=>{
     const [templateId, ...rest] = action.path;
     const subkey     = action.enterKey ? action.enterKey : "root";
-    const {node, children} = _createNode(action.blueprints[templateId], action.blueprints);
+    const {node, children} = _createNode(action.blueprints[templateId], action.blueprints, action.ts, action.index);
     const k = Object.assign({}, state.nodesByKey[templateId] || {}, {[subkey]:node.id});
     return Object.assign({}, state, {
                                           nodes: [...state.nodes, node.id],
@@ -294,6 +299,56 @@ const _cloneNode = (state, action)=>{
 
 }
 
+
+const _removeNode = (state, action)=>{
+
+   
+
+    
+
+    return {nodes, nodesById, nodesByKey};
+}
+
+
+const _removeNodes = (state, action)=>{
+   
+    const node  = state.nodesById[action.nodeId];
+    const templateId = action.path[action.path.length-1];
+    
+    const nodesByKey = Object.assign({}, state.nodesByKey, {[templateId] : Object.keys(state.nodesByKey[templateId]).reduce((acc,key)=>{
+      if (key != action.enterKey){
+        acc[key] = state.nodesByKey[templateId][key]
+      }
+      return acc;
+    },{})});
+
+    if (node.children){
+        const toremove    = [node.id, ..._getAllChildIds(node, state.nodesById)];
+        console.log("removing");
+        console.log(toremove);
+
+        const nodes  = state.nodes.filter((nodeId)=>{
+            return toremove.indexOf(nodeId) === -1;
+        });
+
+        const nodesById  = Object.keys(state.nodesById).reduce((acc,key)=>{
+            if (toremove.indexOf(key) === -1){
+              acc[key] = state.nodesById[key];
+            }
+            return acc;
+        },{}); 
+        
+        return Object.assign({}, state, {nodes,nodesByKey,nodesById});
+    }
+    else{
+        const index = state.nodes.indexOf(action.nodeId);
+        const nodes = [...state.nodes.slice(0,index), ...state.nodes.slice(index+1)];
+        const nodesById  = Object.assign({}, state.nodesById);
+        delete nodesById[node.id];
+        return Object.assign({}, state, {nodes,nodesByKey,nodesById});
+    }    
+}
+
 export default function reducer(state: State = initialState, action: any = {}): State {
   
   switch (action.type) {
@@ -301,17 +356,22 @@ export default function reducer(state: State = initialState, action: any = {}): 
     case CLONE_NODE:
       return Object.assign({}, state, _cloneNode(state, action));
 
+    case REMOVE_NODE:
+      return Object.assign([], state, _removeNodes(state, action));
+     
     case UPDATE_NODE_ATTRIBUTE:   
-     return Object.assign({}, state, _updateNodeAttributes(state, action));
+      return Object.assign({}, state, _updateNodeAttributes(state, action));
 
     case UPDATE_NODE_STYLE: 
       return Object.assign({}, state, _updateNodeStyles(state, action));
 
     case UPDATE_NODE_TRANSFORM:
-       return Object.assign({}, state, _updateNodeTransforms(state, action));
+      return Object.assign({}, state, _updateNodeTransforms(state, action));
 
     case INIT_NODES:
       return Object.assign({}, state, {..._cloneStaticTemplates(action.templates, action.blueprints)});
+
+  
 
     default:
       return state;
@@ -330,7 +390,7 @@ const _shouldClone = (path, enterKey, nodesByKey)=>{
   return true;
 }
 
-function updateNodeAttribute(path:Array, property:string, value, enterKey:string) {
+function updateNodeAttribute(path:Array, property:string, value, enterKey:string, ts:number, index:number) {
  
   return (dispatch, getState)=>{
     
@@ -340,6 +400,8 @@ function updateNodeAttribute(path:Array, property:string, value, enterKey:string
           type: CLONE_NODE,
           enterKey,
           path,
+          ts,
+          index,
           blueprints: getState().canvas.templatesById,
       });
     }
@@ -355,7 +417,7 @@ function updateNodeAttribute(path:Array, property:string, value, enterKey:string
   };
 }
 
-function updateNodeStyle(path:Array, property:string, value, enterKey:string){
+function updateNodeStyle(path:Array, property:string, value, enterKey:string, ts:number, index:number){
   return (dispatch, getState)=>{
 
     if (_shouldClone(path, enterKey, getState().live.nodesByKey)){
@@ -363,6 +425,8 @@ function updateNodeStyle(path:Array, property:string, value, enterKey:string){
           type: CLONE_NODE,
           enterKey,
           path,
+          ts,
+          index,
           blueprints: getState().canvas.templatesById,
       });
     }
@@ -377,7 +441,7 @@ function updateNodeStyle(path:Array, property:string, value, enterKey:string){
   }
 }
 
-function updateNodeTransform(path:Array, property:string, transform:string, enterKey:string){
+function updateNodeTransform(path:Array, property:string, transform:string, enterKey:string, ts:number, index:number){
 
    return (dispatch, getState)=>{
 
@@ -386,6 +450,8 @@ function updateNodeTransform(path:Array, property:string, transform:string, ente
           type: CLONE_NODE,
           enterKey,
           path,
+          ts,
+          index,
           blueprints: getState().canvas.templatesById,
       });
     }
@@ -410,6 +476,14 @@ function initNodes(){
   }
 }
 
+function removeNode(nodeId, path, enterKey){
+   return {
+      type: REMOVE_NODE,
+      enterKey,
+      nodeId,
+      path,
+   }
+}
 // Selectors
 
 const live = (state) => state[NAME];
@@ -426,4 +500,5 @@ export const actionCreators = {
   updateNodeAttribute,
   updateNodeStyle,
   updateNodeTransform,
+  removeNode,
 };

@@ -62,7 +62,7 @@ const _function_for = (ttype)=>{
 	}
 }
 
-const _subscribe = (mapping, onData)=>{
+const _subscribe = (mapping, onData, onRemove)=>{
 	var ds = DatasourceManager.get(mapping.from.sourceId);
 	if (ds){
 		
@@ -70,9 +70,15 @@ const _subscribe = (mapping, onData)=>{
 		let count = 0;
 
 		return  ds.emitter.addListener('data', (data)=>{
-			console.log(data);
+			
     		const enterKey = mapping.to.enterFn ? mapping.to.enterFn(data,count) : null;
-    		onData(mapping.mappingId, mapping.from.key, mapping.to.path, mapping.to.property, propertyFor(data), count, enterKey);
+    		const remove   = count > 3;// mapping.to.exitFn ? mapping.to.exitFn(data, count) : false; 
+
+    		if (remove){
+    			onRemove(mapping.to.path,enterKey);
+    		}else{
+    			onData(mapping.mappingId, mapping.from.key, mapping.to.path, mapping.to.property, propertyFor(data), count, enterKey);
+    		}
     		count+=1;
     	});
 	}
@@ -199,14 +205,24 @@ function subscribeMappings(){
 			
 			const fn = _function_for(mappings[i].ttype);
 			if (fn){
+
 				const onData = (mappingId, key, path, property, value, count, enterKey)=>{
+					const {nodesByKey, nodesById} = getState().live;
+					const node = _getNode(nodesByKey, nodesById, enterKey, path); 
 					const transformer = getState().mapper.transformers[mappingId] || defaultCode(key,property);
-					const transform = Function(key, "node", "i", transformer);	
+					const transform = Function(key, "node", "i", transformer);		
+					dispatch(fn(path,property,transform(value, node, count), enterKey, Date.now(), count));
+				}
+
+				const onRemove = (path,enterKey)=>{
 					const {nodesByKey, nodesById} = getState().live;
 					const node = _getNode(nodesByKey, nodesById, enterKey, path);
-					dispatch(fn(path,property,transform(value, node, count), enterKey));
+					if (node && node.id){
+						dispatch(liveActions.removeNode(node.id, path, enterKey));
+					}
 				}
-				_listeners.push(_subscribe(mappings[i], onData));
+
+				_listeners.push(_subscribe(mappings[i], onData, onRemove));
 			}
 		}
 		dispatch({type: SUBSCRIBED});
@@ -215,7 +231,7 @@ function subscribeMappings(){
 
 function unsubscribeMappings(){
 	_removeSubscriptions();
-	
+
 	return {
 		type: UNSUBSCRIBED
 	}
