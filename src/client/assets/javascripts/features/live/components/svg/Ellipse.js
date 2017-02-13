@@ -27,9 +27,8 @@ export default class Ellipse extends PureComponent {
 		
 		const _style = camelise(style);
 		const is = _interpolatedStyles(_style);
-		const {scale=1,rotate,translate} = componentsFromTransform(transform);
+		const {scale=1,rotate=[0,0,0],translate} = componentsFromTransform(transform);
 		const [x,y]= translate || [0,0];
-		
 
 		const motionstyle = {
 			cx: spring(Number(cx) || 0),
@@ -45,9 +44,8 @@ export default class Ellipse extends PureComponent {
 	 				{({cx,cy,scale,r,rotate,interpolatedStyles}) => {
 	 					const _s = Object.assign({},_style,interpolatedStyles);
 	 					const _transform = `translate(${cx}, ${cy}) scale(${scale}) rotate(${rotate})`;
-	 					return <g transform={`${_transform}`}>
-	 						<ellipse cx={0} cy={0} rx={rx} ry={ry} style={_s} />
-	 					</g>								
+	 					return <ellipse cx={0} cy={0} rx={rx} ry={ry} style={_s} transform={`${_transform}`} />
+	 													
 	 					
 				 	}}	 
 				</Motion>)

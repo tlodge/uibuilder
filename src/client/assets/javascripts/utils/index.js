@@ -282,6 +282,8 @@ export function convertToJson(nodeList){
     for (var item of nodeList){
       const id = generateId();
       
+     
+
       switch(item.nodeName){
       
         case "g":
@@ -388,12 +390,12 @@ export function convertToJson(nodeList){
           break;
 
         case "path":
-        
+       
           items[id]= {
             id,
             label: `path:${id}`,
             type: "path", 
-            d: item.attributes.d.nodeValue.replace(/([A-Za-z])/g, ' $1 ').trim(),
+            d: item.attributes.d.nodeValue.replace(/([MmLlHhVvCcSsQqTtAaZz])/g, ' $1 ').trim(),
             style:{
                 fill: item.style.fill,
                 stroke: item.style.stroke.trim() === "" ? "none" :  item.style.stroke,
@@ -409,9 +411,9 @@ export function convertToJson(nodeList){
             id,
             label: `text:${id}`,
             type: "text", 
-            x: item.x.baseVal.value,
-            y: item.y.baseVal.value,
-            text: item.text.baseVal.value,
+            x: item.x ? item.x.baseVal ? item.x.baseVal.value || 0 : 0 : 0,
+            y: item.y ? item.y.baseVal ? item.y.baseVal.value || 0 : 0 : 0,
+            text: item.text ? item.text.baseVal.value : "",
             style:{
                 fill: item.style.fill,
                 stroke: item.style.stroke.trim() === "" ? "none" :  item.style.stroke,
@@ -465,6 +467,17 @@ export function rectBounds(item){
   }
 }
 
+export function textBounds(item){
+	
+
+   return {
+      x: item.x,
+      y: item.y,
+      width: 100,
+      height: 12,
+  }
+}
+
 export function pathBounds(item){
 
   var path = document.createElementNS("http://www.w3.org/2000/svg", 'path');
@@ -486,6 +499,8 @@ export function pathBounds(item){
     maxy = Math.max(maxy, point.y);
     maxx = Math.max(maxx, point.x);
   }
+
+
   return {x: minx, y: miny, width: maxx-minx, height: maxy-miny};
 }
 
@@ -504,8 +519,11 @@ const _minMax = function(bounds, minmax){
 
 export function calculateBounds(nodes, minX, maxX, minY, maxY){
  	
+
   const _minmax = Object.keys(nodes).reduce((acc, key)=>{
+ 
   		const item = nodes[key];
+ 		
   		const minmax = {
   							minX:acc.minX,
   							maxX:acc.maxX,
@@ -532,6 +550,9 @@ export function calculateBounds(nodes, minX, maxX, minY, maxY){
 
 	        case "rect":
 	          return _minMax(rectBounds(item), minmax);
+
+	        case "text":
+	          return _minMax(textBounds(item), minmax);
 	          
 	    }	
 
@@ -666,8 +687,11 @@ export function originForNode(node){
 			return {x:node.x1, y:node.y1}
 
 		case "text":
-		case "path":
 			return {x:0, y:0}
+
+		case "path":
+			const {x,y,width,height} = pathBounds(node);
+			return  {x:x+ width/2, y: y + height/2}
 		
 		case "rect":
 		case "group":

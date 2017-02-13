@@ -40,7 +40,8 @@ const _createNode = (template, blueprints, ts, index)=>{
     if (template.type !== "group"){
         return {
                   node:  Object.assign({}, template, {id, ts, index, label:`${template.type}:${template.id}`, style: Object.assign({}, template.style)}),
-                  children: {}
+                  children: {},
+                  lookup:{},
               }
     }
 
@@ -70,6 +71,7 @@ const _createNode = (template, blueprints, ts, index)=>{
                                                 style: Object.assign({}, template.style)
                                             }),
         children,
+        lookup,
     }
 } 
 
@@ -86,10 +88,20 @@ const _cloneStaticTemplates = (templates, blueprints)=>{
     return templates.filter((key)=>{
        return !blueprints[key].enterFn;
     }).reduce((acc, key)=>{
-        const {node, children} = _createNode(blueprints[key], blueprints, Date.now(), 0);
+        const {node, children, lookup} = _createNode(blueprints[key], blueprints, Date.now(), 0);
+        
         acc.nodes.push(node.id);
+        
         acc.nodesById = {...acc.nodesById, ...{[node.id]:node}, ...children};
-        acc.nodesByKey[key] = {root:node.id};
+        
+        const nbk = Object.keys(lookup).reduce((acc,key)=>{
+                      acc[key] = {root:lookup[key]}
+                      return acc;
+                    },{});
+
+        acc.nodesByKey = {[key]:{root:node.id},...nbk};
+                           
+
         return acc;
     },{nodes:[], nodesByKey: {}, nodesById:{}});
 }
@@ -119,7 +131,6 @@ const _createTransform = (node, type, transform)=>{
    switch(type){
       
       case "scale":
-
           const {scale} = componentsFromTransform(transform);
           return _combine(scalePreservingOrigin(x, y, scale || 1), node.transform || "");
 
@@ -129,7 +140,6 @@ const _createTransform = (node, type, transform)=>{
 
       case "rotate":
           const {rotate} = componentsFromTransform(transform);
-
           return _combine(`rotate(${rotate},${x},${y})`, node.transform || "")
 
       default:
@@ -231,9 +241,17 @@ const _updateNodeAttributes = (state, action)=>{
   if (!state.nodesById)
     return state;
 
-  const [templateId, ...rest] = action.path;
+  //const [templateId, ...rest] = action.path;
+  const templateId = action.path[action.path.length-1];
   const subkey     = action.enterKey ? action.enterKey : "root";
+
+  //console.log(`tenplate id is ${templateId}, enterkey ${subkey}`);
+  //console.log("looking up in");
+  //console.log(state.nodesByKey);
+
   const nodeId     = state.nodesByKey[templateId] ? state.nodesByKey[templateId][subkey] : null;
+
+
 
   //should always have a nodeId, as clone node was dispatched first
   if (nodeId){
@@ -250,7 +268,8 @@ const _updateNodeStyles = (state, action)=>{
   if (!state.nodesById)
     return state;
 
-  const [templateId, ...rest] = action.path;
+  //const [templateId, ...rest] = action.path;
+  const templateId = action.path[action.path.length-1];
   const subkey     = action.enterKey ? action.enterKey : "root";
   const nodeId     = state.nodesByKey[templateId] ? state.nodesByKey[templateId][subkey] : null;
 
@@ -272,7 +291,8 @@ const _updateNodeTransforms = (state, action)=>{
   if (!state.nodesById)
     return state;
 
-  const [templateId, ...rest] = action.path;
+  //const [templateId, ...rest] = action.path;
+  const templateId = action.path[action.path.length-1];
   const subkey     = action.enterKey ? action.enterKey : "root";
   const nodeId     = state.nodesByKey[templateId] ? state.nodesByKey[templateId][subkey] : null;
 
@@ -287,31 +307,32 @@ const _updateNodeTransforms = (state, action)=>{
 }
 
 const _cloneNode = (state, action)=>{
-    const [templateId, ...rest] = action.path;
+    //const [templateId, ...rest] = action.path;
+    const templateId = action.path[action.path.length-1];
     const subkey     = action.enterKey ? action.enterKey : "root";
-    const {node, children} = _createNode(action.blueprints[templateId], action.blueprints, action.ts, action.index);
+    const {node, children, lookup} = _createNode(action.blueprints[templateId], action.blueprints, action.ts, action.index);
+    
     const k = Object.assign({}, state.nodesByKey[templateId] || {}, {[subkey]:node.id});
+
+    const nbk = Object.keys(lookup).reduce((acc,key)=>{
+                      acc[key] = Object.assign(state.nodesByKey[key]||{}, {[subkey]:lookup[key]});
+                      return acc;
+                },{});
+
+ 
+
     return Object.assign({}, state, {
                                           nodes: [...state.nodes, node.id],
                                           nodesById:  {...state.nodesById, ...{[node.id]:node}, ...children},
-                                          nodesByKey: Object.assign({}, state.nodesByKey, {[templateId]: k }),
+                                          nodesByKey: Object.assign({}, state.nodesByKey, {[templateId]: k, ...nbk}),
                                       });
 
 }
 
 
-const _removeNode = (state, action)=>{
-
-   
-
-    
-
-    return {nodes, nodesById, nodesByKey};
-}
-
 
 const _removeNodes = (state, action)=>{
-   
+
     const node  = state.nodesById[action.nodeId];
     const templateId = action.path[action.path.length-1];
     
@@ -324,8 +345,6 @@ const _removeNodes = (state, action)=>{
 
     if (node.children){
         const toremove    = [node.id, ..._getAllChildIds(node, state.nodesById)];
-        console.log("removing");
-        console.log(toremove);
 
         const nodes  = state.nodes.filter((nodeId)=>{
             return toremove.indexOf(nodeId) === -1;
@@ -345,6 +364,7 @@ const _removeNodes = (state, action)=>{
         const nodes = [...state.nodes.slice(0,index), ...state.nodes.slice(index+1)];
         const nodesById  = Object.assign({}, state.nodesById);
         delete nodesById[node.id];
+      
         return Object.assign({}, state, {nodes,nodesByKey,nodesById});
     }    
 }
@@ -477,6 +497,7 @@ function initNodes(){
 }
 
 function removeNode(nodeId, path, enterKey){
+ 
    return {
       type: REMOVE_NODE,
       enterKey,

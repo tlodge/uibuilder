@@ -16,3 +16,22 @@ export function get(url, query){
      });
   })
 }
+
+
+export function uploadImage(data){  
+  return new Promise((resolve, reject)=>{
+     request
+      .post("/image/add")
+      .send(data)
+      //.set('Accept', 'image/svg+xml')
+      .set('Accept', 'application/json')
+      .type("json")
+      .end(function(err, res){
+        if (err){
+          reject(err);
+        }else{
+          resolve(res);
+        }
+     });
+  })
+}

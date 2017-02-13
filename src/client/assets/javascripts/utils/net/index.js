@@ -1,1 +1,1 @@
-export { get } from './request';
+export { get, uploadImage } from './request';

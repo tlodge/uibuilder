@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import {Motion, spring} from 'react-motion';
-import {schemaLookup, camelise, camelCase, interpolatedStyles} from 'utils';
+import {schemaLookup, camelise, camelCase, interpolatedStyles,componentsFromTransform} from 'utils';
 import { selector } from '../..';
 import { connect } from 'react-redux';
 const schema = {...schemaLookup("rect").attributes, ...schemaLookup("rect").style};
@@ -27,14 +27,25 @@ export default class Rect extends PureComponent {
 		const {x,y,rx,ry,width,height,transform="translate(0,0)",style} = node;
 		const _style = camelise(style);
 		const is = _interpolatedStyles(_style)
-					
-		return <Motion style={{x: spring(Number(x) || 0), y: spring(Number(y) || 0), width:spring(Number(width) || 0), height:spring(Number(height) || 0), ...is}}>
-			 		{(item) => {
-			 			return 	<g transform={`translate(${x},${y})`}>
-			 						<g transform={`${transform}`}>
-			 							<rect rx={rx} ry={ry} x={0} y={0} width={item.width} height={item.height} style={_style}/>
-			 						</g>
-			 					</g>
+		const {scale=1,rotate=[0,0,0],translate} = componentsFromTransform(transform);
+		
+		const motionstyle = {
+			x: spring(Number(x) || 0),
+			y: spring(Number(y) || 0), 
+			width:spring(Number(width) || 0),
+			height:spring(Number(height) || 0),
+			scale: spring(Number(scale)),
+			rotate: spring(Number(rotate[0]) || 0),
+			cx: spring(Number(rotate[1]) || 0),
+			cy: spring(Number(rotate[2]) || 0),
+			interpolatedStyles: is
+		}
+
+		return <Motion style={motionstyle}>
+	 				{({x,y,width,height,scale,rotate,cx,cy,interpolatedStyles}) => {
+			 			const _s = Object.assign({},_style,interpolatedStyles);
+	 					const _transform = `translate(${x}, ${y}) scale(${scale}) rotate(${rotate},${cx},${cy})`;
+	 					return <rect rx={rx} ry={ry} width={width} height={height} style={_s} transform={_transform}/>
 					}}	 
 				</Motion>
 	}

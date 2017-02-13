@@ -72,7 +72,7 @@ const _subscribe = (mapping, onData, onRemove)=>{
 		return  ds.emitter.addListener('data', (data)=>{
 			
     		const enterKey = mapping.to.enterFn ? mapping.to.enterFn(data,count) : null;
-    		const remove   = count > 3;// mapping.to.exitFn ? mapping.to.exitFn(data, count) : false; 
+    		const remove   = mapping.to.exitFn ? mapping.to.exitFn(data, count) : false; //perhaps need to call this for ALL nodes rather than just for enterKey?
 
     		if (remove){
     			onRemove(mapping.to.path,enterKey);
@@ -215,8 +215,14 @@ function subscribeMappings(){
 				}
 
 				const onRemove = (path,enterKey)=>{
+					console.log("IN ON REMOVE!");
+					console.log(path);
+
 					const {nodesByKey, nodesById} = getState().live;
 					const node = _getNode(nodesByKey, nodesById, enterKey, path);
+					console.log("node is");
+					console.log(node);
+
 					if (node && node.id){
 						dispatch(liveActions.removeNode(node.id, path, enterKey));
 					}

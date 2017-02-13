@@ -33,7 +33,7 @@ export default class Circle extends PureComponent {
 		
 		const _style = camelise(style);
 		const is = _interpolatedStyles(_style);
-		const {scale=1,rotate,translate} = componentsFromTransform(transform);
+		const {scale=1,rotate=[0,0,0],translate} = componentsFromTransform(transform);
 		const [x,y]= translate || [0,0];
 		
 		const motionstyle = {
@@ -41,7 +41,7 @@ export default class Circle extends PureComponent {
 			cy: spring(Number(cy) || 0),
 			r:spring(Number(r) || 0),
 			scale: spring(Number(scale)),
-			rotate: spring(Number(rotate) || 0),
+			rotate: spring(Number(rotate[0]) || 0),
 			interpolatedStyles: is,
 		}
 
@@ -49,9 +49,8 @@ export default class Circle extends PureComponent {
 	 				{({cx,cy,scale,r,rotate,interpolatedStyles}) => {
 	 					const _s = Object.assign({},_style,interpolatedStyles);
 	 					const _transform = `translate(${cx}, ${cy}) scale(${scale}) rotate(${rotate})`;
-	 					return <g transform={`${_transform}`}>
-	 						<circle cx={0} cy={0} r={r} style={_s} />
-	 					</g>								
+	 					return <circle cx={0} cy={0} r={r} style={_s} transform={`${_transform}`} />
+	 												
 	 					
 				 	}}	 
 				</Motion>)

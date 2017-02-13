@@ -8,8 +8,11 @@ const webpackDevMiddleware = require('webpack-dev-middleware');
 const webpackHotMiddleware = require('webpack-hot-middleware');
 const DashboardPlugin = require('webpack-dashboard/plugin');
 const config = require('./config/webpack.config.development');
-
+const bodyparser = require('body-parser');
+const  Promise = require('bluebird');
 const app = express();
+app.use(bodyparser.urlencoded({extended:false}));
+app.use(bodyparser.json());
 const compiler = webpack(config);
 
 // Apply CLI dashboard for your webpack dev server
@@ -17,6 +20,7 @@ compiler.apply(new DashboardPlugin());
 
 const host = process.env.HOST || 'localhost';
 const port = process.env.PORT || 3000;
+Promise.promisifyAll(fs);
 
 function log() {
   arguments[0] = '\nWebpack: ' + arguments[0];
@@ -44,6 +48,8 @@ app.get('/images/', (req,res)=>{
       });
 
       const data = images.map((fileName)=>{
+         
+
           const f = path.join(__dirname, `./src/client/assets/images/${fileName}`);
          
           var contents = fs.readFileSync(f, 'utf8');
@@ -60,6 +66,32 @@ app.get('/images/', (req,res)=>{
 
 app.get('/images/:name', (req,res)=>{
    res.sendFile(path.join(__dirname, './src/client/assets/images/' + req.params.name));
+});
+
+app.post('/image/add', function(req, res){
+  
+  const DIRECTORY = path.join(__dirname, './src/client/assets/images/');
+  
+  const {name, image} = req.body;
+  console.log(image);
+  console.log(name);
+  console.log("SAVING TO ");
+  console.log(DIRECTORY);
+
+  //var data = image.replace(/^data:image\/\w+;base64,/, "");
+  //var buf = new Buffer(data, 'base64');
+
+  var ts    = Date.now();
+  var filename  = path.join(DIRECTORY, name);
+  
+  fs.writeFileAsync(filename, image).then(function(){
+    console.log("success!");
+    res.send({success:true});
+  },function(err){
+    console.log(err);
+    res.send({success:false});
+  });
+
 });
 
 app.get('*', (req, res) => {
