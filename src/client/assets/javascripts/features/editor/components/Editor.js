@@ -34,6 +34,8 @@ export default class Editor extends Component {
 		  this._handleResize = this._handleResize.bind(this);
       this._handleLive = this._handleLive.bind(this);
       this._handleEdit = this._handleEdit.bind(this);
+      this._handleSave = this._handleSave.bind(this);
+      this._handleLoad = this._handleLoad.bind(this);
    }		
   	
     componentDidMount(){
@@ -49,7 +51,10 @@ export default class Editor extends Component {
         width: w-PALETTE_WIDTH,
       }
 
-      const actions = [];
+      const actions = [
+                        <Button flat key="load" label="load" onClick={this._handleLoad}>cloud_download</Button>,
+                        <Button flat key="save" label="save" onClick={this._handleSave}>save</Button>
+                      ]
 
       if (view === "editor"){
         actions.push(<Button flat key="toggle" label="live" onClick={this._handleLive}>tap_and_play</Button>);
@@ -86,5 +91,13 @@ export default class Editor extends Component {
     _handleLive(){
       this.props.actions.subscribeMappings();
       this.props.actions.setView("live")
+    }
+
+    _handleSave(){
+      this.props.actions.save();
+    }
+
+     _handleLoad(){
+      this.props.actions.load();
     }
 }

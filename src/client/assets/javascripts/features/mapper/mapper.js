@@ -41,7 +41,7 @@ const createFrom = (action)=>{
 }
 
 const createTo = (action)=>{
-	return {path:action.path, type:action.shape, property:action.property, enterFn: action.enterFn}
+	return {path:action.path, type:action.shape, property:action.property}
 }
 
 const _function_for = (ttype)=>{
@@ -62,23 +62,15 @@ const _function_for = (ttype)=>{
 	}
 }
 
-const _subscribe = (mapping, onData, onRemove)=>{
+const _subscribe = (mapping, onData)=>{
 	var ds = DatasourceManager.get(mapping.from.sourceId);
 	if (ds){
 		
-		const propertyFor = resolvePath.bind(null, mapping.from.key, mapping.from.path);
+		//const propertyFor = resolvePath.bind(null, mapping.from.key, mapping.from.path);
 		let count = 0;
 
 		return  ds.emitter.addListener('data', (data)=>{
-			
-    		const enterKey = mapping.to.enterFn ? mapping.to.enterFn(data,count) : null;
-    		const remove   = mapping.to.exitFn ? mapping.to.exitFn(data, count) : false; //perhaps need to call this for ALL nodes rather than just for enterKey?
-
-    		if (remove){
-    			onRemove(mapping.to.path,enterKey);
-    		}else{
-    			onData(mapping.mappingId, mapping.from.key, mapping.to.path, mapping.to.property, propertyFor(data), count, enterKey);
-    		}
+			onData(mapping, data, count);
     		count+=1;
     	});
 	}
@@ -187,7 +179,6 @@ function mapTo(ttype, path, property){
 			path,
 			ttype,
 			property,
-			enterFn:template.enterFn,
 			shape: template.type,
 			mappingId: generateId(),
 			
@@ -206,29 +197,28 @@ function subscribeMappings(){
 			const fn = _function_for(mappings[i].ttype);
 			if (fn){
 
-				const onData = (mappingId, key, path, property, value, count, enterKey)=>{
-					const {nodesByKey, nodesById} = getState().live;
-					const node = _getNode(nodesByKey, nodesById, enterKey, path); 
-					const transformer = getState().mapper.transformers[mappingId] || defaultCode(key,property);
-					const transform = Function(key, "node", "i", transformer);		
-					dispatch(fn(path,property,transform(value, node, count), enterKey, Date.now(), count));
-				}
+				const onData = (mapping, data, count)=>{
+					
+					const {live: {nodesByKey, nodesById}, canvas: {templatesById}, mapper:{transformers}} = getState();
+					const {mappingId, from: {key},  to:{property}} = mapping;
 
-				const onRemove = (path,enterKey)=>{
-					console.log("IN ON REMOVE!");
-					console.log(path);
+					const template = templatesById[mapping.to.path[mapping.to.path.length-1]];
+					const value   = resolvePath(mapping.from.key, mapping.from.path, data);
 
-					const {nodesByKey, nodesById} = getState().live;
-					const node = _getNode(nodesByKey, nodesById, enterKey, path);
-					console.log("node is");
-					console.log(node);
+					const enterKey = template.enterFn ?  template.enterFn(data,count) : null;
+    				const remove   = template.exitFn ?   template.exitFn(data, count) : false;
 
-					if (node && node.id){
-						dispatch(liveActions.removeNode(node.id, path, enterKey));
+					const node = _getNode(nodesByKey, nodesById, enterKey, mapping.to.path); 
+					
+					if (remove){
+						dispatch(liveActions.removeNode(node.id, mapping.to.path, enterKey));
+					}else {
+						const transformer = transformers[mappingId] || defaultCode(key,property);
+						const transform   = Function(key, "node", "i", transformer);		
+						dispatch(fn(mapping.to.path,property,transform(value, node, count), enterKey, Date.now(), count));
 					}
 				}
-
-				_listeners.push(_subscribe(mappings[i], onData, onRemove));
+				_listeners.push(_subscribe(mappings[i], onData));
 			}
 		}
 		dispatch({type: SUBSCRIBED});

@@ -308,23 +308,24 @@ const _updateNodeTransforms = (state, action)=>{
 
 const _cloneNode = (state, action)=>{
     //const [templateId, ...rest] = action.path;
+  
     const templateId = action.path[action.path.length-1];
     const subkey     = action.enterKey ? action.enterKey : "root";
     const {node, children, lookup} = _createNode(action.blueprints[templateId], action.blueprints, action.ts, action.index);
     
+
     const k = Object.assign({}, state.nodesByKey[templateId] || {}, {[subkey]:node.id});
 
     const nbk = Object.keys(lookup).reduce((acc,key)=>{
-                      acc[key] = Object.assign(state.nodesByKey[key]||{}, {[subkey]:lookup[key]});
+                      acc[key] = Object.assign({}, state.nodesByKey[key]||{}, {[subkey]:lookup[key]});
                       return acc;
                 },{});
 
- 
 
     return Object.assign({}, state, {
                                           nodes: [...state.nodes, node.id],
                                           nodesById:  {...state.nodesById, ...{[node.id]:node}, ...children},
-                                          nodesByKey: Object.assign({}, state.nodesByKey, {[templateId]: k, ...nbk}),
+                                          nodesByKey: {...state.nodesByKey, ...{[templateId]: k}, ...nbk},
                                       });
 
 }
@@ -466,6 +467,7 @@ function updateNodeTransform(path:Array, property:string, transform:string, ente
    return (dispatch, getState)=>{
 
     if (_shouldClone(path, enterKey, getState().live.nodesByKey)){
+
       dispatch({
           type: CLONE_NODE,
           enterKey,

@@ -68,20 +68,32 @@ app.get('/images/:name', (req,res)=>{
    res.sendFile(path.join(__dirname, './src/client/assets/images/' + req.params.name));
 });
 
+app.post('/scene/add', function(req, res){
+  const DIRECTORY = path.join(__dirname, './src/client/assets/scenes/');
+  
+  const {name, scene} = req.body;
+  
+  var ts    = Date.now();
+  var filename  = path.join(DIRECTORY, `${ts}_${name}`);
+  
+  fs.writeFileAsync(filename, scene).then(function(){
+    console.log("success!");
+    res.send({success:true});
+  },function(err){
+    console.log(err);
+    res.send({success:false});
+  });
+
+});
+
 app.post('/image/add', function(req, res){
   
   const DIRECTORY = path.join(__dirname, './src/client/assets/images/');
   
   const {name, image} = req.body;
-  console.log(image);
-  console.log(name);
-  console.log("SAVING TO ");
-  console.log(DIRECTORY);
-
+  
   //var data = image.replace(/^data:image\/\w+;base64,/, "");
   //var buf = new Buffer(data, 'base64');
-
-  var ts    = Date.now();
   var filename  = path.join(DIRECTORY, name);
   
   fs.writeFileAsync(filename, image).then(function(){

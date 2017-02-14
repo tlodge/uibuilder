@@ -5,6 +5,7 @@ const fs = require('fs');
 const express = require('express');
 const app = express();
 const bodyparser = require('body-parser');
+const  Promise = require('bluebird');
 const host = process.env.HOST || 'localhost';
 const port = process.env.PORT || 3000;
 var staticPath = path.join(__dirname, '../../build/client');
@@ -12,6 +13,7 @@ var staticPath = path.join(__dirname, '../../build/client');
 app.use(express.static(staticPath));
 app.use(bodyparser.urlencoded({extended:false}));
 app.use(bodyparser.json());
+Promise.promisifyAll(fs);
 
 //just dev, so blocking read of images dir
 app.get('/images/', (req,res)=>{
@@ -48,17 +50,17 @@ app.get('*', (req, res) => {
 app.post('/image/add', function(req, res){
   
   const DIRECTORY = path.join(__dirname, '../../src/client/assets/images/');
+  
   const {name, image} = req.body;
-
-  var data = image.replace(/^data:image\/\w+;base64,/, "");
-  var buf = new Buffer(data, 'base64');
 
   var ts    = Date.now();
   var filename  = path.join(DIRECTORY, name);
   
-  fs.writeFileAsync(filename, buf).then(function(){
+  fs.writeFileAsync(filename, image).then(function(){
+    console.log("success!");
     res.send({success:true});
   },function(err){
+    console.log(err);
     res.send({success:false});
   });
 
