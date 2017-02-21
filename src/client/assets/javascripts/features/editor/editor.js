@@ -2,8 +2,9 @@
 
 import { createStructuredSelector } from 'reselect';
 import { State } from 'models/editor';
-import {saveFile} from 'utils/net';
-
+import {post, get} from 'utils/net';
+import {actionCreators as mapperActions} from 'features/mapper';
+import {actionCreators as templateActions} from 'features/canvas';
 // Action Types
 
 // Define types in the form of 'npm-module-or-myapp/feature-name/ACTION_TYPE_NAME'
@@ -11,6 +12,8 @@ const SCREEN_RESIZE  = 'uibuilder/editor/SCREEN_RESIZE';
 const SET_VIEW  = 'uibuilder/editor/SET_VIEW';
 const SAVING = 'uibuilder/editor/SAVING';
 const LOADING = 'uibuilder/editor/LOADING';
+const SET_SCENES = 'uibuilder/editor/SET_SCENES';
+
 // This will be used in our root reducer and selectors
 
 export const NAME = 'editor';
@@ -23,6 +26,7 @@ const initialState: State = {
     ow: window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth,
     oh: window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight,
     view: "editor",
+    scenes: [],
 };
 
 export default function reducer(state: State = initialState, action: any = {}): State {
@@ -37,7 +41,10 @@ export default function reducer(state: State = initialState, action: any = {}): 
 
     case SET_VIEW:
       return Object.assign({}, state, {view:action.view})
-      
+    
+    case SET_SCENES:
+      return Object.assign({}, state, {scenes:action.scenes})
+    
     default:
       return state;
   }
@@ -66,31 +73,37 @@ function save(){
       
        const state = JSON.stringify({
                                         templates, 
-                                        templatesById: Object.keys(templatesById).reduce((acc,key)=>{
-                                          acc[key] =  Object.assign({}, templatesById[key], {
-                                                                                                enterFn: templatesById[key].enterFn ? templatesById[key].enterFn.toString() : undefined, 
-                                                                                                exitFn: templatesById[key].exitFn ? templatesById[key].exitFn.toString() : undefined,
-                                                                                            });
-                                          return acc;
-                                        },{}), 
+                                        templatesById,
                                         mappings, 
                                         transformers
                                     });
 
-       saveFile({name:"test.scene", scene:state});
+       post("scene/add", {name:"test", scene:state});
 
        dispatch({type:SAVING});
     }
 }
 
-function load(){
+function load(scene){
     return (dispatch, getState)=>{
        dispatch({type:LOADING});
+       get(`/scenes/${scene}`).then((data)=>{
+          const scene = JSON.parse(data.text);
+          dispatch(templateActions.loadTemplates({templates: scene.templates, templatesById:scene.templatesById}));
+          dispatch(mapperActions.loadMappings({mappings: scene.mappings, transformers: scene.transformers}));
+          console.log(scene);
+       });
     }
 }
 
-// Selectors
+function setScenes(scenes){
+  return {
+    type: SET_SCENES,
+    scenes: scenes,
+  }
+}
 
+// Selectors
 const editor = (state) => state[NAME];
 
 export const selector = createStructuredSelector({
@@ -100,6 +113,7 @@ export const selector = createStructuredSelector({
 export const actionCreators = {
   screenResize,
   setView,
+  setScenes,
   save,
   load,
 };

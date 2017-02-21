@@ -7,6 +7,12 @@ import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import {resolvePath} from 'utils';
 
+
+const _wraplookup = (key,sourcepath,fnstr)=>{
+    const _path = JSON.stringify(sourcepath); 
+    return `const lookup=(data)=>${_path}.reduce((acc,item)=>{return acc[item]},data)["${key}"]; ${fnstr}`; 
+}
+
 @connect(selector, (dispatch) => {
   return {
       actions: bindActionCreators(templateActions, dispatch)
@@ -37,8 +43,9 @@ export default class Birth extends PureComponent {
                                                   },{});
 
     const schema =   <Schema schema={schemas} onSelect={(key,sourcepath)=>{
-        const valueFor = resolvePath.bind(null,key,sourcepath); 
-        this.props.actions.updateTemplateAttribute(path, "enterFn", (data)=>valueFor(data));
+        //cannpt have closures (so can serialise) so have to insert lookup function (mapping path,key to data value) here;
+        const body = _wraplookup(key, sourcepath, "return lookup(data)");
+        this.props.actions.updateTemplateAttribute(path, "enterFn", {params:["data", "index"], body});
     }}/>
           
                               
@@ -62,12 +69,7 @@ export default class Birth extends PureComponent {
                                                   },{});
 
     const schema =   <Schema schema={schemas} onSelect={(key,sourcepath)=>{
-        const valueFor = resolvePath.bind(null,key,sourcepath); 
-        let count = 0;
-        this.props.actions.updateTemplateAttribute(path, "enterFn", (data)=>{
-            return (count++)%15
-            //return Math.abs(Math.floor(valueFor(data)))%100;
-        });
+        this.props.actions.updateTemplateAttribute(path, "enterFn", {params:["data", "index"], body:_wraplookup(key,sourcepath,"return index++%15;")});
     }}/>
                   
                               

@@ -13,7 +13,7 @@ import Mapper from '../../mapper/components/Mapper';
 import DragDropContainer from '../../../components/DragDrop';
 import './Editor.scss';
 import {DatasourceManager} from '../../../datasources';
-
+import LoadScene from './LoadScene';
 import Toolbar from 'react-md/lib/Toolbars';
 import Button from 'react-md/lib/Buttons';
 import {MAPPER_WIDTH} from '../../mapper/constants';
@@ -36,6 +36,9 @@ export default class Editor extends Component {
       this._handleEdit = this._handleEdit.bind(this);
       this._handleSave = this._handleSave.bind(this);
       this._handleLoad = this._handleLoad.bind(this);
+      this._closeDialog = this._closeDialog.bind(this);
+      this._openLoadDialog = this._openLoadDialog.bind(this);
+      this.state = {load:false};
    }		
   	
     componentDidMount(){
@@ -52,9 +55,11 @@ export default class Editor extends Component {
       }
 
       const actions = [
-                        <Button flat key="load" label="load" onClick={this._handleLoad}>cloud_download</Button>,
+                        <Button flat key="load" label="load" onClick={this._openLoadDialog}>cloud_download</Button>,
                         <Button flat key="save" label="save" onClick={this._handleSave}>save</Button>
                       ]
+
+     
 
       if (view === "editor"){
         actions.push(<Button flat key="toggle" label="live" onClick={this._handleLive}>tap_and_play</Button>);
@@ -63,7 +68,7 @@ export default class Editor extends Component {
       }
 
     	return (
-      	 <div className="editor">
+      	<div className="editor">
             <DragDropContainer w={w} h={h}>
               <Palette/>
               <div className="canvascontainer" style={canvasstyle}>
@@ -72,8 +77,9 @@ export default class Editor extends Component {
               </div> 
             </DragDropContainer>
             <Mapper height={h}/>
-            <Toolbar colored title={view} actions={actions} style={{position:'fixed', width:w-MAPPER_WIDTH-PALETTE_WIDTH/*-15*/, background:"#3f51b5", left:PALETTE_WIDTH, bottom:0}}/>
-          </div>
+            <Toolbar colored title={view} actions={actions} style={{position:'fixed', width:w-MAPPER_WIDTH-PALETTE_WIDTH, background:"#3f51b5", left:PALETTE_WIDTH, bottom:0}}/>
+            <LoadScene visible={this.state.load} onHide={this._closeDialog} onLoad={this._handleLoad}/>
+        </div>
     	);
   	}
 
@@ -97,7 +103,16 @@ export default class Editor extends Component {
       this.props.actions.save();
     }
 
-     _handleLoad(){
-      this.props.actions.load();
+    _handleLoad(scene){
+      this.setState({load:false});
+      this.props.actions.load(scene);
+    }
+
+    _openLoadDialog(){
+      this.setState({load:true});
+    }
+
+    _closeDialog(){
+      this.setState({load:false});
     }
 }

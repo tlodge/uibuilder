@@ -3,7 +3,7 @@ import React, { Component, PropTypes } from 'react';
 import TemplateItem from './TemplateItem';
 import { Flex, Box } from 'reflexbox'
 import SVGUpload from './SVGUpload';
-import {uploadImage} from 'utils/net';
+import {post} from 'utils/net';
 
 export default class TemplateList extends Component {
   
@@ -52,7 +52,7 @@ export default class TemplateList extends Component {
                     const reader = new FileReader();
                     reader.onload = (output)=>{
                       //console.log(output.target.result); 
-                      uploadImage({name:f.name, image:output.target.result}).then(()=>{
+                      post("image/add", {name:f.name, image:output.target.result}).then(()=>{
                         console.log("image uploaded!!!");
                       },(err)=>{
                         console.log(err);

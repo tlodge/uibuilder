@@ -1,1 +1,1 @@
-export { get, uploadImage, saveFile } from './request';
+export { get, post } from './request';

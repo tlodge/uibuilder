@@ -19,6 +19,7 @@ const UNSUBSCRIBE_MAPPINGS = 'uibuilder/mapper/UNSUBSCRIBE_MAPPINGS';
 const SAVE_TRANSFORMER = 'uibuilder/mapper/SAVE_TRANSFORMER';
 const SUBSCRIBED = 'uibuilder/mapper/SUBSCRIBED';
 const UNSUBSCRIBED = 'uibuilder/mapper/UNSUBSCRIBED';
+const LOAD_MAPPINGS =  'uibuilder/mapper/LOAD_MAPPINGS';
 
 // This will be used in our root reducer and selectors
 export const NAME = 'mapper';
@@ -146,6 +147,9 @@ export default function reducer(state: State = initialState, action: any = {}): 
 		case SAVE_TRANSFORMER:
 			return Object.assign({},state,{transformers:Object.assign({}, state.transformers, {[action.mappingId]:action.transformer})});
 
+		case LOAD_MAPPINGS:
+			return Object.assign({},state, {mappings:action.mappings, transformers:action.transformers});
+
 		default:	
 			return state;
 	}
@@ -205,8 +209,10 @@ function subscribeMappings(){
 					const template = templatesById[mapping.to.path[mapping.to.path.length-1]];
 					const value   = resolvePath(mapping.from.key, mapping.from.path, data);
 
-					const enterKey = template.enterFn ?  template.enterFn(data,count) : null;
-    				const remove   = template.exitFn ?   template.exitFn(data, count) : false;
+					const enterKey = template.enterFn ?  Function(...template.enterFn.params, template.enterFn.body)(data,count) : null; //template.enterFn(data,count) : null;
+    				const remove   = template.exitFn ?   Function(...template.exitFn.params, template.exitFn.body)(data,count) : null; //template.exitFn(data, count) : false;
+    				
+    				console.log("got enterkey as " + enterKey);
 
 					const node = _getNode(nodesByKey, nodesById, enterKey, mapping.to.path); 
 					
@@ -264,6 +270,14 @@ function saveTransformer(mappingId, transformer){
 	}
 }
 
+function loadMappings({mappings, transformers}){
+	return {
+		type: LOAD_MAPPINGS,
+		mappings,
+		transformers,
+	}
+}
+
 // Selectors
 const mapper  = (state) => state[NAME];
 const sources = (state) => state[SOURCENAME];
@@ -282,6 +296,7 @@ export const actionCreators = {
   mapToStyle,
   mapToTransform,
   selectMapping,
+  loadMappings,
   saveTransformer,
   subscribeMappings,
   unsubscribeMappings,

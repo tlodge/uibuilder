@@ -20,6 +20,8 @@ const TEMPLATE_PARENT_SELECTED   = 'uibuilder/canvas/TEMPLATE_PARENT_SELECTED';
 const UPDATE_TEMPLATE_ATTRIBUTE  = 'uibuilder/canvas/UPDATE_TEMPLATE_ATTRIBUTE';
 const UPDATE_TEMPLATE_STYLE      = 'uibuilder/canvas/UPDATE_TEMPLATE_STYLE';
 const DELETE                     = 'uibuilder/canvas/DELETE';
+const LOAD_TEMPLATES             = 'uibuilder/canvas/LOAD_TEMPLATES';
+
 
 // This will be used in our root reducer and selectors
 export const NAME = 'canvas';
@@ -548,6 +550,9 @@ export default function reducer(state: State = initialState, action: any = {}): 
     case DELETE:
       return Object.assign({}, state, {templates: _deleteTemplate(state), selected: null});
 
+    case LOAD_TEMPLATES:
+      return Object.assign({}, state, {templates:action.templates, templatesById:action.templatesById});
+      
     default:
       return state;
   }
@@ -646,6 +651,14 @@ function updateTemplateStyle(path:Array, property:string, value){
   };
 }
 
+function loadTemplates({templates, templatesById}){
+   return {
+    type: LOAD_TEMPLATES,
+    templates,
+    templatesById,
+  };
+}
+
 // Selectors
 
 const canvas = (state) => state[NAME];
@@ -675,4 +688,5 @@ export const actionCreators = {
   templateParentSelected,
   updateTemplateAttribute,
   updateTemplateStyle,
+  loadTemplates,
 };

@@ -18,12 +18,11 @@ export function get(url, query){
 }
 
 
-export function uploadImage(data){  
+export function post(url, data){  
   return new Promise((resolve, reject)=>{
      request
-      .post("/image/add")
+      .post(url)
       .send(data)
-      //.set('Accept', 'image/svg+xml')
       .set('Accept', 'application/json')
       .type("json")
       .end(function(err, res){
@@ -36,20 +35,3 @@ export function uploadImage(data){
   })
 }
 
-export function saveFile(data){  
-  return new Promise((resolve, reject)=>{
-     request
-      .post("/scene/add")
-      .send(data)
-      //.set('Accept', 'image/svg+xml')
-      .set('Accept', 'application/json')
-      .type("json")
-      .end(function(err, res){
-        if (err){
-          reject(err);
-        }else{
-          resolve(res);
-        }
-     });
-  })
-}
