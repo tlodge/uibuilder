@@ -38,6 +38,23 @@ app.use(webpackDevMiddleware(compiler, {
 
 app.use(webpackHotMiddleware(compiler));
 
+app.post('/scene/add', function(req, res){
+  const DIRECTORY = path.join(__dirname, './src/client/assets/scenes/');
+  
+  const {name, scene} = req.body;
+  
+  var ts    = Date.now();
+  var filename  = path.join(DIRECTORY, `${ts}_${name}.scene`);
+  
+  fs.writeFileAsync(filename, scene).then(function(){
+    console.log("success!");
+    res.send({success:true});
+  },function(err){
+    console.log(err);
+    res.send({success:false});
+  });
+
+});
 
 app.get('/scenes/:name', (req,res)=>{
   res.sendFile(path.join(__dirname, './src/client/assets/scenes/' + req.params.name));
@@ -96,23 +113,7 @@ app.get('/images/:name', (req,res)=>{
    res.sendFile(path.join(__dirname, './src/client/assets/images/' + req.params.name));
 });
 
-app.post('/scene/add', function(req, res){
-  const DIRECTORY = path.join(__dirname, './src/client/assets/scenes/');
-  
-  const {name, scene} = req.body;
-  
-  var ts    = Date.now();
-  var filename  = path.join(DIRECTORY, `${ts}_${name}.scene`);
-  
-  fs.writeFileAsync(filename, scene).then(function(){
-    console.log("success!");
-    res.send({success:true});
-  },function(err){
-    console.log(err);
-    res.send({success:false});
-  });
 
-});
 
 app.post('/image/add', function(req, res){
   

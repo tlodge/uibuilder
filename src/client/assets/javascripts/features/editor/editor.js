@@ -91,7 +91,7 @@ function load(scene){
           const scene = JSON.parse(data.text);
           dispatch(templateActions.loadTemplates({templates: scene.templates, templatesById:scene.templatesById}));
           dispatch(mapperActions.loadMappings({mappings: scene.mappings, transformers: scene.transformers}));
-          console.log(scene);
+         
        });
     }
 }

@@ -27,12 +27,12 @@ export default class Text extends Component {
 
 	render(){
 		const {id, template, selected} = this.props;
-		const {x,y,text,style} = this.props;
+		const {x,y,text,style} = template;
 
 		const _style = camelise(style);
 
 		return 	<g transform={this.props.transform}>
-			 		<text x={x} y={y} style={_style} onClick={this._onSelect} onMouseDown={this._onMouseDown}>{text}</text>
+			 		<text textAnchor="middle" x={x} y={y} style={_style} onClick={this._onSelect} onMouseDown={this._onMouseDown}>{text}</text>
 			 	</g>
 	}
 

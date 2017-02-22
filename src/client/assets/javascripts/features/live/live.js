@@ -90,6 +90,9 @@ const _cloneStaticTemplates = (templates, blueprints)=>{
     }).reduce((acc, key)=>{
         const {node, children, lookup} = _createNode(blueprints[key], blueprints, Date.now(), 0);
         
+        console.log("lookup is");
+        console.log(lookup);
+
         acc.nodes.push(node.id);
         
         acc.nodesById = {...acc.nodesById, ...{[node.id]:node}, ...children};
@@ -99,7 +102,10 @@ const _cloneStaticTemplates = (templates, blueprints)=>{
                       return acc;
                     },{});
 
-        acc.nodesByKey = {[key]:{root:node.id},...nbk};
+        console.log("nods by key is");
+        console.log(nbk);
+
+        acc.nodesByKey = {...acc.nodesByKey, [key]:{root:node.id}, ...nbk};
                            
 
         return acc;
@@ -416,7 +422,7 @@ function updateNodeAttribute(path:Array, property:string, value, enterKey:string
   return (dispatch, getState)=>{
     
     //clone this node if we need to
-    if (_shouldClone(path, enterKey, getState().live.nodesByKey)){
+    /*if (_shouldClone(path, enterKey, getState().live.nodesByKey)){
       dispatch({
           type: CLONE_NODE,
           enterKey,
@@ -425,7 +431,7 @@ function updateNodeAttribute(path:Array, property:string, value, enterKey:string
           index,
           blueprints: getState().canvas.templatesById,
       });
-    }
+    }*/
 
     //update the node
     dispatch({
@@ -438,10 +444,26 @@ function updateNodeAttribute(path:Array, property:string, value, enterKey:string
   };
 }
 
-function updateNodeStyle(path:Array, property:string, value, enterKey:string, ts:number, index:number){
+function cloneNode(path:Array, enterKey, index){
   return (dispatch, getState)=>{
 
     if (_shouldClone(path, enterKey, getState().live.nodesByKey)){
+      dispatch({
+          type: CLONE_NODE,
+          enterKey,
+          path,
+          ts: Date.now(),
+          index,
+          blueprints: getState().canvas.templatesById,
+      });
+    }
+  }
+}
+
+function updateNodeStyle(path:Array, property:string, value, enterKey:string, ts:number, index:number){
+  return (dispatch, getState)=>{
+
+    /*if (_shouldClone(path, enterKey, getState().live.nodesByKey)){
       dispatch({
           type: CLONE_NODE,
           enterKey,
@@ -450,7 +472,7 @@ function updateNodeStyle(path:Array, property:string, value, enterKey:string, ts
           index,
           blueprints: getState().canvas.templatesById,
       });
-    }
+    }*/
 
     dispatch({
       type: UPDATE_NODE_STYLE,
@@ -465,8 +487,13 @@ function updateNodeStyle(path:Array, property:string, value, enterKey:string, ts
 function updateNodeTransform(path:Array, property:string, transform:string, enterKey:string, ts:number, index:number){
 
    return (dispatch, getState)=>{
+    //console.log("cheking if should clone ");
+   // console.log(path);
+   // console.log(enterKey);
 
-    if (_shouldClone(path, enterKey, getState().live.nodesByKey)){
+   /* if (_shouldClone(path, enterKey, getState().live.nodesByKey)){
+      
+      //console.log("YES - cloning!");
 
       dispatch({
           type: CLONE_NODE,
@@ -476,7 +503,7 @@ function updateNodeTransform(path:Array, property:string, transform:string, ente
           index,
           blueprints: getState().canvas.templatesById,
       });
-    }
+    }*/
 
     dispatch({
         type: UPDATE_NODE_TRANSFORM,
@@ -490,6 +517,7 @@ function updateNodeTransform(path:Array, property:string, transform:string, ente
 
 function initNodes(){
   return (dispatch, getState)=>{
+   
     dispatch({
       type: INIT_NODES,
       templates: getState().canvas.templates,
@@ -524,4 +552,5 @@ export const actionCreators = {
   updateNodeStyle,
   updateNodeTransform,
   removeNode,
+  cloneNode,
 };

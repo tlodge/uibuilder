@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { Flex, Box } from 'reflexbox'
 import Schema from "../Schema";
-import { actionCreators as templateActions } from 'features/canvas/';
+import { actionCreators as mapperActions } from 'features/mapper/';
 import { selector } from '../..';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
@@ -15,7 +15,7 @@ const _wraplookup = (key,sourcepath,fnstr)=>{
 
 @connect(selector, (dispatch) => {
   return {
-      actions: bindActionCreators(templateActions, dispatch)
+      actions: bindActionCreators(mapperActions, dispatch)
   }
 })
 
@@ -43,9 +43,21 @@ export default class Birth extends PureComponent {
                                                   },{});
 
     const schema =   <Schema schema={schemas} onSelect={(key,sourcepath)=>{
-        //cannpt have closures (so can serialise) so have to insert lookup function (mapping path,key to data value) here;
-        const body = _wraplookup(key, sourcepath, "return lookup(data)");
-        this.props.actions.updateTemplateAttribute(path, "enterFn", {params:["data", "index"], body});
+        //cannot have closures (so can serialise) so have to insert lookup function (mapping path,key to data value) here;
+        const keybody = _wraplookup(key, sourcepath, "return lookup(data)");
+        
+
+        //this.props.actions.updateTemplateAttribute(path, "enterFn", {
+        //                                                                enter:  {params:["data","index"], body: "return true"},
+        //                                                               key:    {params:["data", "index"], body: keybody}
+        //                                                            });
+
+        this.props.actions.createEnterSubscription(path, this.state.sourceId, sourcepath, {
+                enter:  {params:["data","index"], body: "return true"},
+                key:    {params:["data", "index"], body: keybody}
+             }
+        );
+
     }}/>
           
                               
@@ -69,7 +81,11 @@ export default class Birth extends PureComponent {
                                                   },{});
 
     const schema =   <Schema schema={schemas} onSelect={(key,sourcepath)=>{
-        this.props.actions.updateTemplateAttribute(path, "enterFn", {params:["data", "index"], body:_wraplookup(key,sourcepath,"return index++%15;")});
+         const keybody = _wraplookup(key, sourcepath, "return lookup(data)");
+        /*this.props.actions.updateTemplateAttribute(path, "enterFn", {
+                                                                        enter:  {params:["data","index"], body: `return data.person==="mum"`},
+                                                                        key:    {params:["data", "index"], body: `return "mum"`}
+                                                                    });*/
     }}/>
                   
                               

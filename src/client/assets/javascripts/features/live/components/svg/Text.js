@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import {Motion, spring} from 'react-motion';
-import {schemaLookup, camelise, camelCase, interpolatedStyles} from 'utils';
+import {schemaLookup, camelise, camelCase, interpolatedStyles,componentsFromTransform} from 'utils';
 import { selector } from '../..';
 import { connect } from 'react-redux';
 const schema = {...schemaLookup("text").attributes, ...schemaLookup("text").style};
@@ -25,20 +25,33 @@ export default class Text extends PureComponent {
 	}
 
 	render(){
-		const node = this.props;
+		const {node} = this.props;
 		const {x,y,text,transform="translate(0,0)", style} = node;
 
-		
+		const {scale=1,rotate,translate} = componentsFromTransform(transform);
+		const [degrees=0,cx=0,cy=0] = rotate || [0,0,0];
+
 		const _style = camelise(style);
 		const is = _interpolatedStyles(_style);
 		
-		return (<Motion style={{x: spring(Number(x)), y: spring(Number(y)),...is}}>
-			 		{
-			 			(item) => { 
-			 				const _s = Object.assign({},_style,item,{fontSize:`${item.fontSize}px`});
+		const motionstyle = {
+			x: spring(Number(x) || 0),
+			y: spring(Number(y) || 0), 
+			scale: spring(Number(scale)),
+			degrees: spring(Number(degrees)),
+			interpolatedStyles: is,
+			//fontSize: _style.fontSize || 0,
+		}
 
-			 				return 	<g transform={transform}>
-			 							<text x={item.x} y={item.y} style={_s}>{text}</text>
+		return (<Motion style={motionstyle}>
+			 		{({x,y,scale,degrees,interpolatedStyles/*,fontSize*/}) => {
+			 				const _s = Object.assign({},_style,interpolatedStyles);//,{fontSize:`${fontSize}px`});
+			 				//const _s = Object.assign({},_style,item,{fontSize:`${item.fontSize}px`});
+
+			 				const _transform = `translate(${x}, ${y}) scale(${scale}) rotate(${degrees},${cx},${cy})`;
+			 				
+			 				return 	<g transform={_transform}>
+			 							<text textAnchor="middle" x={0} y={0} style={_s}>{text}</text>
 			 						</g>
 			 			}
 			 		}

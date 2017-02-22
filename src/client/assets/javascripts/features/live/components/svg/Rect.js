@@ -29,6 +29,9 @@ export default class Rect extends PureComponent {
 		const is = _interpolatedStyles(_style)
 		const {scale=1,rotate=[0,0,0],translate} = componentsFromTransform(transform);
 		
+		const cx = Number(rotate[1]) || 0;
+		const cy = Number(rotate[2]) || 0;
+
 		const motionstyle = {
 			x: spring(Number(x) || 0),
 			y: spring(Number(y) || 0), 
@@ -36,13 +39,11 @@ export default class Rect extends PureComponent {
 			height:spring(Number(height) || 0),
 			scale: spring(Number(scale)),
 			rotate: spring(Number(rotate[0]) || 0),
-			cx: spring(Number(rotate[1]) || 0),
-			cy: spring(Number(rotate[2]) || 0),
 			interpolatedStyles: is
 		}
 
 		return <Motion style={motionstyle}>
-	 				{({x,y,width,height,scale,rotate,cx,cy,interpolatedStyles}) => {
+	 				{({x,y,width,height,scale,rotate,interpolatedStyles}) => {
 			 			const _s = Object.assign({},_style,interpolatedStyles);
 	 					const _transform = `translate(${x}, ${y}) scale(${scale}) rotate(${rotate},${cx},${cy})`;
 	 					return <rect rx={rx} ry={ry} width={width} height={height} style={_s} transform={_transform}/>

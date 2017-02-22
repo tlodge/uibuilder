@@ -75,21 +75,20 @@ export default class Group extends PureComponent {
 		const is = _interpolatedStyles(_style);
 
 		const {scale=1,rotate,translate} = componentsFromTransform(transform);
-		//const [tx,ty]= translate || [0,0];
-		
-
+		const [degrees,cx=0,cy=0] = rotate || [0,0,0];
+	
 		const motionstyle = {
 			x: spring(Number(x ? x : 0) || 0),
 			y: spring(Number(y ? y : 0) || 0),
 			scale: spring(Number(scale ? scale : 0) || 0),
-			rotate: spring(Number(rotate ? rotate[0] : 0) || 0),
+			degrees: spring(Number(rotate ? rotate[0] : 0) || 0),
 			interolatedStyles: is,
 		}
 
 		return (<Motion style={motionstyle}>
-	 				{({x,y,scale,rotate,interpolatedStyles}) => {
+	 				{({x,y,scale,degrees,interpolatedStyles}) => {
 	 					const _s = Object.assign({},_style,interpolatedStyles);
-	 					const _transform = `translate(${x}, ${y}) scale(${scale}) rotate(${rotate})`;
+	 					const _transform = `translate(${x}, ${y}) scale(${scale}) rotate(${degrees},${cx},${cy})`;
 	 					return <g transform={`${_transform}`} style={_s}>
 	 						{this.renderChildren(children)}
 	 					</g>								
