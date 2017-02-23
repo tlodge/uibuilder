@@ -1,12 +1,13 @@
 import React, { PureComponent } from 'react';
 import { Flex, Box } from 'reflexbox'
 import Schema from "../Schema";
-import { actionCreators as mapperActions } from 'features/mapper/';
+import { actionCreators as templateActions } from 'features/canvas/';
 import { selector } from '../..';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import {resolvePath} from 'utils';
-
+import TextField from 'react-md/lib/TextFields';
+import Button from 'react-md/lib/Buttons/Button';
 
 const _wraplookup = (key,sourcepath,fnstr)=>{
     const _path = JSON.stringify(sourcepath); 
@@ -15,7 +16,7 @@ const _wraplookup = (key,sourcepath,fnstr)=>{
 
 @connect(selector, (dispatch) => {
   return {
-      actions: bindActionCreators(mapperActions, dispatch)
+      actions: bindActionCreators(templateActions, dispatch)
   }
 })
 
@@ -23,7 +24,7 @@ export default class Birth extends PureComponent {
   
   constructor(props) {
     super(props);
-    this.state = { sourceId: null, type:"static"}; 
+    this.state = { sourceId: null, type:"static", bufferenter:null, bufferkey:null}; 
     this._selectSource = this._selectSource.bind(this);
     this._selectType = this._selectType.bind(this);
   }
@@ -47,16 +48,16 @@ export default class Birth extends PureComponent {
         const keybody = _wraplookup(key, sourcepath, "return lookup(data)");
         
 
-        //this.props.actions.updateTemplateAttribute(path, "enterFn", {
-        //                                                                enter:  {params:["data","index"], body: "return true"},
-        //                                                               key:    {params:["data", "index"], body: keybody}
-        //                                                            });
+        this.props.actions.updateTemplateAttribute(path, "enterFn", {
+                                                                      enter:  {params:["data","index"], body: "return true"},
+                                                                      key:    {params:["data", "index"], body: keybody}
+                                                                    });
 
-        this.props.actions.createEnterSubscription(path, this.state.sourceId, sourcepath, {
-                enter:  {params:["data","index"], body: "return true"},
-                key:    {params:["data", "index"], body: keybody}
-             }
-        );
+        //this.props.actions.createEnterSubscription(path, this.state.sourceId, sourcepath, {
+         //       enter:  {params:["data","index"], body: "return true"},
+         //       key:    {params:["data", "index"], body: keybody}
+         //    }
+        //);
 
     }}/>
           
@@ -80,18 +81,45 @@ export default class Birth extends PureComponent {
                                                     return (source.id === this.state.sourceId) ? source.schema : acc
                                                   },{});
 
-    const schema =   <Schema schema={schemas} onSelect={(key,sourcepath)=>{
-         const keybody = _wraplookup(key, sourcepath, "return lookup(data)");
-        /*this.props.actions.updateTemplateAttribute(path, "enterFn", {
-                                                                        enter:  {params:["data","index"], body: `return data.person==="mum"`},
-                                                                        key:    {params:["data", "index"], body: `return "mum"`}
-                                                                    });*/
-    }}/>
+    //const schema =   <Schema schema={schemas} onSelect={(key,sourcepath)=>{
+    //    const keybody = _wraplookup(key, sourcepath, "return lookup(data)");
+    //    this.props.actions.updateTemplateAttribute(path, "enterFn", {
+    //                                                                    enter:  {params:["data","index"], body: `return data.person==="mum"`},
+    //                                                                    key:    {params:["data", "index"], body: `return "mum"`}                                                              });
+    //}}/>
                   
                               
     return <Flex flexColumn={true}>
-                  {srcs}
-                  {schema}
+                  //enter textfield function
+                  <TextField
+                    id="enterfunction"
+                    block
+                    rows={4}
+                    value={this.state.bufferenter || `return "true"`} 
+                    onChange={(e)=>{
+                                      this.setState({bufferenter:e})
+                                  }
+                              }
+                  />
+                  <TextField
+                    id="enterfunction"
+                    block
+                    rows={4}
+                    value={this.state.bufferkey || `return "root"`} 
+                    onChange={(e)=>{
+                                      this.setState({bufferkey:e})
+                                  }
+                              }
+                  />
+
+                  <Button flat label="submit" onClick={()=>{
+                      this.props.actions.updateTemplateAttribute(path, "enterFn", {
+                                                                        enter:  {params:["data","index"], body: this.state.bufferenter || `return "true"`},
+                                                                        key:    {params:["data", "index"], body: this.state.bufferkey || `return "root"`},
+                      }); 
+                  }}>submit</Button>
+                  //key textfield function
+                  //ok button
             </Flex>
  }
 

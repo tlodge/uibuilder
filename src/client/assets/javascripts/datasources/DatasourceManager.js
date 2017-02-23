@@ -7,55 +7,103 @@ let _emitters = {};
 const locations = [
 		{
 			person:"dad",
+			location: "home",
+			time: "8:00",
+		},
+		{
+			person:"mum",
+			location: "home",
+			time: "8:10",
+		},
+		{
+			person:"jamie",
+			location: "home",
+			time: "8:15",
+		},
+		{
+			person:"alice",
+			location: "home",
+			time: "8:15",
+		},
+		{
+			person:"mum",
+			location: "junior school",
+			time: "8:45",
+		},
+		{
+			person:"jamie",
+			location: "junior school",
+			time: "8:45",
+		},
+		{
+			person:"alice",
+			location: "infant school",
+			time: "8.55",
+		},
+		{
+			person:"mum",
+			location: "infant school",
+			time: "8.55",
+		},
+		{
+			person:"dad",
 			location: "work",
+			time: "9.00",
 		},
 		{
 			person:"mum",
-			location: "home"
-		},
-		{
-			person:"jamie",
-			location: "home"
-		},
-		{
-			person:"alice",
-			location: "home"
-		},
-		{
-			person:"mum",
-			location: "school"
-		},
-		{
-			person:"jamie",
-			location: "school"
-		},
-		{
-			person:"alice",
-			location: "school"
+			location: "home",
+			time: "9.30",
 		},
 		{
 			person:"dad",
-			location: "mr tucks tucker"
-		},
-		{
-			person:"mum",
-			location: "home"
+			location: "starbucks",
+			time: "9.18",
 		},
 		{
 			person:"dad",
-			location: "work"
+			location: "work",
+			time: "9.40",
 		},
 		{
 			person:"mum",
-			location: "gym"
+			location: "co-op",
+			time: "9.53",
+		},
+		{
+			person:"mum",
+			location: "work",
+			time: "10.03",
 		},
 		{
 			person:"jamie",
-			location: "swimming pool"
+			location: "swimming pool",
+			time: "10.12",
 		},
 		{
-			person:"alice",
-			location: "pub"
+			person:"jamie",
+			location: "junior school",
+			time: "11.32",
+		},
+		{
+			person:"mum",
+			location: "cafe nero",
+			time: "12.05",
+		},
+		{
+			person:"dad",
+			location: "cafe nero",
+			time: "12.15",
+		},
+		{
+			person:"dad",
+			location: "work",
+			time: "13.35",
+		},
+		{
+			person:"mum",
+			location: "work",
+			time: "13.45"
 		}
 ]
 
@@ -185,7 +233,7 @@ export function	init(registerCallback){
 
 
 	let whereisindex = 0;
-	
+
 	const t3 = setInterval(()=>{
 			
 			whereiseveryone.emit("data", 

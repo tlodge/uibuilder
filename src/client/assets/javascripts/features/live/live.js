@@ -11,6 +11,7 @@ const UPDATE_NODE_STYLE          = 'uibuilder/live/UPDATE_NODE_STYLE';
 const UPDATE_NODE_TRANSFORM      = 'uibuilder/live/UPDATE_NODE_TRANSFORM';
 const INIT_NODES                 = 'uibuilder/live/INIT_NODES';
 const REMOVE_NODE                = 'uibuilder/live/REMOVE_NODE';
+const CLEAR_STATE                = 'uibuilder/live/CLEAR_STATE';
 
 export const NAME = 'live';
 
@@ -90,8 +91,7 @@ const _cloneStaticTemplates = (templates, blueprints)=>{
     }).reduce((acc, key)=>{
         const {node, children, lookup} = _createNode(blueprints[key], blueprints, Date.now(), 0);
         
-        console.log("lookup is");
-        console.log(lookup);
+      
 
         acc.nodes.push(node.id);
         
@@ -101,9 +101,6 @@ const _cloneStaticTemplates = (templates, blueprints)=>{
                       acc[key] = {root:lookup[key]}
                       return acc;
                     },{});
-
-        console.log("nods by key is");
-        console.log(nbk);
 
         acc.nodesByKey = {...acc.nodesByKey, [key]:{root:node.id}, ...nbk};
                            
@@ -247,14 +244,9 @@ const _updateNodeAttributes = (state, action)=>{
   if (!state.nodesById)
     return state;
 
-  //const [templateId, ...rest] = action.path;
+  
   const templateId = action.path[action.path.length-1];
   const subkey     = action.enterKey ? action.enterKey : "root";
-
-  //console.log(`tenplate id is ${templateId}, enterkey ${subkey}`);
-  //console.log("looking up in");
-  //console.log(state.nodesByKey);
-
   const nodeId     = state.nodesByKey[templateId] ? state.nodesByKey[templateId][subkey] : null;
 
 
@@ -398,7 +390,8 @@ export default function reducer(state: State = initialState, action: any = {}): 
     case INIT_NODES:
       return Object.assign({}, state, {..._cloneStaticTemplates(action.templates, action.blueprints)});
 
-  
+    case CLEAR_STATE:
+      return Object.assign({}, state, initialState);
 
     default:
       return state;
@@ -422,7 +415,9 @@ function updateNodeAttribute(path:Array, property:string, value, enterKey:string
   return (dispatch, getState)=>{
     
     //clone this node if we need to
-    /*if (_shouldClone(path, enterKey, getState().live.nodesByKey)){
+    
+    if (_shouldClone(path, enterKey, getState().live.nodesByKey)){
+     
       dispatch({
           type: CLONE_NODE,
           enterKey,
@@ -431,7 +426,7 @@ function updateNodeAttribute(path:Array, property:string, value, enterKey:string
           index,
           blueprints: getState().canvas.templatesById,
       });
-    }*/
+    }
 
     //update the node
     dispatch({
@@ -463,7 +458,7 @@ function cloneNode(path:Array, enterKey, index){
 function updateNodeStyle(path:Array, property:string, value, enterKey:string, ts:number, index:number){
   return (dispatch, getState)=>{
 
-    /*if (_shouldClone(path, enterKey, getState().live.nodesByKey)){
+    if (_shouldClone(path, enterKey, getState().live.nodesByKey)){
       dispatch({
           type: CLONE_NODE,
           enterKey,
@@ -472,7 +467,7 @@ function updateNodeStyle(path:Array, property:string, value, enterKey:string, ts
           index,
           blueprints: getState().canvas.templatesById,
       });
-    }*/
+    }
 
     dispatch({
       type: UPDATE_NODE_STYLE,
@@ -487,11 +482,8 @@ function updateNodeStyle(path:Array, property:string, value, enterKey:string, ts
 function updateNodeTransform(path:Array, property:string, transform:string, enterKey:string, ts:number, index:number){
 
    return (dispatch, getState)=>{
-    //console.log("cheking if should clone ");
-   // console.log(path);
-   // console.log(enterKey);
-
-   /* if (_shouldClone(path, enterKey, getState().live.nodesByKey)){
+  
+  if (_shouldClone(path, enterKey, getState().live.nodesByKey)){
       
       //console.log("YES - cloning!");
 
@@ -503,7 +495,7 @@ function updateNodeTransform(path:Array, property:string, transform:string, ente
           index,
           blueprints: getState().canvas.templatesById,
       });
-    }*/
+    }
 
     dispatch({
         type: UPDATE_NODE_TRANSFORM,
@@ -535,6 +527,12 @@ function removeNode(nodeId, path, enterKey){
       path,
    }
 }
+
+function clearState(){
+   return {
+      type: CLEAR_STATE,
+   }
+}
 // Selectors
 
 const live = (state) => state[NAME];
@@ -553,4 +551,5 @@ export const actionCreators = {
   updateNodeTransform,
   removeNode,
   cloneNode,
+  clearState,
 };

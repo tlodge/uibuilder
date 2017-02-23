@@ -5,6 +5,7 @@ import { State } from 'models/editor';
 import {post, get} from 'utils/net';
 import {actionCreators as mapperActions} from 'features/mapper';
 import {actionCreators as templateActions} from 'features/canvas';
+import {actionCreators as liveActions} from 'features/live';
 // Action Types
 
 // Define types in the form of 'npm-module-or-myapp/feature-name/ACTION_TYPE_NAME'
@@ -87,11 +88,16 @@ function save(){
 function load(scene){
     return (dispatch, getState)=>{
        dispatch({type:LOADING});
+       
+       dispatch(liveActions.clearState());
+       dispatch(templateActions.clearState());
+       dispatch(mapperActions.clearState());
+
        get(`/scenes/${scene}`).then((data)=>{
           const scene = JSON.parse(data.text);
           dispatch(templateActions.loadTemplates({templates: scene.templates, templatesById:scene.templatesById}));
           dispatch(mapperActions.loadMappings({mappings: scene.mappings, transformers: scene.transformers}));
-         
+          
        });
     }
 }

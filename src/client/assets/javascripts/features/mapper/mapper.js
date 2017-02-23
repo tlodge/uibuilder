@@ -21,6 +21,8 @@ const SUBSCRIBED = 'uibuilder/mapper/SUBSCRIBED';
 const UNSUBSCRIBED = 'uibuilder/mapper/UNSUBSCRIBED';
 const LOAD_MAPPINGS =  'uibuilder/mapper/LOAD_MAPPINGS';
 const CREATED_ENTER_SUBSCRIPTION=  'uibuilder/mapper/CREATED_ENTER_SUBSCRIPTION';
+const CLEAR_STATE =  'uibuilder/mapper/CLEAR_STATE';
+
 // This will be used in our root reducer and selectors
 export const NAME = 'mapper';
 
@@ -151,7 +153,10 @@ export default function reducer(state: State = initialState, action: any = {}): 
 			return Object.assign({},state,{transformers:Object.assign({}, state.transformers, {[action.mappingId]:action.transformer})});
 
 		case LOAD_MAPPINGS:
-			return Object.assign({},state, {mappings:action.mappings, transformers:action.transformers});
+			return Object.assign({},state, {mappings:action.mappings, transformers:action.transformers, selectedMapping:null, from:null, to:null});
+
+		case CLEAR_STATE:
+			return Object.assign({}, state, initialState);
 
 		default:	
 			return state;
@@ -205,7 +210,6 @@ function subscribeMappings(){
 			if (fn){
 
 				const onData = (mapping, data, count)=>{
-					
 					const {live: {nodesByKey, nodesById}, canvas: {templatesById}, mapper:{transformers}} = getState();
 					const {mappingId, from: {key},  to:{property}} = mapping;
 
@@ -220,18 +224,15 @@ function subscribeMappings(){
 						shouldenter = Function(...enter.params, enter.body)(data,count);
 						enterKey = 	Function(...key.params, key.body)(data,count);
 					}
-
-					//const enterKey = template.enterFn ?  Function(...template.enterFn.params, template.enterFn.body)(data,count) : null; //template.enterFn(data,count) : null;
-    				
-    				const remove   = template.exitFn ?   Function(...template.exitFn.params, template.exitFn.body)(data,count) : null; //template.exitFn(data, count) : false;
-    				
+				
+    				const remove   = template.exitFn ?   Function(...template.exitFn.params, template.exitFn.body)(data,count) : null; //template.exitFn(data, count) : false;    				
 					const node = _getNode(nodesByKey, nodesById, enterKey, mapping.to.path); 
 					
 					if (remove){
 						dispatch(liveActions.removeNode(node.id, mapping.to.path, enterKey));
 					}else if (shouldenter){
 						const transformer = transformers[mappingId] || defaultCode(key,property);
-						const transform   = Function(key, "node", "i", transformer);		
+						const transform   = Function(key, "node", "i", transformer);	
 						dispatch(fn(mapping.to.path,property,transform(value, node, count), enterKey, Date.now(), count));
 					}
 				}
@@ -307,10 +308,18 @@ function saveTransformer(mappingId, transformer){
 }
 
 function loadMappings({mappings, transformers}){
+	
 	return {
 		type: LOAD_MAPPINGS,
 		mappings,
 		transformers,
+	}
+}
+
+function clearState(){
+	unsubscribeMappings();
+	return {
+		type: CLEAR_STATE,
 	}
 }
 
@@ -337,4 +346,5 @@ export const actionCreators = {
   subscribeMappings,
   unsubscribeMappings,
   createEnterSubscription,
+  clearState,
 };

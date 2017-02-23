@@ -21,7 +21,7 @@ const UPDATE_TEMPLATE_ATTRIBUTE  = 'uibuilder/canvas/UPDATE_TEMPLATE_ATTRIBUTE';
 const UPDATE_TEMPLATE_STYLE      = 'uibuilder/canvas/UPDATE_TEMPLATE_STYLE';
 const DELETE                     = 'uibuilder/canvas/DELETE';
 const LOAD_TEMPLATES             = 'uibuilder/canvas/LOAD_TEMPLATES';
-
+const CLEAR_STATE                = 'uibuilder/canvas/CLEAR_STATE';
 
 // This will be used in our root reducer and selectors
 export const NAME = 'canvas';
@@ -376,21 +376,43 @@ const _expandTemplate = (template, x, y)=>{
     }
 }
 
+const _getAllChildIds = (template, blueprints)=>{
+  if (template.children){
+    return [].concat.apply([], template.children.map((child)=>{
+        if (blueprints[child].children){
+          return [child, ..._getAllChildIds(blueprints[child], blueprints)]
+        }
+        return child; 
+    }));
+  }
+  return [];
+}
+
 const _deleteTemplate = (state)=>{
 
     if (state.selected && state.selected.path){
 
         const [id, ...rest] = state.selected.path;
-      
-        return  Object.keys(state.templates).reduce((acc,key)=>{
-            if (key !== id){
-              acc[key] = state.templates[key];
+        
+        const todelete = [id, ..._getAllChildIds(state.templatesById[id], state.templatesById)];
+        const index = state.templates.indexOf(id);
+
+        const templates = [...state.templates.slice(0,index), ...state.templates.slice(index+1)];
+
+        const templatesById = Object.keys(state.templatesById).reduce((acc,key)=>{
+            if (todelete.indexOf(key) == -1){
+              acc[key] = state.templatesById[key];
             }
             return acc;
-        },{});     
+        },{});
+
+        return {templates, templatesById, selected:null};
     }
 
-    return state.templates;
+    return state;
+    
+
+    //return {templates: state.templates, templatesByKey:};
 }
 
 const _expandChildren = (templates, children, sf)=>{
@@ -539,7 +561,6 @@ export default function reducer(state: State = initialState, action: any = {}): 
 
     case UPDATE_TEMPLATE_ATTRIBUTE:
       return Object.assign({}, state, {templatesById:_updateTemplateAttribute(state,action)});
-
     
     case EXPAND:
       return Object.assign({}, state, {expanding:true, dragging:false, rotating:false});
@@ -548,11 +569,14 @@ export default function reducer(state: State = initialState, action: any = {}): 
       return Object.assign({}, state, {expanding:false, dragging:false, rotating:true});
 
     case DELETE:
-      return Object.assign({}, state, {templates: _deleteTemplate(state), selected: null});
+      return Object.assign({}, state, _deleteTemplate(state));//, {selected: null}});
 
     case LOAD_TEMPLATES:
-      return Object.assign({}, state, {templates:action.templates, templatesById:action.templatesById});
-      
+      return Object.assign({}, state, {templates:action.templates, templatesById:action.templatesById, selected:null});
+
+    case CLEAR_STATE:
+      return Object.assign({}, state, initialState);
+
     default:
       return state;
   }
@@ -659,6 +683,12 @@ function loadTemplates({templates, templatesById}){
   };
 }
 
+
+function clearState(){
+  return {
+    type: CLEAR_STATE,
+  }
+}
 // Selectors
 
 const canvas = (state) => state[NAME];
@@ -689,4 +719,5 @@ export const actionCreators = {
   updateTemplateAttribute,
   updateTemplateStyle,
   loadTemplates,
+  clearState,
 };
