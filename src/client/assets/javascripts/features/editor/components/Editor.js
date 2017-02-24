@@ -67,6 +67,9 @@ export default class Editor extends Component {
         actions.push(<Button flat key="toggle" label="editor" onClick={this._handleEdit}>mode_edit</Button>);
       }
 
+      const toolbarwidth = view==="editor" ? w-MAPPER_WIDTH-PALETTE_WIDTH : w-PALETTE_WIDTH;
+
+
     	return (
       	<div className="editor">
             <DragDropContainer w={w} h={h}>
@@ -76,8 +79,8 @@ export default class Editor extends Component {
                   {view==="live" && <LiveCanvas w={w} h={h} ow={ow} oh={oh}/>}
               </div> 
             </DragDropContainer>
-            <Mapper height={h}/>
-            <Toolbar colored title={view} actions={actions} style={{position:'fixed', width:w-MAPPER_WIDTH-PALETTE_WIDTH, background:"#3f51b5", left:PALETTE_WIDTH, bottom:0}}/>
+            {view==="editor" && <Mapper height={h}/>}
+            <Toolbar colored title={view} actions={actions} style={{position:'fixed', width:toolbarwidth, background:"#3f51b5", left:PALETTE_WIDTH, bottom:0}}/>
             <LoadScene visible={this.state.load} onHide={this._closeDialog} onLoad={this._handleLoad}/>
         </div>
     	);

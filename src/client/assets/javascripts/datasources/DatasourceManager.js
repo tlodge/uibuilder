@@ -9,101 +9,121 @@ const locations = [
 			person:"dad",
 			location: "home",
 			time: "8:00",
+			percentage: 60,
 		},
 		{
 			person:"mum",
 			location: "home",
 			time: "8:10",
+			percentage: 70,
 		},
 		{
 			person:"jamie",
 			location: "home",
 			time: "8:15",
+			percentage: 70,
 		},
 		{
 			person:"alice",
 			location: "home",
 			time: "8:15",
+			percentage: 70,
 		},
 		{
 			person:"mum",
 			location: "junior school",
 			time: "8:45",
+			percentage: 1,
 		},
 		{
 			person:"jamie",
 			location: "junior school",
 			time: "8:45",
+			percentage: 15,
 		},
 		{
 			person:"alice",
 			location: "infant school",
 			time: "8.55",
+			percentage: 20,
 		},
 		{
 			person:"mum",
 			location: "infant school",
 			time: "8.55",
+			percentage: 1,
 		},
 		{
 			person:"dad",
 			location: "work",
 			time: "9.00",
+			percentage: 30,
 		},
 		{
 			person:"mum",
 			location: "home",
 			time: "9.30",
+			percentage: 70,
 		},
 		{
 			person:"dad",
 			location: "starbucks",
 			time: "9.18",
+			percentage: 3,
 		},
 		{
 			person:"dad",
 			location: "work",
 			time: "9.40",
+			percentage: 30,
 		},
 		{
 			person:"mum",
 			location: "co-op",
 			time: "9.53",
+			percentage: 2,
 		},
 		{
 			person:"mum",
 			location: "work",
 			time: "10.03",
+			percentage: 18
 		},
 		{
 			person:"jamie",
 			location: "swimming pool",
 			time: "10.12",
+			percentage: 1,
 		},
 		{
 			person:"jamie",
 			location: "junior school",
 			time: "11.32",
+			percentage: 15,
 		},
 		{
 			person:"mum",
 			location: "cafe nero",
 			time: "12.05",
+			percentage: 1,
 		},
 		{
 			person:"dad",
 			location: "cafe nero",
 			time: "12.15",
+			percentage: 2,
 		},
 		{
 			person:"dad",
 			location: "work",
 			time: "13.35",
+			percentage: 30,
 		},
 		{
 			person:"mum",
 			location: "work",
-			time: "13.45"
+			time: "13.45",
+			percentage: 18,
 		}
 ]
 
@@ -216,14 +236,15 @@ export function	init(registerCallback){
 							{
 									id:"data1", 
 									value: {
-										x: (Math.random() * 800) * multiplier,
-										y: (Math.random()  * 400) * multiplier,
-										z: Math.random()  * 20,
+										x: (Math.random() * 100) * multiplier,
+										y: (Math.random()  * 100) * multiplier,
+										z: (Math.random()  * 100) * multiplier,
+										a: (Math.random()  * 100) * multiplier,
 										name: "dskldjs",
 									}
 							}
 				  );
-	}, 500);
+	}, 1500);
 
 	const keys = ["data2","data3","data4"];
 
@@ -241,6 +262,8 @@ export function	init(registerCallback){
 									id:"location", 
 									person: locations[whereisindex % locations.length].person,
 									location: locations[whereisindex % locations.length].location,
+									time: locations[whereisindex % locations.length].time,
+									percentage: locations[whereisindex % locations.length].percentage,
 							}
 			);
 			whereisindex +=1;
@@ -270,6 +293,7 @@ export function	init(registerCallback){
 													x: {type: "number", description: "x value"},
 													y: {type: "number", description: "y value"},
 													z: {type: "number", description: "z value"},
+													a: {type: "number", description: "a value"},
 													name: {type: "string", description: "a name"}
 												}
 									}
@@ -296,6 +320,8 @@ export function	init(registerCallback){
 										id: {type: "string", description: "datasource id"},
 										person: {type: "string", description: "the person"},
 										location: {type: "string", description: "the person's location"},
+										time: {type: "string", description: "string value of time h:mm"},
+										percentage: {type: "number", description: "time spent in this location"},
 									}
 								},		
 								(registerInfo)=>{registerCallback(registerInfo);}
